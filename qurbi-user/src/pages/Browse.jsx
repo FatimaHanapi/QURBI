@@ -36,6 +36,7 @@ function LivestockCard({ livestock, index = 0 }) {
   }, [livestock.id]);
 
   const productName = livestock.breed || livestock.name || livestock.species || "Livestock";
+  const speciesLabel = livestock.species || "Livestock";
   const normalizedGender = String(livestock.gender || "").trim().toLowerCase();
   const isMale = normalizedGender === "male";
   const isFemale = normalizedGender === "female";
@@ -81,9 +82,14 @@ function LivestockCard({ livestock, index = 0 }) {
         }}
       >
         <div className="relative flex h-full min-w-0 flex-col justify-start">
-          <h2 className="mt-2 min-h-11 min-w-0 break-words pb-1 pr-6 text-lg font-extrabold leading-tight sm:mt-1 sm:min-h-14 sm:pb-1.5 sm:pr-7 sm:text-2xl">
-            <span>{productName}</span>
-          </h2>
+          <div className="mt-1 h-[3.15rem] min-w-0 overflow-hidden pr-6 sm:h-14 sm:pr-7">
+            <p className="truncate text-[9px] font-bold uppercase leading-none tracking-[0.12em] text-white/70 sm:text-xs sm:leading-tight">
+              {speciesLabel}
+            </p>
+            <h2 className="mt-0.5 line-clamp-2 min-w-0 break-words text-[17px] font-extrabold leading-[1.05] sm:text-2xl sm:leading-tight">
+              {productName}
+            </h2>
+          </div>
           {GenderIcon && (
             <span
               aria-label={isMale ? "Male" : "Female"}
@@ -98,7 +104,7 @@ function LivestockCard({ livestock, index = 0 }) {
               />
             </span>
           )}
-          <div className="absolute bottom-7 left-0 right-0 flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden text-xs font-semibold text-white/90 sm:bottom-8 sm:text-sm">
+          <div className="absolute bottom-7 left-0 right-0 flex min-w-0 flex-nowrap items-center gap-0.5 overflow-hidden text-[11px] font-semibold leading-none text-white/90 sm:bottom-8 sm:gap-1 sm:text-sm sm:leading-normal">
             {livestock.age && (
               <span className="whitespace-nowrap px-1 py-0.5">
                 {livestock.age}
