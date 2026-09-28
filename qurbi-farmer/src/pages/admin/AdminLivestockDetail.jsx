@@ -5,6 +5,7 @@ import {
   Palette, Ruler, ShieldCheck, Tag, UserRound, Utensils, Weight,
 } from "lucide-react";
 import { qurbi } from "@/api/qurbiClient";
+import { resolveApiAssetUrl } from "@/api/apiClient";
 import SectionHeader from "@/components/agri/SectionHeader";
 import StatusBadge from "@/components/agri/StatusBadge";
 import { Image } from "@/components/ui/image";
@@ -100,7 +101,7 @@ export default function AdminLivestockDetail() {
           {videos.length > 0 && (
             <section>
               <SectionHeader title="Videos" />
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">{videos.map((url, index) => <video key={`${url}-${index}`} src={url} controls preload="metadata" className="aspect-video w-full rounded-[1.25rem] bg-black shadow-sm" />)}</div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">{videos.map((url, index) => <video key={`${url}-${index}`} src={resolveApiAssetUrl(url)} controls preload="metadata" className="aspect-video w-full rounded-[1.25rem] bg-black shadow-sm" />)}</div>
             </section>
           )}
         </div>

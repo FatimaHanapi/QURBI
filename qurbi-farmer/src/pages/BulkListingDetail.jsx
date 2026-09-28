@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, MapPin, Pencil, Trash2, Users } from "lucide-react";
 import { qurbi } from "@/api/qurbiClient";
+import { resolveApiAssetUrl } from "@/api/apiClient";
 import ConfirmDialog from "@/components/agri/ConfirmDialog";
 import StatusBadge from "@/components/agri/StatusBadge";
 import { Image } from "@/components/ui/image";
@@ -65,7 +66,7 @@ export default function BulkListingDetail() {
             {images.length > 1 && <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto p-1">{images.map((url, index) => <button key={`${url}-${index}`} type="button" onClick={() => setActiveImage(index)} className={cn("h-16 w-16 shrink-0 overflow-hidden rounded-xl ring-2 ring-offset-2 ring-offset-card", index === activeImage ? "ring-primary" : "ring-transparent opacity-70")}><Image src={url} fittingType="fill" alt="" className="h-full w-full object-cover" /></button>)}</div>}
           </section>
 
-          {videos.length > 0 && <section><h2 className="text-lg font-extrabold">Videos</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{videos.map((url, index) => <video key={`${url}-${index}`} src={url} controls preload="metadata" className="aspect-video w-full rounded-2xl bg-black" />)}</div></section>}
+          {videos.length > 0 && <section><h2 className="text-lg font-extrabold">Videos</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{videos.map((url, index) => <video key={`${url}-${index}`} src={resolveApiAssetUrl(url)} controls preload="metadata" className="aspect-video w-full rounded-2xl bg-black" />)}</div></section>}
         </div>
 
         <div className="space-y-5">
