@@ -4,6 +4,7 @@ import {
   AlertCircle, ArrowLeft, CalendarDays, Hash, Loader2, MapPin, Palette, Pencil, Ruler, Tag, Trash2, UserRound, Utensils, Weight,
 } from "lucide-react";
 import { qurbi } from "@/api/qurbiClient";
+import { resolveApiAssetUrl } from "@/api/apiClient";
 import ConfirmDialog from "@/components/agri/ConfirmDialog";
 import SectionHeader from "@/components/agri/SectionHeader";
 import StatusBadge from "@/components/agri/StatusBadge";
@@ -105,7 +106,7 @@ export default function LivestockDetail() {
           {videos.length > 0 && (
             <section>
               <SectionHeader title="Videos" />
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">{videos.map((url, index) => <video key={`${url}-${index}`} src={url} controls preload="metadata" className="aspect-video w-full rounded-[1.25rem] bg-black shadow-sm" />)}</div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">{videos.map((url, index) => <video key={`${url}-${index}`} src={resolveApiAssetUrl(url)} controls preload="metadata" className="aspect-video w-full rounded-[1.25rem] bg-black shadow-sm" />)}</div>
             </section>
           )}
         </div>
