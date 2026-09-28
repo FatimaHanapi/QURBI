@@ -497,7 +497,7 @@ export default function AddressBook() {
         {/* Empty state */}
         {addresses.length === 0 && !showForm && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#E3C19F]">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#41362D] to-[#6B594A] border-2 border-[#41362D] rounded-2x1">
               <MapPin className="w-10 h-10 text-white" />
             </div>
             <p className="text-gray-800 font-bold">No addresses yet</p>
@@ -511,10 +511,10 @@ export default function AddressBook() {
         {!showForm && !editingAddress && (
           <button
             onClick={() => setShowForm(true)}
-            className={`flex w-full items-center justify-center gap-2 rounded-2xl bg-[#E3C19F] py-4 text-sm font-semibold text-[#41362D] shadow-sm transition-transform active:scale-95 ${reveal()}`}
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] py-4 text-sm font-semibold text-[#41362D] shadow-sm transition-transform active:scale-95 ${reveal()}`}
             style={{ animationDelay: "200ms" }}
           >
-            <Plus className="w-4 h-4 text-white" /> Add New Address
+            <Plus className="w-4 h-4 text-white" /> <h1 className="text-white">Add New Address</h1>
           </button>
         )}
 
