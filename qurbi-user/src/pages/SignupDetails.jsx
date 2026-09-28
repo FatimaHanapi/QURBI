@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { User, Phone, MapPin, Check, ArrowRight } from "lucide-react";
+import { User, Phone, Check, ArrowRight } from "lucide-react";
 import { useUserProfile } from "@/lib/user-profile-context";
 import { useAuth } from "@/lib/AuthContext";
 import AuthLayout from "@/components/AuthLayout";
@@ -10,14 +10,13 @@ const inputCls = "w-full bg-gradient-to-br from-[#41362D] to-[#6B594A] border bo
 const primaryBtn = "w-full bg-gradient-to-r from-[#5A493C] to-[#41362D] text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition-all flex items-center justify-center gap-2 shadow-md shadow-[#D5B18D] disabled:opacity-60"; 
 
 export default function SignupDetails() {
-  const { profile, updateProfile, addAddress } = useUserProfile();
+  const { profile, updateProfile } = useUserProfile();
   const { user, authChecked, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const returnTo = safeReturnTo();
   const [form, setForm] = useState({
     name: profile.name || user?.full_name || "",
     phone: profile.phone || "",
-    address: "",
   });
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -47,21 +46,11 @@ export default function SignupDetails() {
     setSaveError("");
     try {
       await updateProfile({ name: form.name, phone: form.phone });
-      if (form.address.trim()) {
-        await addAddress({
-          label: "Home",
-          street: form.address.trim(),
-          city: "Not specified",
-          state: "",
-          postcode: "",
-          country: "Malaysia",
-          name: form.name,
-          phone: form.phone,
-          isDefault: true,
-        });
-      }
       setSaved(true);
-      setTimeout(() => navigate(returnTo, { replace: true }), 500);
+      setTimeout(
+        () => navigate(`/address-book?onboarding=1&returnTo=${encodeURIComponent(returnTo)}`, { replace: true }),
+        500,
+      );
     } catch (error) {
       setSaveError(error.message || "Your profile could not be saved.");
     } finally {
@@ -69,10 +58,16 @@ export default function SignupDetails() {
     }
   };
 
-  const handleSkip = () => navigate(returnTo, { replace: true });
+  const handleSkip = () =>
+    navigate(`/address-book?onboarding=1&returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
 
   if (authChecked && !isAuthenticated) {
     return <Navigate to="/auth?mode=register" replace />;
+  }
+
+  if (authChecked && isAuthenticated &&
+      (!user?.privacyPolicyAcceptedAt || !user?.userAgreementAcceptedAt)) {
+    return <Navigate to={`/user-agreement?returnTo=${encodeURIComponent(returnTo)}`} replace />;
   }
 
   return (
@@ -97,14 +92,6 @@ export default function SignupDetails() {
             <input value={form.phone} onChange={set("phone")} type="tel" placeholder="012-345 6789" className={inputCls} />
           </div>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-gray-500 text-xs font-semibold">Address</label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-            <input value={form.address} onChange={set("address")} placeholder="Street, city, state" className={inputCls} />
-          </div>
-        </div>
-
         {saveError && <p role="alert" className="text-center text-xs text-red-600">{saveError}</p>}
         <button disabled={saving} onClick={handleSave} className={primaryBtn + " mt-1"}>
           {saving ? "Saving…" : saved ? <><Check className="w-4 h-4" /> Saved!</> : <>Save & continue <ArrowRight className="w-4 h-4" /></>}

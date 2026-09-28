@@ -75,7 +75,9 @@ function LivestockCard({ livestock, index = 0 }) {
         className="absolute inset-x-0 bottom-0 h-28 px-2.5 pb-2.5 pt-1.5 text-white sm:h-28 sm:px-4 sm:pb-3 sm:pt-2"
         style={{
           background:
-            "linear-gradient(135deg, rgba(65, 54, 45, 0.48), rgba(107, 89, 74, 0.3))",
+            "linear-gradient(135deg, rgba(65, 54, 45, 0.82), rgba(107, 89, 74, 0.68))",
+          backdropFilter: "blur(2px)",
+          WebkitBackdropFilter: "blur(2px)",
         }}
       >
         <div className="relative flex h-full min-w-0 flex-col justify-start">
@@ -351,6 +353,12 @@ export default function Browse() {
         const q = searchQuery.toLowerCase();
 
         const matches =
+          (l.name || "")
+            .toLowerCase()
+            .includes(q) ||
+          (l.title || "")
+            .toLowerCase()
+            .includes(q) ||
           (l.breed || "")
             .toLowerCase()
             .includes(q) ||

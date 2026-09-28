@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Plus,
   Pencil,
@@ -63,7 +63,7 @@ function AddressForm({ initial, onSave, onCancel }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Form Header */}
-      <div className="bg-gradient-to-r from-[#F7EDE2]0 to-[#5A493C] px-4 py-3">
+      <div className="bg-gradient-to-r from-[#41362D] to-[#6B594A] px-4 py-3">
         <h3 className="text-white font-bold">
           {initial?.id ? "Edit Address" : "Add New Address"}
         </h3>
@@ -206,7 +206,7 @@ function AddressForm({ initial, onSave, onCancel }) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 py-3 rounded-xl bg-[#F7EDE2]0 text-white font-bold text-sm active:scale-95 transition-transform shadow-sm shadow-[#D5B18D]"
+            className="flex-1 rounded-xl bg-gradient-to-r from-[#41362D] to-[#6B594A] py-3 text-sm font-bold text-white shadow-sm shadow-[#D5B18D] transition-transform active:scale-95"
           >
             {saving ? "Saving..." : "Save Address"}
           </button>
@@ -250,7 +250,7 @@ function AddressCard({
             onClick={() => onEdit(addr)}
             className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] text-black transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
           >
-            <Pencil className="h-4 w-4 text-white" />
+            <Pencil className="h-4 w-4 text-[#41362D]" />
           </button>
           <button
             onClick={() => onDelete(addr.id)}
@@ -310,7 +310,7 @@ function AddressCard({
               onClick={() => onSetDefault(addr.id)}
               className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-[#E3C19F] bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] py-2 text-xs font-semibold text-[#41362D] transition-transform active:scale-95"
             >
-              <Star className="w-3 h-3 text-white" /> Set Default
+              <Star className="h-3 w-3 text-[#41362D]" /> Set Default
             </button>
           )}
           <button
@@ -371,13 +371,20 @@ export default function AddressBook() {
     profileLoading,
   } = useUserProfile();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { reveal } = useReveal();
   const openedFromPayment = searchParams.get("new") === "1";
+  const isOnboarding = searchParams.get("onboarding") === "1";
   const requestedReturnTo = searchParams.get("returnTo") || "";
-  const returnTo = requestedReturnTo.startsWith("/payment")
+  const safeRequestedReturnTo = requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
     ? requestedReturnTo
-    : "/profile";
-  const [showForm, setShowForm] = useState(openedFromPayment);
+    : "/";
+  const returnTo = isOnboarding
+    ? safeRequestedReturnTo
+    : requestedReturnTo.startsWith("/payment")
+      ? requestedReturnTo
+      : "/profile";
+  const [showForm, setShowForm] = useState(openedFromPayment || isOnboarding);
   const [editingAddress, setEditingAddress] = useState(null);
   const [deleteCandidate, setDeleteCandidate] = useState(null);
 
@@ -395,6 +402,7 @@ export default function AddressBook() {
         if (openedFromPayment) setSelectedAddressId(newAddress.id);
         setShowForm(false);
       }
+      if (isOnboarding) navigate(returnTo, { replace: true });
     } catch (error) {
       alert(error.data?.error || error.message || "Contact information could not be saved.");
     }
@@ -443,7 +451,9 @@ export default function AddressBook() {
       <AppHeader
         title="Address Book"
         backTo={returnTo}
-        subtitle={`${addresses.length} saved address${addresses.length !== 1 ? "es" : ""}`}
+        subtitle={isOnboarding
+          ? "Add your delivery address or skip for now"
+          : `${addresses.length} saved address${addresses.length !== 1 ? "es" : ""}`}
       />
 
       <div className="aisyah-content">
@@ -487,7 +497,7 @@ export default function AddressBook() {
         {/* Empty state */}
         {addresses.length === 0 && !showForm && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#E3C19F]">
               <MapPin className="w-10 h-10 text-white" />
             </div>
             <p className="text-gray-800 font-bold">No addresses yet</p>
@@ -501,10 +511,20 @@ export default function AddressBook() {
         {!showForm && !editingAddress && (
           <button
             onClick={() => setShowForm(true)}
-            className={`w-full py-4 border-2 border-dashed border-[#D5B18D] rounded-2xl text-[#F7EDE2]0 font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform bg-[#F7EDE2]/30 ${reveal()}`} 
+            className={`flex w-full items-center justify-center gap-2 rounded-2xl bg-[#E3C19F] py-4 text-sm font-semibold text-[#41362D] shadow-sm transition-transform active:scale-95 ${reveal()}`}
             style={{ animationDelay: "200ms" }}
           >
             <Plus className="w-4 h-4 text-white" /> Add New Address
+          </button>
+        )}
+
+        {isOnboarding && (
+          <button
+            type="button"
+            onClick={() => navigate(returnTo, { replace: true })}
+            className="w-full rounded-2xl border border-[#41362D] bg-transparent py-3.5 text-sm font-bold text-[#41362D]"
+          >
+            Skip for now
           </button>
         )}
       </div>

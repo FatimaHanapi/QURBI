@@ -744,6 +744,33 @@ html {
   scrollbar-width: none;
 }
 
+/* Keep cards and controls at a stable size while they are pressed or hovered. */
+#root [class*="active:scale"]:active,
+#root [class*="hover:scale"]:hover,
+#root [class*="hover:-translate"]:hover {
+  transform: none !important;
+}
+
+#root
+  :where(section, article, div, a)[class*="rounded-xl"][class*="bg-"]:not(
+    header *
+  ):not(nav *):hover,
+#root
+  :where(section, article, div, a)[class*="rounded-2xl"][class*="bg-"]:not(
+    header *
+  ):not(nav *):hover,
+#root
+  :where(section, article, div, a)[class*="rounded-3xl"][class*="bg-"]:not(
+    header *
+  ):not(nav *):hover,
+#root :where(.aisyah-card, .qurbi-dark-surface):not(header *):not(nav *):hover {
+  translate: 0 -1px;
+}
+
+#root .qurbi-category-card:hover {
+  translate: 0 -3px;
+}
+
 /* QURBI migration layer: legacy utility classes remain in older, functional
    components, while these token mappings keep their visual treatment within
    the shared taupe palette. Semantic status text is conveyed by labels and icons. */

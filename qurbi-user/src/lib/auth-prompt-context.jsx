@@ -11,6 +11,7 @@ import { Home, Leaf, LogIn } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import GoogleIcon from "@/components/GoogleIcon";
+import apiClient from "@/api/apiClient";
 
 const AuthPromptContext = createContext(null);
 const EXIT_MS = 140;
@@ -94,8 +95,17 @@ export function AuthPromptProvider({ children }) {
   const signInWithGoogle = async () => {
     try {
       const signedInUser = await loginWithGoogle();
+      if (!signedInUser?.privacyPolicyAcceptedAt || !signedInUser?.userAgreementAcceptedAt) {
+        navigate(`/user-agreement?returnTo=${encodeURIComponent(prompt?.returnTo || "/")}`);
+        return;
+      }
       if (!signedInUser?.phone) {
         navigate(`/signup-details?returnTo=${encodeURIComponent(prompt?.returnTo || "/")}`);
+        return;
+      }
+      const { data: savedAddresses } = await apiClient.get("/addresses");
+      if (!savedAddresses?.length) {
+        navigate(`/address-book?onboarding=1&returnTo=${encodeURIComponent(prompt?.returnTo || "/")}`);
       }
     } catch {
       // AuthContext retains the error while the prompt stays open for retry.

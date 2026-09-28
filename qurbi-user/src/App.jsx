@@ -9,6 +9,7 @@ import { UserProfileProvider } from "@/lib/user-profile-context";
 import AppLayout from "@/components/AppLayout";
 import Authentication from "@/pages/Authentication";
 import SignupDetails from "@/pages/SignupDetails";
+import UserAgreement from "@/pages/UserAgreement";
 import Home from "@/pages/Home";
 import Browse from "@/pages/Browse";
 import LivestockDetail from "@/pages/LivestockDetail";
@@ -51,6 +52,7 @@ function App() {
                     <Route path="/login" element={<LegacyAuthRedirect mode="login" />} />
                     <Route path="/register" element={<LegacyAuthRedirect mode="register" />} />
                     <Route path="/signup-details" element={<SignupDetails />} />
+                    <Route path="/user-agreement" element={<UserAgreement />} />
                     <Route element={<AppLayout />}>
                       <Route path="/" element={<Home />} />
                       <Route path="/browse" element={<Browse />} />

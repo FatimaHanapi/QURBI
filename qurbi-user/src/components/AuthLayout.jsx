@@ -8,19 +8,22 @@ export default function AuthLayout({
   subtitle,
   footer = null,
   onModeChange = null,
+  iconClassName = "text-white",
+  cardClassName = "",
+  titleClassName = "",
   children,
 }) {
   const isRegister = mode === "register";
   return (
-    <div className="relative isolate min-h-screen overflow-hidden flex flex-col items-center justify-center px-4 py-10 bg-[#F7EDE2]">
+    <div className="relative isolate min-h-screen overflow-x-hidden flex flex-col items-center justify-center px-4 py-10 bg-[#F7EDE2]">
       <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] transition-opacity duration-500 ${isRegister ? "opacity-0" : "opacity-100"}`} />
-      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br from-[#41362D] to-[#6B594A] transition-opacity duration-500 ${isRegister ? "opacity-100" : "opacity-0"}`} />
+      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br from-[#E8C7A5] to-[#F7EDE2] transition-opacity duration-500 ${isRegister ? "opacity-100" : "opacity-0"}`} />
       {/* Brand */}
       <div className="relative z-10 flex items-center gap-2 mb-6 animate-fade-in-up">
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#41362D] to-[#6B594A] flex items-center justify-center shadow-md shadow-[#41362D]/20">
           <Leaf className="w-4 h-4 text-white" />
         </div>
-        <span className={`${isRegister ? "text-white" : "text-[#41362D]"} font-bold text-sm tracking-[0.16em]`}>
+        <span className="text-[#41362D] font-bold text-sm tracking-[0.16em]">
           QURBI
         </span>
       </div>
@@ -32,16 +35,16 @@ export default function AuthLayout({
       >
         {Icon && (
           <div className="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] shadow-lg shadow-[#41362D]/20">
-            <Icon className="h-7 w-7 text-white" aria-hidden="true" />
+            <Icon className={`h-7 w-7 ${iconClassName}`} aria-hidden="true" />
           </div>
         )}
-        <h1 className={`text-2xl font-bold ${isRegister ? "text-white" : "text-[#41362D]"}`}>{title}</h1>
-        {subtitle && <p className={`text-sm mt-1 ${isRegister ? "text-[#F7EDE2]/80" : "text-[#6B594A]"}`}>{subtitle}</p>}
+        <h1 className={`text-2xl font-bold text-[#41362D] ${titleClassName}`}>{title}</h1>
+        {subtitle && <p className="mt-1 text-sm text-[#6B594A]">{subtitle}</p>}
       </div>
 
       {/* Card */}
       <div
-        className="relative z-10 w-full max-w-md bg-[#F7EDE2]/90 rounded-3xl shadow-xl shadow-[#41362D]/15 border border-[#E3C19F] p-6 animate-fade-in-up"
+        className={`relative z-10 w-full max-w-md bg-[#F7EDE2]/90 rounded-3xl shadow-xl shadow-[#41362D]/15 border border-[#E3C19F] p-6 animate-fade-in-up ${cardClassName}`}
         style={{ animationDelay: "120ms" }}
       >
         {onModeChange && <div className="mb-5 grid grid-cols-2 rounded-2xl bg-[#41362D]/10 p-1" aria-label="Authentication mode">
@@ -67,7 +70,7 @@ export default function AuthLayout({
 
       {footer && (
         <p
-          className={`relative z-10 text-center text-sm mt-5 animate-fade-in-up ${isRegister ? "text-[#F7EDE2]" : "text-[#6B594A]"}`}
+          className="relative z-10 mt-5 text-center text-sm text-[#6B594A] animate-fade-in-up"
           style={{ animationDelay: "180ms" }}
         >
           {footer}

@@ -8,7 +8,6 @@ import {
   Mail,
   Star,
   Truck,
-  Store,
   CreditCard,
   ArrowLeft,
 } from "lucide-react";
@@ -47,7 +46,6 @@ export default function Payment() {
     setSelectedAddressId,
     selectedAddress,
     profile,
-    updateProfile,
   } = useUserProfile();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -63,10 +61,7 @@ export default function Payment() {
   const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
-  const [fulfillmentMethod, setFulfillmentMethod] = useState("delivery");
-  const [pickupName, setPickupName] = useState(profile.name || "");
-  const [pickupEmail, setPickupEmail] = useState(profile.email || "");
-  const [pickupPhone, setPickupPhone] = useState(profile.phone || "");
+  const fulfillmentMethod = "delivery";
 
   useEffect(() => {
     if (!resumeOrderId) return;
@@ -89,7 +84,6 @@ export default function Payment() {
           setLoadingProductDetails(
             (order.items || []).some((item) => item.livestock_id),
           );
-          setFulfillmentMethod(order.fulfillment_method || "delivery");
         }
       } catch (error) {
         if (active)
@@ -148,19 +142,13 @@ export default function Payment() {
 
   const buyerName = isResumingOrder
     ? resumedOrder?.buyer_name || ""
-    : fulfillmentMethod === "delivery"
-      ? selectedAddress?.name || ""
-      : pickupName;
+    : selectedAddress?.name || profile.name || "";
   const buyerEmail = isResumingOrder
     ? resumedOrder?.buyer_email || ""
-    : fulfillmentMethod === "delivery"
-      ? selectedAddress?.email || ""
-      : pickupEmail;
+    : profile.email || "";
   const buyerPhone = isResumingOrder
     ? resumedOrder?.buyer_phone || ""
-    : fulfillmentMethod === "delivery"
-      ? selectedAddress?.phone || ""
-      : pickupPhone;
+    : selectedAddress?.phone || profile.phone || "";
 
   // Delivery fee: RM 10 per unique farmer (charged once per farmer), only for delivery
   const farmerSet = new Set(
@@ -169,17 +157,14 @@ export default function Payment() {
   const farmerCount = farmerSet.size;
   const deliveryFee =
     resumedOrder?.delivery_fee ??
-    (fulfillmentMethod === "delivery" && paymentItems.length > 0
+    (paymentItems.length > 0
       ? farmerCount * DUMMY_DELIVERY_FEE_PER_FARMER
       : 0);
   const grandTotal = resumedOrder?.total ?? paymentSubtotal + deliveryFee;
 
   const canCheckout = isResumingOrder
     ? Boolean(resumedOrder)
-    : paymentItems.length > 0 &&
-      (fulfillmentMethod === "pickup"
-        ? pickupName && pickupEmail
-        : buyerName && buyerEmail && selectedAddress);
+    : Boolean(paymentItems.length > 0 && buyerName && buyerEmail && selectedAddress);
 
   const handleCheckout = async () => {
     if (!isAuthenticated || !user?.id) {
@@ -189,16 +174,11 @@ export default function Payment() {
     if (paymentItems.length === 0)
       return alert("No items selected for checkout.");
     if (!canCheckout) {
-      if (fulfillmentMethod === "delivery") {
-        if (!selectedAddress) return alert("Please select a delivery address.");
-        if (!buyerName || !buyerEmail)
-          return alert(
-            "Your selected address is missing a name or email. Please edit it in Address Book.",
-          );
-      } else {
-        if (!pickupName || !pickupEmail)
-          return alert("Please enter your name and email for pickup.");
-      }
+      if (!selectedAddress) return alert("Please select a delivery address.");
+      if (!buyerName || !buyerEmail)
+        return alert(
+          "Your delivery details are missing a name or email. Please complete your profile and address.",
+        );
       return;
     }
     try {
@@ -226,10 +206,6 @@ export default function Payment() {
         "Checkout only works from the published app. Please open the app in a new tab.",
       );
       return;
-    }
-    // Persist pickup contact details to the user profile for next time
-    if (!isResumingOrder && fulfillmentMethod === "pickup") {
-      await updateProfile({ name: pickupName, phone: pickupPhone });
     }
     setLoading(true);
     try {
@@ -289,15 +265,7 @@ export default function Payment() {
         deliveryFee,
         total: grandTotal,
         fulfillmentMethod,
-        deliveryAddress: selectedAddress || {
-          recipientName: buyerName,
-          recipientPhone: buyerPhone,
-          addressLine1: "Self pickup",
-          city: "N/A",
-          state: "N/A",
-          postcode: "00000",
-          country: "Malaysia",
-        },
+        deliveryAddress: selectedAddress || resumedOrder?.delivery_address || {},
       });
       if (res.data?.url) {
         if (!isResumingOrder) removeSelected();
@@ -338,11 +306,11 @@ export default function Payment() {
     return <QurbiPageLoader label="Preparing payment…" />;
   if (resumeError)
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-4 p-8">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#E3C19F] p-8">
         <p className="text-gray-500 text-center">{resumeError}</p>
         <button
           onClick={() => navigate("/orders")}
-          className="bg-[#F7EDE2]0 text-white px-6 py-3 rounded-xl font-bold text-sm"
+          className="rounded-xl px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"
         >
           Back to My Orders
         </button>
@@ -350,11 +318,11 @@ export default function Payment() {
     );
   if (paymentItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-4 p-8">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#E3C19F] p-8">
         <p className="text-gray-500">No items selected for payment.</p>
         <button
           onClick={() => navigate(isResumingOrder ? "/orders" : "/cart")}
-          className="bg-[#F7EDE2]0 text-white px-6 py-3 rounded-xl font-bold text-sm"
+          className="rounded-xl px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"
         >
           {isResumingOrder ? "Back to My Orders" : "Back to Cart"}
         </button>
@@ -369,6 +337,7 @@ export default function Payment() {
           addresses={addresses}
           selectedId={selectedAddressId}
           onSelect={setSelectedAddressId}
+          onAddNew={() => navigate("/address-book?new=1&returnTo=%2Fpayment")}
           onClose={() => setShowPicker(false)}
         />
       )}
@@ -450,7 +419,7 @@ export default function Payment() {
               Existing unpaid order
             </h3>
             <p className="text-gray-500 text-sm mt-1">
-              {fulfillmentMethod === "delivery" ? "Delivery" : "Pickup"} ·{" "}
+              Delivery ·{" "}
               {buyerName || "Buyer details saved with this order"}
             </p>
           </div>
@@ -459,42 +428,19 @@ export default function Payment() {
             className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-50 ${reveal()}`}
             style={{ animationDelay: "120ms" }}
           >
-            <h3 className="text-gray-800 font-bold text-sm mb-3">
-              Fulfillment Method
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setFulfillmentMethod("delivery")}
-                className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${fulfillmentMethod === "delivery" ? "border-[#A9825F] bg-[#F7EDE2]" : "border-gray-100"}`}
-              >
-                <Truck
-                  className={`w-6 h-6 ${fulfillmentMethod === "delivery" ? "text-[#F7EDE2]0" : "text-gray-300"}`}
-                />
-                <span
-                  className={`text-sm font-bold ${fulfillmentMethod === "delivery" ? "text-[#41362D]" : "text-gray-400"}`}
-                >
-                  Delivery
-                </span>
-              </button>
-              <button
-                onClick={() => setFulfillmentMethod("pickup")}
-                className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${fulfillmentMethod === "pickup" ? "border-[#A9825F] bg-[#F7EDE2]" : "border-gray-100"}`}
-              >
-                <Store
-                  className={`w-6 h-6 ${fulfillmentMethod === "pickup" ? "text-[#F7EDE2]0" : "text-gray-300"}`}
-                />
-                <span
-                  className={`text-sm font-bold ${fulfillmentMethod === "pickup" ? "text-[#41362D]" : "text-gray-400"}`}
-                >
-                  Pickup
-                </span>
-              </button>
+            <h3 className="mb-3 text-sm font-bold text-gray-800">Fulfillment</h3>
+            <div className="flex items-center gap-3 rounded-xl border-2 border-[#A9825F] bg-[#F7EDE2] p-3">
+              <Truck className="h-6 w-6 text-[#A9825F]" />
+              <div>
+                <p className="text-sm font-bold text-[#41362D]">Delivery</p>
+                <p className="text-xs text-[#6B594A]">Delivered to your selected address</p>
+              </div>
             </div>
           </div>
         )}
 
         {/* Delivery Address + Buyer Info */}
-        {!isResumingOrder && fulfillmentMethod === "delivery" && (
+        {!isResumingOrder && (
           <>
             <button
               onClick={() => setShowPicker(true)}
@@ -517,7 +463,7 @@ export default function Payment() {
                   className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedAddress ? "bg-[#F7EDE2]" : "bg-orange-50"}`}
                 >
                   <MapPin
-                    className={`w-5 h-5 ${selectedAddress ? "text-[#F7EDE2]0" : "text-orange-300"}`}
+                    className={`h-5 w-5 ${selectedAddress ? "text-[#A9825F]" : "text-orange-300"}`}
                   />
                 </div>
                 {selectedAddress ? (
@@ -613,53 +559,6 @@ export default function Payment() {
           </>
         )}
 
-        {/* Pickup Contact Info */}
-        {!isResumingOrder && fulfillmentMethod === "pickup" && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-gray-800 font-bold text-sm">
-                Contact Information
-              </h3>
-              <span className="text-[10px] text-[#5A493C] font-semibold bg-[#F7EDE2] px-2 py-0.5 rounded-full">
-                From your profile
-              </span>
-            </div>
-            <div>
-              <label className="text-gray-500 text-xs font-semibold block mb-1">
-                Name *
-              </label>
-              <input
-                value={pickupName}
-                onChange={(e) => setPickupName(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-[#A9825F]"
-                placeholder="Your full name"
-              />
-            </div>
-            <div>
-              <label className="text-gray-500 text-xs font-semibold block mb-1">
-                Email *
-              </label>
-              <input
-                type="email"
-                value={pickupEmail}
-                onChange={(e) => setPickupEmail(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-[#A9825F]"
-                placeholder="your@email.com"
-              />
-            </div>
-            <div>
-              <label className="text-gray-500 text-xs font-semibold block mb-1">
-                Phone
-              </label>
-              <input
-                value={pickupPhone}
-                onChange={(e) => setPickupPhone(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-[#A9825F]" 
-                placeholder="012-345 6789"
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Payment box stays at the end of the document and is reached by scrolling. */}
@@ -689,26 +588,22 @@ export default function Payment() {
                 RM {paymentSubtotal.toLocaleString()}
               </span>
             </div>
-            {fulfillmentMethod === "delivery" && (
-              <div className="flex justify-between gap-3 text-sm">
-                <span className="text-black/70">
-                  Delivery Fee ({farmerCount} farmer
-                  {farmerCount !== 1 ? "s" : ""} × RM{" "}
-                  {DUMMY_DELIVERY_FEE_PER_FARMER})
-                </span>
-                <span className="flex-none font-semibold text-black">
-                  RM {deliveryFee.toLocaleString()}
-                </span>
-              </div>
-            )}
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="text-black/70">
+                Delivery Fee ({farmerCount} farmer
+                {farmerCount !== 1 ? "s" : ""} × RM{" "}
+                {DUMMY_DELIVERY_FEE_PER_FARMER})
+              </span>
+              <span className="flex-none font-semibold text-black">
+                RM {deliveryFee.toLocaleString()}
+              </span>
+            </div>
           </div>
 
           <div className="my-3 flex items-center justify-between border-t border-[#E3C19F] pt-3">
             <div>
               <p className="text-xs font-semibold text-black/70">
-                {fulfillmentMethod === "delivery"
-                  ? "Delivery total"
-                  : "Pickup total"}
+                Delivery total
               </p>
               <p className="text-xl font-extrabold text-black">
                 RM {grandTotal.toLocaleString()}
@@ -751,11 +646,9 @@ export default function Payment() {
             )}
           {!canCheckout && (
             <p className="mt-2 text-center text-xs text-black/70">
-              {fulfillmentMethod === "delivery"
-                ? !selectedAddress
-                  ? "Select a delivery address to continue"
-                  : "Add name & email to your address"
-                : "Enter your name and email to continue"}
+              {!selectedAddress
+                ? "Select a delivery address to continue"
+                : "Complete your name and email to continue"}
             </p>
           )}
         </div>

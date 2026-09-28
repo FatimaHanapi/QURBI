@@ -1,10 +1,11 @@
 import React from "react";
-import { Home } from "lucide-react";
+import { Home, LogIn, UserPlus } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { useAuth } from "@/lib/AuthContext";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import apiClient from "@/api/apiClient";
 
 const loginGoogleButton =
   "w-full bg-white border border-[#E3C19F] text-black py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm shadow-black/10";
@@ -33,8 +34,17 @@ export default function Authentication() {
   const handleGoogle = async () => {
     try {
       const signedInUser = await loginWithGoogle();
+      if (!signedInUser?.privacyPolicyAcceptedAt || !signedInUser?.userAgreementAcceptedAt) {
+        navigate(`/user-agreement?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+        return;
+      }
       if (!signedInUser?.phone) {
         navigate(`/signup-details?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+        return;
+      }
+      const { data: savedAddresses } = await apiClient.get("/addresses");
+      if (!savedAddresses?.length) {
+        navigate(`/address-book?onboarding=1&returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
         return;
       }
       navigate(returnTo, { replace: true });
@@ -51,9 +61,21 @@ export default function Authentication() {
   return (
     <AuthLayout
       mode={mode}
-      onModeChange={changeMode}
+      icon={isRegister ? UserPlus : LogIn}
       title={isRegister ? "Create your account" : "Welcome back"}
       subtitle={isRegister ? "Sign up to get started" : "Sign in to your account"}
+      footer={
+        <>
+          {isRegister ? "Already have an account? " : "Don’t have an account? "}
+          <button
+            type="button"
+            onClick={() => changeMode(isRegister ? "login" : "register")}
+            className="font-bold text-[#41362D] hover:underline"
+          >
+            {isRegister ? "Sign in" : "Create one"}
+          </button>
+        </>
+      }
     >
       <div key={mode} className={isRegister ? "auth-mode-content-register" : "auth-mode-content-login"}>
         {authError?.type === "auth_failed" && (
