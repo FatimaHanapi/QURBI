@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { Loader2, ShieldCheck } from "lucide-react";
 import BrandLogo from "@/components/agri/BrandLogo";
 import GoogleIcon from "@/components/GoogleIcon";
@@ -64,12 +63,6 @@ export default function Login() {
               {loading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <GoogleIcon className="h-5 w-5" />}
               {loading ? "Signing in..." : "Continue with Google"}
             </button>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              Prefer email and password?{" "}
-              <Link to="/register" className="font-semibold text-primary hover:underline">
-                Create farmer account
-              </Link>
-            </p>
             <div className="mt-5 flex items-start gap-2.5 rounded-2xl bg-muted/65 p-3 text-xs leading-5 text-muted-foreground">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <span>Secure sign-in. Farmer accounts must be verified before livestock can be listed.</span>
