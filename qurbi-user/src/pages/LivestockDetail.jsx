@@ -214,6 +214,7 @@ export default function LivestockDetail() {
   const allImages = [livestock.coverImage, ...(livestock.images || [])].filter(
     Boolean,
   );
+  const videos = livestock.videos || [];
 
   const infoItems = [
     { label: "Species", value: livestock.species },
@@ -297,6 +298,31 @@ export default function LivestockDetail() {
               </button>
             ))}
           </div>
+        )}
+
+        {videos.length > 0 && (
+          <section className="mb-5" aria-labelledby="livestock-videos-title">
+            <h2
+              id="livestock-videos-title"
+              className="mb-3 text-lg font-extrabold text-white"
+            >
+              Videos
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {videos.map((url, index) => (
+                <video
+                  key={`${url}-${index}`}
+                  src={url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="aspect-video w-full rounded-2xl border border-[#F7EDE2]/30 bg-black shadow-lg shadow-black/20"
+                >
+                  Your browser does not support video playback.
+                </video>
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Title + price + add to cart */}

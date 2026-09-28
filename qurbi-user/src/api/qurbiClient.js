@@ -92,10 +92,12 @@ function livestockForUser(item) {
   if (!item) return item;
   const attributes = item.attributes || {};
   const images = (item.images || []).map(mediaUrl).filter(Boolean);
+  const videos = (item.videos || []).map(mediaUrl).filter(Boolean);
   return {
     ...item,
     ...farmDetails(item),
     images,
+    videos,
     name: item.title,
     species: item.species?.name || item.species?.slug || "Livestock",
     breed: item.breed?.name || "",
@@ -123,6 +125,7 @@ function bulkListingForUser(item) {
   const maleCount = Number(item.maleCount || 0);
   const femaleCount = Number(item.femaleCount || 0);
   const images = (item.images || []).map(mediaUrl).filter(Boolean);
+  const videos = (item.videos || []).map(mediaUrl).filter(Boolean);
   const breedBreakdown = Array.isArray(item.breedBreakdown)
     ? item.breedBreakdown.map((entry, index, entries) => ({
         ...entry,
@@ -142,6 +145,7 @@ function bulkListingForUser(item) {
     ...item,
     ...farmDetails(item),
     images,
+    videos,
     name: item.title,
     ownerId: item.farmerId,
     coverImage: images[0] || "",

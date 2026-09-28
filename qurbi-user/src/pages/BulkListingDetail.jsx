@@ -87,6 +87,7 @@ export default function BulkListingDetail() {
   const total = listing.totalAnimals ??
     Number(listing.maleCount || 0) + Number(listing.femaleCount || 0);
   const image = listing.coverImage || listing.images?.[0];
+  const videos = listing.videos || [];
   const inCart = cartItems.some((item) => item.key === `bulk:${listing.id}`);
   const breedBreakdown = getBreedGenderBreakdown(listing);
   const item = {
@@ -183,6 +184,31 @@ export default function BulkListingDetail() {
             Complete lot · Quantity fixed at 1
           </p>
         </header>
+
+        {videos.length > 0 && (
+          <section aria-labelledby="bulk-listing-videos-title">
+            <h2
+              id="bulk-listing-videos-title"
+              className="mb-3 text-lg font-extrabold text-white"
+            >
+              Videos
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {videos.map((url, index) => (
+                <video
+                  key={`${url}-${index}`}
+                  src={url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="aspect-video w-full rounded-2xl border border-[#F7EDE2]/30 bg-black shadow-lg shadow-black/20"
+                >
+                  Your browser does not support video playback.
+                </video>
+              ))}
+            </div>
+          </section>
+        )}
 
         <LightDetailCard title="Location">
           <div>
