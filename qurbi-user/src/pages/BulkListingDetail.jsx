@@ -165,7 +165,6 @@ export default function BulkListingDetail() {
           <img
             data-cart-product-image
             src={image}
-            alt={listing.name}
             className="h-full w-full object-cover"
           />
         ) : (

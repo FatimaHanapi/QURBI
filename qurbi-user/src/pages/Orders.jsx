@@ -8,6 +8,7 @@ import {
   ReceiptText,
   Check,
   Trash2,
+  Clock3,
 } from "lucide-react";
 import { qurbiApi } from "@/api/qurbiClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -80,6 +81,20 @@ const STATUS_LABELS = {
   out_of_stock: "Out of Stock",
 };
 
+function reservationLabel(order) {
+  if (!order.reservation_expires_at || order.reservation_status !== "active")
+    return "";
+  const expiresAt = new Date(order.reservation_expires_at);
+  if (Number.isNaN(expiresAt.getTime())) return "Reserved for 24 hours";
+  const formatted = new Intl.DateTimeFormat("en-MY", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(expiresAt);
+  return `${order.payment_status === "failed" ? "Payment failed · " : ""}Reserved until ${formatted}`;
+}
+
 function groupOrdersByDay(orders) {
   const sorted = [...orders].sort(
     (a, b) => orderTimestamp(b.created_date) - orderTimestamp(a.created_date),
@@ -111,6 +126,7 @@ function OrderCard({
   const totalItems =
     order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   const isPending = ["pending", "pending_payment", "to_pay"].includes(order.status);
+  const reservedUntil = isPending ? reservationLabel(order) : "";
   const isHistory = ["cancelled", "out_of_stock"].includes(order.status);
   const originTab =
     fromTab || sessionStorage.getItem("gh_orders_active_tab") || "";
@@ -184,6 +200,12 @@ function OrderCard({
           </Link>
         </div>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+          {reservedUntil && (
+            <span className="flex items-center gap-1 rounded-full border border-[#E3C19F] bg-[#F7EDE2] px-2 py-1 text-[10px] font-bold text-[#41362D]">
+              <Clock3 className="h-3 w-3" />
+              {reservedUntil}
+            </span>
+          )}
           {isPending && (
             <button
               onClick={() => onCancel(order)}
@@ -294,6 +316,12 @@ function OrderCard({
               : STATUS_LABELS[order.status] || order.status}
           </span>
         </div>
+        {reservedUntil && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#E3C19F] bg-[#F7EDE2] px-3 py-2 text-xs font-bold text-[#41362D]">
+            <Clock3 className="h-4 w-4 flex-none" />
+            <span>{reservedUntil}. You can retry payment from this order.</span>
+          </div>
+        )}
         <div
           className={`flex items-center justify-between gap-3 ${compact ? "pt-1" : "py-3"}`}
         >
@@ -349,13 +377,13 @@ function DeleteHistoryModal({ count, loading, onClose, onConfirm }) {
       onClick={() => !loading && onClose()}
     >
       <div
-        className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-xl"
+        className="w-full max-w-sm rounded-3xl bg-gradient-to-br from-[#41362D] to-[#6B594A] p-5 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-gray-900">
+        <h2 className="text-lg font-bold text-white">
           Delete selected orders?
         </h2>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-white">
           {count} order{count === 1 ? "" : "s"} will be removed from your order
           history.
         </p>
@@ -363,14 +391,14 @@ function DeleteHistoryModal({ count, loading, onClose, onConfirm }) {
           <button
             onClick={onClose}
             disabled={loading}
-            className="min-h-11 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 disabled:opacity-50"
+            className="min-h-11 rounded-xl border border-white text-sm font-bold text-white disabled:opacity-50"
           >
             Keep Orders
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="min-h-11 rounded-xl bg-red-500 text-sm font-bold text-white disabled:opacity-50"
+            className="min-h-11 rounded-xl bg-gradient-to-br from-[#EF4444] to-[#B91C1C] text-sm font-bold text-white disabled:opacity-50"
           >
             {loading ? "Deleting..." : "Delete"}
           </button>

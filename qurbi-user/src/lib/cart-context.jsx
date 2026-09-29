@@ -16,6 +16,7 @@ const readStoredCart = (scope) => {
           .map((item) => ({
             ...item,
             quantity: 1,
+            price_per_head: Number(item.price_per_head) || 0,
             total: Number(item.price_per_head) || 0,
           }))
       : [];
@@ -94,7 +95,8 @@ export function CartProvider({ children }) {
   const addToCart = (item) => {
     const key = keyFor(item);
     if (cartItems.some((cartItem) => cartItem.key === key)) return false;
-    setCartItems((prev) => [...prev, { ...item, key, quantity: 1, total: item.price_per_head }]);
+    const unitPrice = Number(item.price_per_head) || 0;
+    setCartItems((prev) => [...prev, { ...item, key, quantity: 1, price_per_head: unitPrice, total: unitPrice }]);
     setSelectedKeys((prev) => prev.includes(key) ? prev : [...prev, key]);
     return true;
   };
@@ -102,10 +104,11 @@ export function CartProvider({ children }) {
   // Buy Now: add item (if not already present) and select ONLY this item for checkout
   const buyNow = (item) => {
     const key = keyFor(item);
+    const unitPrice = Number(item.price_per_head) || 0;
     setCartItems((prev) => {
       const exists = prev.some((i) => i.key === key);
       if (exists) return prev;
-      return [...prev, { ...item, key, quantity: 1, total: item.price_per_head }];
+      return [...prev, { ...item, key, quantity: 1, price_per_head: unitPrice, total: unitPrice }];
     });
     setSelectedKeys([key]);
   };
@@ -120,7 +123,7 @@ export function CartProvider({ children }) {
       removeFromCart(key);
       return;
     }
-    setCartItems((prev) => prev.map((i) => i.key === key ? { ...i, quantity: 1, total: i.price_per_head } : i));
+    setCartItems((prev) => prev.map((i) => i.key === key ? { ...i, quantity: 1, total: Number(i.price_per_head) || 0 } : i));
   };
 
   const toggleSelect = (key) => {
@@ -141,9 +144,9 @@ export function CartProvider({ children }) {
   const clearCart = () => { setCartItems([]); setSelectedKeys([]); };
 
   const totalItems = cartItems.reduce((s, i) => s + i.quantity, 0);
-  const totalPrice = cartItems.reduce((s, i) => s + i.total, 0);
+  const totalPrice = cartItems.reduce((s, i) => s + (Number(i.total) || 0), 0);
   const selectedItems = cartItems.filter((i) => selectedKeys.includes(i.key));
-  const selectedSubtotal = selectedItems.reduce((s, i) => s + i.total, 0);
+  const selectedSubtotal = selectedItems.reduce((s, i) => s + (Number(i.total) || 0), 0);
 
   return (
     <CartContext.Provider value={{

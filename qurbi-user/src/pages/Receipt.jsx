@@ -123,6 +123,53 @@ export default function Receipt() {
   }
 
   const totalItems = order.items?.reduce((s, i) => s + i.quantity, 0) || 0;
+  const paymentComplete =
+    order.payment_status === "paid" ||
+    ["paid", "preparing", "in_transit", "delivered", "received", "completed"].includes(
+      order.status,
+    );
+
+  if (!paymentComplete) {
+    const reservationDate = new Date(order.reservation_expires_at || "");
+    const reservationExpiry = !Number.isNaN(reservationDate.getTime())
+      ? new Intl.DateTimeFormat("en-MY", {
+          day: "numeric",
+          month: "short",
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(reservationDate)
+      : "up to 24 hours";
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#41362D] to-[#6B594A] p-5">
+        <div className="w-full max-w-sm rounded-3xl border border-[#E3C19F]/60 bg-white/10 p-6 text-center shadow-2xl backdrop-blur-sm">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#E3C19F] bg-white/10">
+            <Clock className="h-9 w-9 text-[#E3C19F]" />
+          </div>
+          <h1 className="mt-4 text-2xl font-bold text-white">
+            Payment not completed
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-[#F7EDE2]">
+            Your order is saved and the livestock is reserved until {reservationExpiry}.
+            You can try payment again from this order.
+          </p>
+          <div className="mt-6 grid gap-3">
+            <Link
+              to={`/payment?order_id=${encodeURIComponent(order.id)}`}
+              className="rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-4 py-3 text-sm font-bold text-[#41362D]"
+            >
+              Continue Payment
+            </Link>
+            <Link
+              to="/orders"
+              className="rounded-xl border border-[#E3C19F] px-4 py-3 text-sm font-bold text-white"
+            >
+              Back to My Orders
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-950 to-green-900 pb-10">

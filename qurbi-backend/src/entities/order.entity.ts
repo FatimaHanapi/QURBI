@@ -4,6 +4,7 @@ import { OrderStatus, PaymentStatus, DeliveryMethod, RefundStatus } from './enum
 import { User } from './user.entity';
 import { OrderItem } from './order-item.entity';
 import { OrderTrackingEvent } from './order-tracking-event.entity';
+import { Reservation } from './reservation.entity';
 
 // Frozen at checkout on purpose: it is NOT a FK to addresses. If the buyer
 // later edits or deletes that address, the order must still show exactly
@@ -143,4 +144,7 @@ export class Order extends BaseEntity {
 
   @OneToMany(() => OrderTrackingEvent, (event) => event.order)
   trackingEvents: OrderTrackingEvent[];
+
+  @OneToMany(() => Reservation, (reservation) => reservation.order)
+  reservations: Reservation[];
 }
