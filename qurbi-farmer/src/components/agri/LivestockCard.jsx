@@ -58,8 +58,8 @@ export default function LivestockCard({ livestock, onEdit, onDelete, onView, foo
           {!paymentReserved && livestock.status === "Available" && <p className={cn("mb-3 text-xs font-semibold", listingExpired ? "text-destructive" : "text-muted-foreground")}>{listingExpired ? `Expired ${listingExpiryLabel(livestock)} — update & renew to sell again` : expiry.daysRemaining !== null ? `${expiry.daysRemaining} day${expiry.daysRemaining === 1 ? "" : "s"} left before renewal` : "14-day renewal window will begin when published"}</p>}
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <h2 className="truncate text-xl font-extrabold leading-tight text-primary">{livestock.species || "Livestock"}</h2>
-              <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">{livestock.breed || "Unspecified"}</p>
+              <p className="truncate text-sm font-medium text-muted-foreground">{livestock.species || "Livestock"}</p>
+              <h2 className="mt-1 truncate text-xl font-extrabold leading-tight text-primary">{livestock.breed || "Unspecified breed"}</h2>
             </div>
             <p className="shrink-0 text-lg font-extrabold tracking-tight text-foreground">{formatMYR(livestock.price)}</p>
           </div>
