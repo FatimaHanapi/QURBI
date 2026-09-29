@@ -30,6 +30,10 @@ export class Order extends BaseEntity {
   @Column({ type: 'varchar', length: 30, unique: true })
   orderNumber: string;
 
+  @Index({ unique: true })
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  checkoutKey: string | null;
+
   @Column({ type: 'varchar', length: 36 })
   buyerId: string;
 

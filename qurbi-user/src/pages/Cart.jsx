@@ -13,6 +13,27 @@ import { AisyahCardSkeleton } from "@/components/AisyahLoading";
 const isUnobtainable = (result) =>
   result?.available === false && result?.state !== "reserved_by_you";
 
+function CartItemImage({ item }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (!item.image || imageFailed) {
+    return (
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-1 text-center text-[10px] font-bold text-[#41362D]">
+        No image
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={item.image}
+      alt={item.listing_name || item.breed || "Cart product"}
+      className="h-12 w-12 flex-shrink-0 rounded-xl object-cover"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
 function DeleteCartModal({ request, onCancel, onConfirm }) {
   if (!request) return null;
   return createPortal(
@@ -291,13 +312,7 @@ export default function Cart() {
                       <Check className="w-4 h-4 text-white" />
                     )}
                   </button>
-                  {item.image ? (
-                    <img src={item.image} alt="" className="h-12 w-12 flex-shrink-0 rounded-xl object-cover" />
-                  ) : (
-                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F7EDE2] px-1 text-center text-[10px] font-bold text-[#41362D]">
-                      {item.item_type === "bulk" ? "Bulk lot" : item.animal || "Livestock"}
-                    </span>
-                  )}
+                  <CartItemImage item={item} />
                   <div className="min-w-0">
                     <p className="break-words [overflow-wrap:anywhere] font-bold text-gray-900">
                       {item.item_type === "bulk"

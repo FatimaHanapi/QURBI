@@ -59,11 +59,17 @@ export class LivestockController {
     return this.livestockService.findAllForViewer(query, user);
   }
 
+  @Get(':id/availability')
+  availability(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.livestockService.availability(id, user);
+  }
+
   @Public()
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser | undefined) {
     return this.livestockService.findOneForViewer(id, user);
   }
+
 
   @Patch(':id')
   update(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser, @Body() body: UpdateLivestockDto) {

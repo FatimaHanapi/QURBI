@@ -198,7 +198,7 @@ function OrderCard({
               to={`/payment?order_id=${encodeURIComponent(order.id)}`}
               className="whitespace-nowrap rounded-lg bg-[#F7EDE2]0 px-2 py-1.5 text-[11px] font-bold text-white"
             >
-              Pay Now
+              Complete Payment
             </Link>
           ) : (
             <Link to={detailsPath} className="text-[#5A493C]">
@@ -331,7 +331,7 @@ function OrderCard({
           }
           className="flex items-center gap-1 text-[#5A493C] text-xs font-semibold"
         >
-          {isPending ? "Pay Now" : "View order"}{" "}
+          {isPending ? "Complete Payment" : "View order"}{" "}
           <ChevronRight className="w-4 h-4" />
         </Link>
       </div>

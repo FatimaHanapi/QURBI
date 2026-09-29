@@ -15,6 +15,7 @@ import {
 import { BaseCrudService } from '../common/base-crud.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { Paginated, PageQuery, resolvePage } from '../common/pagination';
+import { ReservationsService } from '../reservations/reservations.service';
 
 export interface DerivedMarketplaceVisibility {
   marketplaceVisible: boolean;
@@ -38,6 +39,7 @@ export class LivestockService extends BaseCrudService<Livestock> {
   constructor(
     @InjectRepository(Livestock) repository: Repository<Livestock>,
     @InjectDataSource() private readonly dataSource: DataSource,
+    private readonly reservationsService: ReservationsService,
   ) {
     super(repository);
   }
@@ -51,6 +53,7 @@ export class LivestockService extends BaseCrudService<Livestock> {
   // at worst they narrow it down to nothing (e.g. adminBlocked=true as a
   // buyer: blocked listings are never in the buyer-visible set anyway).
   async findAllForViewer(query: LivestockQuery, viewer?: AuthenticatedUser): Promise<Paginated<LivestockWithVisibility>> {
+    await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager));
     const { page, limit, skip, take } = resolvePage(query);
     const isOwnInventory = viewer?.role === UserRole.FARMER && query.farmerId === viewer.id;
     const isAdmin = viewer?.role === UserRole.ADMIN;
@@ -147,6 +150,7 @@ export class LivestockService extends BaseCrudService<Livestock> {
   }
 
   async findOneForViewer(id: string, viewer?: AuthenticatedUser): Promise<LivestockWithVisibility> {
+    await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager, id));
     const listing = await this.findOneWithVisibility(id);
     const canSeeHidden =
       viewer?.role === UserRole.ADMIN ||
@@ -159,6 +163,10 @@ export class LivestockService extends BaseCrudService<Livestock> {
       listing.viewCount += 1;
     }
     return listing;
+  }
+
+  availability(id: string, viewer: AuthenticatedUser) {
+    return this.reservationsService.availability(id, viewer.id);
   }
 
   // Computes the same visible/reason pair the browse query filters on, purely

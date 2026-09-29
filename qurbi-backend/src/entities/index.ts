@@ -13,6 +13,8 @@ export * from './bulk-listing.entity';
 export * from './order.entity';
 export * from './order-item.entity';
 export * from './order-tracking-event.entity';
+export * from './payment.entity';
+export * from './reservation.entity';
 export * from './notification.entity';
 export * from './species-request.entity';
 export * from './breed-request.entity';
@@ -33,6 +35,8 @@ import { BulkListing } from './bulk-listing.entity';
 import { Order } from './order.entity';
 import { OrderItem } from './order-item.entity';
 import { OrderTrackingEvent } from './order-tracking-event.entity';
+import { Payment } from './payment.entity';
+import { Reservation } from './reservation.entity';
 import { Notification } from './notification.entity';
 import { SpeciesRequest } from './species-request.entity';
 import { BreedRequest } from './breed-request.entity';
@@ -55,6 +59,8 @@ export const ALL_ENTITIES = [
   Order,
   OrderItem,
   OrderTrackingEvent,
+  Payment,
+  Reservation,
   Notification,
   SpeciesRequest,
   BreedRequest,

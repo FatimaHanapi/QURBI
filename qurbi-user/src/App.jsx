@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/AuthContext";
 import { CartProvider } from "@/lib/cart-context";
 import { UserProfileProvider } from "@/lib/user-profile-context";
 import AppLayout from "@/components/AppLayout";
+import StandaloneLayout from "@/components/StandaloneLayout";
 import Authentication from "@/pages/Authentication";
 import SignupDetails from "@/pages/SignupDetails";
 import UserAgreement from "@/pages/UserAgreement";
@@ -48,11 +49,6 @@ function App() {
                 <NotificationProvider>
                   <HeaderTransitionProvider>
                   <Routes>
-                    <Route path="/auth" element={<Authentication />} />
-                    <Route path="/login" element={<LegacyAuthRedirect mode="login" />} />
-                    <Route path="/register" element={<LegacyAuthRedirect mode="register" />} />
-                    <Route path="/signup-details" element={<SignupDetails />} />
-                    <Route path="/user-agreement" element={<UserAgreement />} />
                     <Route element={<AppLayout />}>
                       <Route path="/" element={<Home />} />
                       <Route path="/browse" element={<Browse />} />
@@ -79,11 +75,18 @@ function App() {
                         element={<Notifications />}
                       />
                     </Route>
-                    <Route path="/address-book" element={<AddressBook />} />
-                    <Route path="/admin/breeds" element={<AdminBreeds />} />
-                    <Route path="/admin/test" element={<AdminTest />} />
-                    <Route path="/receipt" element={<Receipt />} />
-                    <Route path="*" element={<PageNotFound />} />
+                    <Route element={<StandaloneLayout />}>
+                      <Route path="/auth" element={<Authentication />} />
+                      <Route path="/login" element={<LegacyAuthRedirect mode="login" />} />
+                      <Route path="/register" element={<LegacyAuthRedirect mode="register" />} />
+                      <Route path="/signup-details" element={<SignupDetails />} />
+                      <Route path="/user-agreement" element={<UserAgreement />} />
+                      <Route path="/address-book" element={<AddressBook />} />
+                      <Route path="/admin/breeds" element={<AdminBreeds />} />
+                      <Route path="/admin/test" element={<AdminTest />} />
+                      <Route path="/receipt" element={<Receipt />} />
+                      <Route path="*" element={<PageNotFound />} />
+                    </Route>
                   </Routes>
                   </HeaderTransitionProvider>
                 </NotificationProvider>

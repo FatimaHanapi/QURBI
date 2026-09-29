@@ -50,6 +50,21 @@ export class User extends BaseEntity {
   @Column({ type: 'datetime', precision: 6, nullable: true })
   lastLoginAt: Date | null;
 
+  // Legal consent is stored as auditable timestamps plus the exact policy
+  // version accepted. Keeping this on the shared user row lets /auth/me
+  // drive onboarding consistently on every device.
+  @Column({ type: 'datetime', precision: 6, nullable: true })
+  privacyPolicyAcceptedAt: Date | null;
+
+  @Column({ type: 'datetime', precision: 6, nullable: true })
+  userAgreementAcceptedAt: Date | null;
+
+  @Column({ type: 'datetime', precision: 6, nullable: true })
+  adultConfirmedAt: Date | null;
+
+  @Column({ type: 'varchar', length: 40, nullable: true })
+  agreementsVersion: string | null;
+
   @OneToOne(() => FarmerProfile, (farmerProfile) => farmerProfile.user)
   farmerProfile: FarmerProfile;
 

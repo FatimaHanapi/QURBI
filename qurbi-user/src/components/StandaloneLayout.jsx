@@ -1,12 +1,10 @@
 import React from "react";
-import BottomNav from "@/components/BottomNav";
 import PageTransitionOutlet from "@/components/PageTransitionOutlet";
 
-export default function AppLayout() {
+export default function StandaloneLayout() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2]">
       <PageTransitionOutlet />
-      <BottomNav />
     </div>
   );
 }

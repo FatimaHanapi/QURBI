@@ -19,14 +19,17 @@ import {
   OrderStatus,
   OrderTrackingEvent,
   PaymentStatus,
+  Payment,
   RefundStatus,
   UserRole,
 } from '../entities';
+import { createHash } from 'crypto';
 import { CartsService } from '../carts/carts.service';
 import { LivestockService } from '../livestock/livestock.service';
 import { BulkListingsService } from '../bulk-listings/bulk-listings.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { Paginated, PageQuery, resolvePage } from '../common/pagination';
+import { ReservationsService } from '../reservations/reservations.service';
 
 export interface CheckoutInput {
   deliveryMethod: DeliveryMethod;
@@ -74,9 +77,11 @@ export class OrdersService {
     private readonly cartsService: CartsService,
     private readonly livestockService: LivestockService,
     private readonly bulkListingsService: BulkListingsService,
+    private readonly reservationsService: ReservationsService,
   ) {}
 
-  findAllForBuyer(buyerId: string): Promise<Order[]> {
+  async findAllForBuyer(buyerId: string): Promise<Order[]> {
+    await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager));
     return this.repository.find({
       where: { buyerId, hiddenFromBuyerHistory: false },
       relations: { items: true },
@@ -118,6 +123,7 @@ export class OrdersService {
   }
 
   async findOne(id: string, actor: Actor): Promise<Order> {
+    await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager));
     const order = await this.repository.findOne({
       where: { id },
       relations: { items: true, trackingEvents: true },
@@ -168,10 +174,37 @@ export class OrdersService {
     items: CartItem[],
     input: CheckoutInput,
   ): Promise<Order> {
+    const checkoutKey = createHash('sha256')
+      .update(
+        `${buyerId}:${farmerId}:${items
+          .map((item) => `${item.itemType}:${item.livestockId ?? item.bulkListingId}`)
+          .sort()
+          .join('|')}`,
+      )
+      .digest('hex');
     let lastError: unknown;
     for (let attempt = 0; attempt < MAX_ORDER_NUMBER_ATTEMPTS; attempt++) {
       try {
         return await this.dataSource.transaction(async (manager) => {
+          await this.reservationsService.expireDue(manager);
+          const existingOrder = await manager.findOne(Order, {
+            where: { checkoutKey, buyerId, status: OrderStatus.PENDING_PAYMENT },
+            relations: { items: true },
+          });
+          if (existingOrder) {
+            const existingPayment = await manager.findOne(Payment, {
+              where: { orderId: existingOrder.id },
+            });
+            if (existingPayment?.status === PaymentStatus.FAILED) {
+              existingPayment.status = PaymentStatus.UNPAID;
+              await manager.save(existingPayment);
+              existingOrder.paymentStatus = PaymentStatus.UNPAID;
+              await manager.save(existingOrder);
+            }
+            await manager.delete(CartItem, items.map((item) => item.id));
+            return existingOrder;
+          }
+
           let subtotal = 0;
           const itemsToInsert: DeepPartial<OrderItem>[] = [];
 
@@ -201,9 +234,7 @@ export class OrdersService {
               metadata: item.metadata,
             });
 
-            if (isLivestock) {
-              await this.livestockService.markSold(item.livestockId as string, manager);
-            } else {
+            if (!isLivestock) {
               // A lot is bought whole (quantity is enforced to 1 by
               // CartItemsService), so this is a flip to SOLD, not a
               // decrement — see BulkListingsService.markSold.
@@ -214,6 +245,7 @@ export class OrdersService {
           const order = await manager.save(
             manager.create(Order, {
               orderNumber: await this.generateOrderNumber(manager),
+              checkoutKey,
               buyerId,
               farmerId,
               status: OrderStatus.PENDING_PAYMENT,
@@ -229,6 +261,25 @@ export class OrdersService {
               buyerNotes: input.buyerNotes ?? null,
             }),
           );
+
+          const payment = await manager.save(
+            manager.create(Payment, {
+              orderId: order.id,
+              status: PaymentStatus.UNPAID,
+            }),
+          );
+
+          for (const item of items) {
+            if (item.itemType === OrderItemType.LIVESTOCK && item.livestockId) {
+              await this.reservationsService.reserve(
+                manager,
+                item.livestockId,
+                buyerId,
+                order.id,
+                payment.id,
+              );
+            }
+          }
 
           for (const data of itemsToInsert) {
             await manager.save(manager.create(OrderItem, { ...data, orderId: order.id }));
@@ -247,7 +298,10 @@ export class OrdersService {
             items.map((item) => item.id),
           );
 
-          return order;
+          return manager.findOneOrFail(Order, {
+            where: { id: order.id },
+            relations: { items: true },
+          });
         });
       } catch (err) {
         if (isDuplicateOrderNumberError(err)) {
@@ -313,7 +367,8 @@ export class OrdersService {
     );
 
     if (toStatus === OrderStatus.CANCELLED) {
-      await this.releaseOrderItems(manager, order.id);
+      await this.reservationsService.cancelOrder(manager, order.id);
+      await this.releaseOrderItems(manager, order.id, false);
     }
 
     return order;
@@ -325,10 +380,14 @@ export class OrdersService {
   // release is itself row-locked and idempotent (see
   // LivestockService.releaseToAvailable / BulkListingsService.releaseToOpen)
   // — safe to call even if some items are already available.
-  private async releaseOrderItems(manager: EntityManager, orderId: string): Promise<void> {
+  private async releaseOrderItems(
+    manager: EntityManager,
+    orderId: string,
+    releaseLivestock = true,
+  ): Promise<void> {
     const items = await manager.find(OrderItem, { where: { orderId } });
     for (const item of items) {
-      if (item.itemType === OrderItemType.LIVESTOCK && item.livestockId) {
+      if (releaseLivestock && item.itemType === OrderItemType.LIVESTOCK && item.livestockId) {
         await this.livestockService.releaseToAvailable(item.livestockId, manager);
       } else if (item.itemType === OrderItemType.BULK_LISTING && item.bulkListingId) {
         await this.bulkListingsService.releaseToOpen(item.bulkListingId, manager);
@@ -535,6 +594,62 @@ export class OrdersService {
       const order = await manager.findOne(Order, { where: { id } });
       if (!order) throw new NotFoundException(`Order ${id} not found`);
       return this.applyStatusChange(manager, order, status, opts);
+    });
+  }
+
+  async completePaymentFromWebhook(id: string, providerReference?: string): Promise<Order> {
+    return this.dataSource.transaction(async (manager) => {
+      const order = await manager
+        .createQueryBuilder(Order, 'order')
+        .setLock('pessimistic_write')
+        .where('order.id = :id', { id })
+        .getOne();
+      if (!order) throw new NotFoundException(`Order ${id} not found`);
+      if (order.status === OrderStatus.PAID && order.paymentStatus === PaymentStatus.PAID) {
+        return order;
+      }
+      if (order.status !== OrderStatus.PENDING_PAYMENT) {
+        throw new ConflictException(`Order ${id} is not awaiting payment`);
+      }
+
+      await this.reservationsService.completeOrder(manager, order.id, order.buyerId);
+      const payment = await manager.findOne(Payment, { where: { orderId: order.id } });
+      if (!payment) throw new ConflictException(`Order ${id} has no payment record`);
+      const paidAt = new Date();
+      payment.status = PaymentStatus.PAID;
+      payment.paidAt = paidAt;
+      if (providerReference) payment.providerReference = providerReference;
+      await manager.save(payment);
+
+      order.status = OrderStatus.PAID;
+      order.paymentStatus = PaymentStatus.PAID;
+      order.paymentReference = providerReference ?? payment.id;
+      order.paidAt = paidAt;
+      await manager.save(order);
+      await manager.save(manager.create(OrderTrackingEvent, {
+        orderId: order.id,
+        status: OrderStatus.PAID,
+        note: 'Payment completed',
+        createdByUserId: null,
+      }));
+      return order;
+    });
+  }
+
+  async markPaymentFailed(id: string, actor: Actor): Promise<Order> {
+    return this.dataSource.transaction(async (manager) => {
+      await this.reservationsService.expireDue(manager);
+      const order = await this.loadOwnedOrder(manager, id, actor, ['buyer']);
+      if (order.status !== OrderStatus.PENDING_PAYMENT) {
+        throw new ConflictException(`Order ${id} is not awaiting payment`);
+      }
+      const payment = await manager.findOne(Payment, { where: { orderId: order.id } });
+      if (!payment) throw new ConflictException(`Order ${id} has no payment record`);
+      payment.status = PaymentStatus.FAILED;
+      await manager.save(payment);
+      order.paymentStatus = PaymentStatus.FAILED;
+      await manager.save(order);
+      return order;
     });
   }
 }

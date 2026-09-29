@@ -212,7 +212,7 @@ const functionHandlers = {
   async checkLivestockAvailability({ livestockIds = [] } = {}) {
     const entries = await Promise.all(livestockIds.map(async (id) => {
       try {
-        return [id, availabilityFor(await request({ method: "get", url: `/livestock/${id}` }), "available")];
+        return [id, await request({ method: "get", url: `/livestock/${id}/availability` })];
       } catch {
         return [id, availabilityFor(null, "available")];
       }
@@ -264,7 +264,7 @@ const functionHandlers = {
     return wrap({ orders: orders.map(orderForUser) });
   },
   async cancelMyOrder({ orderId, reason = "Cancelled by buyer" }) {
-    const order = await request({ method: "patch", url: `/orders/${orderId}/cancel`, data: { reason, userId: currentUserId() } });
+    const order = await request({ method: "patch", url: `/orders/${orderId}/cancel`, data: { reason } });
     return wrap({ order: orderForUser(order) });
   },
   async hideMyOrderHistory({ orderIds = [] }) {
@@ -272,7 +272,7 @@ const functionHandlers = {
     return wrap({ success: true });
   },
   async confirmMyOrderReceived({ orderId }) {
-    const order = await request({ method: "patch", url: `/orders/${orderId}/received`, data: { proofImages: [], userId: currentUserId() } });
+    const order = await request({ method: "patch", url: `/orders/${orderId}/received`, data: { proofImages: [] } });
     return wrap({ order: orderForUser(order) });
   },
   async requestMyOrderRefund({ orderId, reason }) {
@@ -283,13 +283,11 @@ const functionHandlers = {
     return wrap({ order: orderForUser(await request({ method: "get", url: `/orders/${orderId}` })) });
   },
   async createCheckout({ items = [], fulfillmentMethod = "delivery", deliveryAddress = {} }) {
-    const userId = currentUserId();
     await Promise.all(items.map((item) => request({
       method: "post",
       url: "/cart-items",
       data: {
-        userId,
-        itemType: item.item_type === "bulk" ? "bulk_share" : "livestock",
+        itemType: item.item_type === "bulk" ? "bulk_listing" : "livestock",
         livestockId: item.item_type === "bulk" ? undefined : item.livestock_id || item.id,
         bulkListingId: item.item_type === "bulk" ? item.bulk_listing_id || item.id : undefined,
         quantity: item.quantity || 1,
@@ -299,7 +297,6 @@ const functionHandlers = {
       method: "post",
       url: "/orders/checkout",
       data: {
-        buyerId: userId,
         deliveryMethod: fulfillmentMethod === "pickup" ? "self_pickup" : "delivery",
         deliveryAddress,
       },
