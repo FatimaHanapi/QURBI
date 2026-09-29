@@ -908,19 +908,7 @@ html {
 /* QURBI migration layer: legacy utility classes remain in older, functional
    components, while these token mappings keep their visual treatment within
    the shared taupe palette. Semantic status text is conveyed by labels and icons. */
-[class*="bg-green"],
-[class*="bg-blue"],
-[class*="bg-purple"],
-[class*="bg-red"],
-[class*="bg-orange"],
-[class*="bg-yellow"],
-[class*="bg-gray"],
-[class*="bg-slate"],
-[class*="bg-zinc"],
-[class*="bg-neutral"],
-[class*="bg-stone"] {
-  background-color: #e3c19f !important;
-}
+
 [class*="from-green"],
 [class*="to-green"] {
   background-image: linear-gradient(
@@ -930,19 +918,7 @@ html {
     #6b594a 100%
   ) !important;
 }
-[class*="text-green"],
-[class*="text-blue"],
-[class*="text-purple"],
-[class*="text-red"],
-[class*="text-orange"],
-[class*="text-yellow"],
-[class*="text-gray"],
-[class*="text-slate"],
-[class*="text-zinc"],
-[class*="text-neutral"],
-[class*="text-stone"] {
-  color: #000000 !important;
-}
+
 [class*="text-[#F7EDE2]"] {
   color: #ffffff !important;
 }
