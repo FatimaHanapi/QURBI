@@ -218,7 +218,7 @@ function OrderCard({
           {isPending ? (
             <Link
               to={`/payment?order_id=${encodeURIComponent(order.id)}`}
-              className="whitespace-nowrap rounded-lg bg-[#F7EDE2]0 px-2 py-1.5 text-[11px] font-bold text-white"
+              className="flex-inline justify-center item-center rounded-lg border border-[#41362D] bg-gradient-to-br from-green-700 via-green-500 to-green-300 px-2 py-1.5 text-[11px] font-bold text-white"
             >
               Complete Payment
             </Link>
