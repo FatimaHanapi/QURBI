@@ -1,6 +1,6 @@
 // Compatibility facade for screens that still use the former entity-style
 // calls. Every operation is backed by QURBI NestJS/MySQL; no Base44 request.
-import apiClient, { uploadApi } from "@/api/apiClient";
+import apiClient, { resolveApiAssetUrl, uploadApi } from "@/api/apiClient";
 
 const data = async (request) => {
   try {
@@ -64,12 +64,31 @@ function normalizeNotification(item) {
   return { ...item, message: item.body, orderId: item.relatedType === "order" ? item.relatedId : null, livestockId: item.relatedType === "livestock" ? item.relatedId : null, created_date: item.createdAt, priority: item.type === "refund" ? "Important" : "Normal", type: titleCase(item.type) };
 }
 
+function normalizeOrderItem(orderItem) {
+  const metadata = orderItem.metadata || {};
+  const titleParts = String(orderItem.titleSnapshot || "")
+    .split(" - ")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return {
+    ...orderItem,
+    livestock_id: orderItem.livestockId,
+    bulk_listing_id: orderItem.bulkListingId,
+    image_url: resolveApiAssetUrl(orderItem.imageSnapshot),
+    species: metadata.species || titleParts[0] || "Livestock",
+    breed: metadata.breed || titleParts.slice(1).join(" - ") || "Unspecified breed",
+    price: Number(orderItem.unitPrice),
+    total: Number(orderItem.lineTotal),
+  };
+}
+
 function normalizeOrder(item) {
   if (!item) return item;
   const statusMap = { pending_payment: "pending", paid: "paid", preparing: "processing", in_transit: "shipped", delivered: "delivered", received: "completed", cancelled: "cancelled", refunded: "refunded" };
   const tracking = {};
-  (item.trackingEvents || []).forEach((event) => { const stage = event.note?.match(/^(before|during|after)/i)?.[1]?.toLowerCase(); if (stage && event.images?.[0]) tracking[stage] = { image_url: event.images[0], uploaded_at: event.createdAt }; });
-  return { ...item, order_number: item.orderNumber, status: item.refundStatus === "requested" ? "refund_requested" : statusMap[item.status] || item.status, payment_status: item.paymentStatus, fulfillment_method: item.deliveryMethod === "self_pickup" ? "pickup" : "delivery", farmer_total: Number(item.subtotal), total_amount: Number(item.total), buyer_name: item.buyer?.fullName || "Buyer", buyer_phone: item.deliveryAddress?.recipientPhone, delivery_address: item.deliveryAddress, created_date: item.createdAt, tracking_photos: tracking, tracking_enabled: true, multi_farmer_order: false, items: (item.items || []).map((orderItem) => ({ ...orderItem, livestock_id: orderItem.livestockId, bulk_listing_id: orderItem.bulkListingId, image_url: orderItem.imageSnapshot, species: orderItem.metadata?.species || orderItem.titleSnapshot, breed: orderItem.metadata?.breed || "", price: Number(orderItem.unitPrice), total: Number(orderItem.lineTotal) })) };
+  (item.trackingEvents || []).forEach((event) => { const stage = event.note?.match(/^(before|during|after)/i)?.[1]?.toLowerCase(); if (stage && event.images?.[0]) tracking[stage] = { image_url: resolveApiAssetUrl(event.images[0]), uploaded_at: event.createdAt }; });
+  return { ...item, order_number: item.orderNumber, status: item.refundStatus === "requested" ? "refund_requested" : statusMap[item.status] || item.status, payment_status: item.paymentStatus, fulfillment_method: item.deliveryMethod === "self_pickup" ? "pickup" : "delivery", farmer_total: Number(item.subtotal), total_amount: Number(item.total), buyer_name: item.buyer?.fullName || "Buyer", buyer_phone: item.deliveryAddress?.recipientPhone, delivery_address: item.deliveryAddress, created_date: item.createdAt, tracking_photos: tracking, tracking_enabled: true, multi_farmer_order: false, items: (item.items || []).map(normalizeOrderItem) };
 }
 
 async function allSpecies() { return (await data(apiClient.get("/species"))).map(normalizeSpecies); }

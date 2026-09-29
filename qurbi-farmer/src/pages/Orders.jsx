@@ -65,6 +65,26 @@ function LoadingCards() {
   );
 }
 
+function OrderItemImage({ item }) {
+  const [failed, setFailed] = useState(false);
+  const imageUrl = item?.image_url;
+
+  return (
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
+      {imageUrl && !failed ? (
+        <img
+          src={imageUrl}
+          alt={`${item.species || "Livestock"} ${item.breed || ""}`.trim()}
+          className="h-full w-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <ImageOff className="h-5 w-5 text-muted-foreground" />
+      )}
+    </div>
+  );
+}
+
 function PackageCard({ order, onOpen }) {
   const [label, tone] = statusMeta(order.status);
   const first = order.items?.[0];
@@ -77,20 +97,19 @@ function PackageCard({ order, onOpen }) {
       : "View order";
 
   return (
-    <article className="soft-card group p-4 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(65,54,45,0.1)] sm:p-5">
+    <article className="soft-card group mx-auto w-full max-w-lg min-w-0 p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(65,54,45,0.1)] sm:p-5">
       <div className="flex items-center justify-between gap-3">
         <p className="min-w-0 truncate text-xs font-extrabold text-primary">#{orderNumber(order)}</p>
         <StatusBadge tone={tone} dot className="shrink-0">{label}</StatusBadge>
       </div>
 
-      <div className="mt-4 flex items-center gap-3.5">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted">
-          {first?.image_url ? <img src={first.image_url} alt={`${first.species} ${first.breed}`} className="h-full w-full object-cover" /> : <ImageOff className="h-5 w-5 text-muted-foreground" />}
-        </div>
+      <div className="mt-3 flex min-w-0 items-center gap-3">
+        <OrderItemImage item={first} />
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0"><h2 className="truncate text-lg font-extrabold leading-tight text-primary">{first?.species || "Livestock"}</h2><p className="mt-0.5 truncate text-sm font-semibold text-muted-foreground">{first?.breed || "Unspecified breed"}{order.items?.length > 1 ? ` +${order.items.length - 1} more` : ""}</p></div>
-            <p className="shrink-0 text-sm font-extrabold text-foreground">{formatMYR(order.farmer_total)}</p>
+          <p className="truncate text-xs font-medium text-muted-foreground">{first?.species || "Livestock"}</p>
+          <div className="mt-0.5 flex min-w-0 items-start justify-between gap-2">
+            <h2 className="min-w-0 truncate text-base font-extrabold leading-tight text-primary">{first?.breed || "Unspecified breed"}{order.items?.length > 1 ? ` +${order.items.length - 1} more` : ""}</h2>
+            <p className="shrink-0 text-xs font-extrabold text-foreground sm:text-sm">{formatMYR(order.farmer_total)}</p>
           </div>
           <p className="mt-1.5 truncate text-xs text-muted-foreground">Buyer: <span className="font-semibold text-foreground">{order.buyer_name || "Buyer"}</span></p>
         </div>
@@ -104,7 +123,7 @@ function PackageCard({ order, onOpen }) {
 
       <EvidenceProgress count={evidenceCount} />
 
-      <Button onClick={() => onOpen(order.id)} className="mt-4 h-11 w-full rounded-2xl text-sm font-bold">
+      <Button onClick={() => onOpen(order.id)} className="mt-3 h-11 w-full rounded-2xl text-sm font-bold">
         {canProcess ? <Truck className="mr-2 h-4 w-4" /> : null}{actionLabel}<ChevronRight className="ml-auto h-4 w-4" />
       </Button>
     </article>
@@ -115,7 +134,7 @@ function EvidenceProgress({ count }) {
   const stages = ["Before", "During", "After"];
 
   return (
-    <div className="mt-5">
+    <div className="mt-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] font-bold text-muted-foreground">Delivery evidence</p>
         <p className="text-[10px] font-semibold text-muted-foreground">{count}/3</p>
@@ -194,7 +213,7 @@ export default function Orders() {
       )}
 
       {loading ? <LoadingCards /> : !error && filtered.length ? (
-        <div className="mt-4 grid gap-4 xl:grid-cols-2">{filtered.map((order) => <PackageCard key={order.id} order={order} onOpen={(id) => navigate(`/orders/${id}`)} />)}</div>
+        <div className="mt-4 grid min-w-0 justify-items-center gap-4 xl:grid-cols-2">{filtered.map((order) => <PackageCard key={order.id} order={order} onOpen={(id) => navigate(`/orders/${id}`)} />)}</div>
       ) : !error ? (
         <div className="mt-4"><EmptyState icon={PackageCheck} title="No orders found" description={filter === "all" ? "Paid orders assigned to your livestock will appear here." : `No orders are currently in ${active.label}.`} /></div>
       ) : null}
