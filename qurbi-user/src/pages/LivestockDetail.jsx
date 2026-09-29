@@ -268,7 +268,7 @@ export default function LivestockDetail() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="pointer-events-none absolute inset-x-0 top-4 z-10 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white drop-shadow">
+          <p className="text-[15px] font-bold uppercase tracking-[0.3em] text-white drop-shadow">
             QURBI
           </p>
         </div>
@@ -281,7 +281,6 @@ export default function LivestockDetail() {
             <img
               data-cart-product-image
               src={allImages[activeImage]}
-              alt={livestock.breed}
               className="w-full h-full object-cover"
             />
           </button>

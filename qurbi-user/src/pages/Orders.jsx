@@ -377,13 +377,13 @@ function DeleteHistoryModal({ count, loading, onClose, onConfirm }) {
       onClick={() => !loading && onClose()}
     >
       <div
-        className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-xl"
+        className="w-full max-w-sm rounded-3xl bg-gradient-to-br from-[#41362D] to-[#6B594A] p-5 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-gray-900">
+        <h2 className="text-lg font-bold text-white">
           Delete selected orders?
         </h2>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-white">
           {count} order{count === 1 ? "" : "s"} will be removed from your order
           history.
         </p>
@@ -391,14 +391,14 @@ function DeleteHistoryModal({ count, loading, onClose, onConfirm }) {
           <button
             onClick={onClose}
             disabled={loading}
-            className="min-h-11 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 disabled:opacity-50"
+            className="min-h-11 rounded-xl border border-white text-sm font-bold text-white disabled:opacity-50"
           >
             Keep Orders
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="min-h-11 rounded-xl bg-red-500 text-sm font-bold text-white disabled:opacity-50"
+            className="min-h-11 rounded-xl bg-gradient-to-br from-[#EF4444] to-[#B91C1C] text-sm font-bold text-white disabled:opacity-50"
           >
             {loading ? "Deleting..." : "Delete"}
           </button>
