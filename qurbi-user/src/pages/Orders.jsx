@@ -113,6 +113,21 @@ function groupOrdersByDay(orders) {
   }, []);
 }
 
+function GuardedOrderLink({ selecting, to, children, ...props }) {
+  if (selecting) {
+    return (
+      <div {...props}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link to={to} {...props} onClick={(event) => event.stopPropagation()}>
+      {children}
+    </Link>
+  );
+}
+
 function OrderCard({
   order,
   view,
@@ -123,6 +138,7 @@ function OrderCard({
   onSelect,
   fromTab = "",
 }) {
+  const navigate = useNavigate();
   const totalItems =
     order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   const isPending = ["pending", "pending_payment", "to_pay"].includes(order.status);
@@ -131,13 +147,27 @@ function OrderCard({
   const originTab =
     fromTab || sessionStorage.getItem("gh_orders_active_tab") || "";
   const detailsPath = `/orders/${encodeURIComponent(order.id)}${originTab ? `?fromTab=${encodeURIComponent(originTab)}` : ""}`;
+  const cardDestination = isPending
+    ? `/payment?order_id=${encodeURIComponent(order.id)}`
+    : detailsPath;
   const compact = view === "list";
+  const handleCardInteraction = (event) => {
+    if (selecting) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (isHistory) onSelect(order.id);
+      return;
+    }
+
+    if (event.target.closest("a, button")) return;
+    navigate(cardDestination);
+  };
 
   if (compact) {
     const item = order.items?.[0] || {};
     return (
       <div
-        onClick={() => selecting && isHistory && onSelect(order.id)}
+        onClick={handleCardInteraction}
         className={`qurbi-dark-surface flex min-w-0 flex-col gap-2 overflow-hidden rounded-xl border px-2.5 py-2 shadow-sm sm:flex-row sm:items-center sm:gap-2.5 ${isHistory ? "border-orange-100" : "border-gray-50"}`}
       >
         <div className="flex min-w-0 w-full flex-1 items-center gap-2.5">
@@ -160,15 +190,9 @@ function OrderCard({
               )}
             </button>
           )}
-          <Link
-            to={
-              isPending
-                ? `/payment?order_id=${encodeURIComponent(order.id)}`
-                : detailsPath
-            }
-            onClick={(event) => {
-              if (selecting && isHistory) event.preventDefault();
-            }}
+          <GuardedOrderLink
+            selecting={selecting}
+            to={cardDestination}
             className="flex min-w-0 flex-1 items-center gap-2.5"
             aria-label={`View order ${order.order_number}`}
           >
@@ -197,7 +221,7 @@ function OrderCard({
             <p className="flex-none whitespace-nowrap text-xs font-bold text-gray-900">
               RM {order.total?.toLocaleString()}
             </p>
-          </Link>
+          </GuardedOrderLink>
         </div>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           {reservedUntil && (
@@ -208,7 +232,11 @@ function OrderCard({
           )}
           {isPending && (
             <button
-              onClick={() => onCancel(order)}
+              onClick={(event) => {
+                if (selecting) return handleCardInteraction(event);
+                event.stopPropagation();
+                onCancel(order);
+              }}
               disabled={cancelling}
               className="rounded-lg border border-[#41362D] bg-gradient-to-br from-[#EF4444] to-[#B91C1C] px-2 py-1.5 text-[11px] font-bold text-white shadow-sm shadow-red-950/25 disabled:opacity-50"
             >
@@ -216,16 +244,21 @@ function OrderCard({
             </button>
           )}
           {isPending ? (
-            <Link
+            <GuardedOrderLink
+              selecting={selecting}
               to={`/payment?order_id=${encodeURIComponent(order.id)}`}
               className="flex-inline justify-center item-center rounded-lg border border-[#41362D] bg-gradient-to-br from-green-700 via-green-500 to-green-300 px-2 py-1.5 text-[11px] font-bold text-white"
             >
               Complete Payment
-            </Link>
+            </GuardedOrderLink>
           ) : (
-            <Link to={detailsPath} className="text-[#5A493C]">
+            <GuardedOrderLink
+              selecting={selecting}
+              to={detailsPath}
+              className="text-[#5A493C]"
+            >
               <ChevronRight className="w-4 h-4" />
-            </Link>
+            </GuardedOrderLink>
           )}
         </div>
       </div>
@@ -234,7 +267,7 @@ function OrderCard({
 
   return (
     <div
-      onClick={() => selecting && isHistory && onSelect(order.id)}
+      onClick={handleCardInteraction}
       className={`qurbi-dark-surface shadow-sm border ${isHistory ? "border-orange-100" : "border-gray-50"} ${compact ? "rounded-xl px-3 py-2.5" : "rounded-2xl p-4"}`}
     >
       {selecting && isHistory && (
@@ -260,15 +293,9 @@ function OrderCard({
           Select order
         </button>
       )}
-      <Link
-        to={
-          isPending
-            ? `/payment?order_id=${encodeURIComponent(order.id)}`
-            : detailsPath
-        }
-        onClick={(event) => {
-          if (selecting && isHistory) event.preventDefault();
-        }}
+      <GuardedOrderLink
+        selecting={selecting}
+        to={cardDestination}
         className="block"
         aria-label={`View order ${order.order_number}`}
       >
@@ -338,20 +365,25 @@ function OrderCard({
             RM {order.total?.toLocaleString()}
           </p>
         </div>
-      </Link>
+      </GuardedOrderLink>
       <div
         className={`flex flex-wrap items-center justify-end gap-2 ${compact ? "pt-2" : "pt-2 border-t border-gray-50"}`}
       >
         {isPending && (
           <button
-            onClick={() => onCancel(order)}
+            onClick={(event) => {
+              if (selecting) return handleCardInteraction(event);
+              event.stopPropagation();
+              onCancel(order);
+            }}
             disabled={cancelling}
             className="rounded-lg border border-[#41362D] bg-gradient-to-br from-[#EF4444] to-[#B91C1C] px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-red-950/25 disabled:opacity-50"
           >
             {cancelling ? "Cancelling..." : "Cancel Order"}
           </button>
         )}
-        <Link
+        <GuardedOrderLink
+          selecting={selecting}
           to={
             isPending
               ? `/payment?order_id=${encodeURIComponent(order.id)}`
@@ -361,7 +393,7 @@ function OrderCard({
         >
           {isPending ? "Complete Payment" : "View order"}{" "}
           <ChevronRight className="w-4 h-4" />
-        </Link>
+        </GuardedOrderLink>
       </div>
     </div>
   );
