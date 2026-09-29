@@ -45,6 +45,18 @@ export class UsersService extends BaseCrudService<User> {
     return { data, total, page, limit };
   }
 
+  async acceptAgreements(id: string, version: string): Promise<User> {
+    await this.findOne(id);
+    const acceptedAt = new Date();
+    await this.repository.update(id, {
+      privacyPolicyAcceptedAt: acceptedAt,
+      userAgreementAcceptedAt: acceptedAt,
+      adultConfirmedAt: acceptedAt,
+      agreementsVersion: version,
+    });
+    return this.findOne(id);
+  }
+
   // Fetches a user and confirms `viewer` is that user (or an admin). Anyone
   // else gets the exact same 404 a made-up id would return.
   async findOwned(id: string, viewer: AuthenticatedUser): Promise<User> {

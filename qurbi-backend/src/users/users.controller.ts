@@ -7,6 +7,7 @@ import type { AuthenticatedUser } from '../auth/decorators/current-user.decorato
 import { AdminUsersQuery, UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AcceptAgreementsDto } from './dto/accept-agreements.dto';
 import { toPageInt } from '../common/pagination';
 
 // Profile CRUD only — registration/login/password changes go through
@@ -37,6 +38,16 @@ export class UsersController {
   ) {
     const query: AdminUsersQuery = { role, status, page: toPageInt(page), limit: toPageInt(limit) };
     return this.usersService.findAllForAdmin(query);
+  }
+
+  @Roles(UserRole.BUYER)
+  @UseGuards(RolesGuard)
+  @Post('me/agreements')
+  acceptAgreements(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: AcceptAgreementsDto,
+  ) {
+    return this.usersService.acceptAgreements(user.id, body.version);
   }
 
   @Get(':id')
