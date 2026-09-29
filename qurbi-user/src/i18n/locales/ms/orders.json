@@ -1,0 +1,190 @@
+{
+  "orders": {
+    "title": "Pesanan Saya",
+    "subtitle": "Jejak dan urus pembelian anda",
+    "tabs": {
+      "toPay": "Perlu Bayar",
+      "toShip": "Perlu Dihantar",
+      "toReceive": "Perlu Diterima",
+      "completed": "Selesai",
+      "returnRefund": "Pemulangan / Bayaran Balik"
+    },
+    "status": {
+      "toPay": "Perlu Bayar",
+      "toShip": "Perlu Dihantar",
+      "toReceive": "Perlu Diterima",
+      "completed": "Selesai",
+      "returnRequested": "Pemulangan Dipohon",
+      "refundRequested": "Bayaran Balik Dipohon",
+      "returnRefund": "Pemulangan / Bayaran Balik",
+      "refundComplete": "Bayaran Balik Selesai",
+      "cancelled": "Dibatalkan",
+      "outOfStock": "Stok Habis",
+      "rejected": "Ditolak"
+    },
+    "aria": {
+      "selectOrder": "Pilih pesanan",
+      "deselectOrder": "Nyahpilih pesanan",
+      "viewOrder": "Lihat pesanan {{orderNumber}}",
+      "currentView": "Paparan pesanan semasa",
+      "listView": "Paparan senarai pesanan"
+    },
+    "fallbackItemName": "Item pesanan",
+    "headCount": "{{count}} ekor",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} item",
+    "cancel": "Batal",
+    "cancelling": "Membatalkan...",
+    "cancelOrder": "Batalkan Pesanan",
+    "payNow": "Bayar Sekarang",
+    "viewOrderLink": "Lihat pesanan",
+    "selectOrderLabel": "Pilih pesanan",
+    "select": "Pilih",
+    "selectAll": "Pilih Semua",
+    "deselectAll": "Nyahpilih Semua",
+    "deleteWithCount": "Padam ({{count}})",
+    "deleteModal": {
+      "title": "Padam pesanan yang dipilih?",
+      "body_one": "{{count}} pesanan akan dialih keluar daripada sejarah pesanan anda.",
+      "body_other": "{{count}} pesanan akan dialih keluar daripada sejarah pesanan anda.",
+      "keep": "Simpan Pesanan",
+      "deleting": "Memadam...",
+      "confirm": "Padam"
+    },
+    "signInPrompt": "Log masuk untuk melihat pesanan anda.",
+    "signIn": "Log Masuk",
+    "loadingOrders": "Memuatkan pesanan...",
+    "loadError": "Kami tidak dapat memuatkan pesanan anda. Sila cuba lagi.",
+    "retry": "Cuba Lagi",
+    "emptyTitle": "Tiada pesanan untuk dipaparkan",
+    "emptyBody": "Pesanan dalam {{tab}} akan dipaparkan di sini.",
+    "cancelSuccess": "Pesanan berjaya dibatalkan.",
+    "cancelErrorFallback": "Kami tidak dapat membatalkan pesanan ini. Sila cuba lagi.",
+    "deleteHistoryError": "Kami tidak dapat mengalih keluar pesanan tersebut daripada sejarah.",
+    "completePayment": "Lengkapkan Pembayaran",
+    "signInMessage": "Log masuk untuk melihat dan mengurus pesanan anda.",
+    "reservation": {
+      "reservedFor24h": "Ditempah selama 24 jam",
+      "paymentFailedPrefix": "Pembayaran gagal · ",
+      "reservedUntil": "Ditempah sehingga {{time}}",
+      "retryHint": "Anda boleh cuba bayar semula daripada pesanan ini."
+    }
+  },
+  "orderDetail": {
+    "title": "Butiran Pesanan",
+    "loadingSubtitle": "Jejak pembelian dan kemajuan penghantaran anda",
+    "loadingMessage": "Memuatkan butiran pesanan...",
+    "retry": "Cuba Lagi",
+    "backToOrders": "Kembali ke Pesanan Saya",
+    "notFound": "Pesanan tidak dijumpai.",
+    "statusLabel": "Status",
+    "status": {
+      "outOfStock": "Stok Habis",
+      "cancelled": "Dibatalkan",
+      "refundComplete": "Bayaran Balik Selesai",
+      "refundRejected": "Bayaran Balik Ditolak",
+      "refundPending": "Bayaran Balik Menunggu Kelulusan"
+    },
+    "stages": {
+      "before": "Sebelum",
+      "during": "Semasa",
+      "after": "Selepas",
+      "received": "Diterima",
+      "ownerFarmer": "Penternak",
+      "ownerYou": "Anda"
+    },
+    "proofAlt": "Bukti pesanan {{stage}}",
+    "legacyTracking": {
+      "title": "Penjejakan pesanan",
+      "stagesLine": "Sebelum → Semasa → Selepas → Diterima",
+      "complete": "Selesai",
+      "lockedUntilFarmer": "Dikunci sehingga foto penternak lengkap",
+      "waitingFor": "Menunggu {{owner}}",
+      "locked": "Dikunci",
+      "action": "Tindakan: {{owner}}"
+    },
+    "tracking": {
+      "title": "Bukti Foto Pesanan",
+      "subtitle": "Foto Sebelum, Semasa, Selepas oleh penternak dan bukti Diterima anda",
+      "noProofYet": "Belum ada foto bukti dimuat naik."
+    },
+    "progress": {
+      "title": "Kemajuan pesanan",
+      "subtitle": "Foto dimuat naik oleh penternak",
+      "photoAlt": "Kemajuan pesanan {{index}}"
+    },
+    "refundSection": {
+      "title": "Permohonan bayaran balik",
+      "reasonLabel": "Sebab: ",
+      "photoEvidence": "Bukti foto",
+      "evidenceAlt": "Bukti bayaran balik {{index}}",
+      "adminNoteLabel": "Nota admin: ",
+      "waitingAdminReview": "Menunggu semakan Admin."
+    },
+    "items": {
+      "title": "Item",
+      "gradeSuffix": " · Gred {{grade}}",
+      "total": "Jumlah"
+    },
+    "refundSheet": {
+      "title": "Mohon bayaran balik",
+      "subtitle": "Beritahu kami sebab anda memohon bayaran balik untuk {{orderNumber}}.",
+      "reasonPlaceholder": "Masukkan sebab anda",
+      "uploadLabel": "Muat naik bukti foto bayaran balik",
+      "uploadHint": "Sekurang-kurangnya satu foto diperlukan (sehingga 5)",
+      "photosSelected_one": "{{count}} foto dipilih",
+      "photosSelected_other": "{{count}} foto dipilih",
+      "disclaimer": "Permohonan anda akan dihantar kepada pentadbir untuk semakan. Bayaran balik tidak selesai sehingga ia diluluskan.",
+      "keep": "Simpan Pesanan",
+      "submitting": "Menghantar...",
+      "submit": "Hantar Permohonan"
+    },
+    "confirm": {
+      "instructions": "Sahkan hanya selepas anda menerima pesanan anda.",
+      "replacePhoto": "Gantikan foto bukti diterima",
+      "uploadPhoto": "Muat naik foto bukti diterima",
+      "saving": "Menyimpan...",
+      "savePhoto": "Simpan foto bukti diterima",
+      "proofSaved": "Bukti diterima disimpan. Anda kini boleh sahkan penerimaan.",
+      "waitingFarmerPhotos": "Menunggu penternak memuat naik foto Sebelum, Semasa, dan Selepas.",
+      "returnRefund": "Pemulangan / Bayaran Balik",
+      "updating": "Mengemas kini...",
+      "approveReceive": "Sahkan Penerimaan"
+    },
+    "confirmSuccess": "Pesanan diterima dan selesai dengan jayanya.",
+    "saveProofSuccess": "Foto bukti diterima disimpan.",
+    "refundRequestSuccess": "Permohonan bayaran balik anda telah dihantar untuk kelulusan admin.",
+    "errors": {
+      "loadFallback": "Kami tidak dapat memuatkan pesanan ini. Sila cuba lagi.",
+      "uploadReceivedFirst": "Muat naik dan simpan foto yang menunjukkan anda telah menerima pesanan terlebih dahulu.",
+      "confirmReceiptFallback": "Kami tidak dapat mengesahkan penerimaan pesanan ini.",
+      "saveProofFallback": "Kami tidak dapat menyimpan foto bukti diterima anda.",
+      "evidenceRequired": "Muat naik sekurang-kurangnya satu foto sebagai bukti bayaran balik sebelum menghantar permohonan anda.",
+      "refundRequestFallback": "Kami tidak dapat menghantar permohonan bayaran balik anda."
+    },
+    "signInPrompt": "Log masuk untuk melihat pesanan ini.",
+    "signInMessage": "Log masuk untuk melihat pesanan ini dan kemajuan penghantarannya.",
+    "signIn": "Log Masuk"
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "signInPrompt": "Log masuk untuk melihat notifikasi pesanan anda.",
+    "signIn": "Log Masuk",
+    "clearAll": "Kosongkan Semua",
+    "goBackAria": "Kembali",
+    "refreshAria": "Muat semula notifikasi",
+    "emptyTitle": "Belum ada notifikasi",
+    "emptyBody": "Kemas kini foto penternak dan bayaran balik akan dipaparkan di sini.",
+    "clearAria": "Kosongkan {{title}}",
+    "clear": "Kosongkan",
+    "clearing": "Mengosongkan…",
+    "clearAllModal": {
+      "title": "Kosongkan semua notifikasi?",
+      "body": "Ini hanya mengosongkan notifikasi daripada akaun anda.",
+      "keep": "Simpan Notifikasi"
+    }
+  },
+  "notificationBanner": {
+    "dismissAria": "Tutup notifikasi"
+  }
+}

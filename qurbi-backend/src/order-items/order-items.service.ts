@@ -8,7 +8,10 @@ import { OrderItem } from '../entities';
 // create/update/remove exposed here.
 @Injectable()
 export class OrderItemsService {
-  constructor(@InjectRepository(OrderItem) private readonly repository: Repository<OrderItem>) {}
+  constructor(
+    @InjectRepository(OrderItem)
+    private readonly repository: Repository<OrderItem>,
+  ) {}
 
   findAllForOrder(orderId: string): Promise<OrderItem[]> {
     return this.repository.find({ where: { orderId } });

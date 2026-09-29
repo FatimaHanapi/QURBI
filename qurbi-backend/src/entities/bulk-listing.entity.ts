@@ -94,7 +94,11 @@ export class BulkListing extends BaseEntity {
   @Column({ type: 'datetime', precision: 6, nullable: true })
   closesAt: Date | null;
 
-  @Column({ type: 'enum', enum: BulkListingStatus, default: BulkListingStatus.DRAFT })
+  @Column({
+    type: 'enum',
+    enum: BulkListingStatus,
+    default: BulkListingStatus.DRAFT,
+  })
   status: BulkListingStatus;
 
   @Column({ type: 'boolean', default: false })

@@ -1,6 +1,18 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  Index,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { OrderStatus, PaymentStatus, DeliveryMethod, RefundStatus } from './enums';
+import {
+  OrderStatus,
+  PaymentStatus,
+  DeliveryMethod,
+  RefundStatus,
+} from './enums';
 import { User } from './user.entity';
 import { OrderItem } from './order-item.entity';
 import { OrderTrackingEvent } from './order-tracking-event.entity';
@@ -55,7 +67,11 @@ export class Order extends BaseEntity {
   farmer: User;
 
   @Index()
-  @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING_PAYMENT })
+  @Column({
+    type: 'enum',
+    enum: OrderStatus,
+    default: OrderStatus.PENDING_PAYMENT,
+  })
   status: OrderStatus;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })

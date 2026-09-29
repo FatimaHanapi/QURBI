@@ -1,8 +1,10 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { CircleAlert, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function PaymentErrorModal({ error, onClose, onViewOrders }) {
+  const { t } = useTranslation("shopflow");
   useEffect(() => {
     if (!error) return undefined;
     const closeOnEscape = (event) => {
@@ -33,7 +35,7 @@ export default function PaymentErrorModal({ error, onClose, onViewOrders }) {
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#E3C19F]/80">
-                Payment update
+                {t("paymentError.eyebrow")}
               </p>
               <h2 id="payment-error-title" className="mt-0.5 text-lg font-bold text-white">
                 {error.title}
@@ -43,8 +45,8 @@ export default function PaymentErrorModal({ error, onClose, onViewOrders }) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close payment message"
-            className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-[#E3C19F]/60 text-white"
+            aria-label={t("paymentError.closeAria")}
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-[#E3C19F]/60 text-white"
           >
             <X className="h-4 w-4" />
           </button>
@@ -56,7 +58,7 @@ export default function PaymentErrorModal({ error, onClose, onViewOrders }) {
           </p>
           {error.reserved && (
             <p className="mt-3 text-sm leading-relaxed text-white">
-              Your livestock remains reserved for up to 24 hours. You can try payment again from My Orders.
+              {t("paymentError.reservedNote")}
             </p>
           )}
           <div className={`mt-5 grid gap-3 ${error.reserved ? "grid-cols-2" : "grid-cols-1"}`}>
@@ -66,7 +68,7 @@ export default function PaymentErrorModal({ error, onClose, onViewOrders }) {
                 onClick={onViewOrders}
                 className="min-h-12 rounded-xl border border-[#E3C19F] text-sm font-bold text-white"
               >
-                My Orders
+                {t("paymentError.myOrders")}
               </button>
             )}
             <button
@@ -74,7 +76,7 @@ export default function PaymentErrorModal({ error, onClose, onViewOrders }) {
               onClick={onClose}
               className="min-h-12 rounded-xl border border-[#41362D] bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] text-sm font-bold text-[#41362D]"
             >
-              {error.reserved ? "Try Again" : "Okay"}
+              {error.reserved ? t("paymentError.tryAgain") : t("paymentError.okay")}
             </button>
           </div>
         </div>

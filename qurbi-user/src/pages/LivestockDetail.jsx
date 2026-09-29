@@ -4,6 +4,7 @@ import {
   Link,
   useSearchParams,
 } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ShoppingCart,
   Check,
@@ -12,6 +13,9 @@ import {
   AlertCircle,
   ArrowLeft,
   Zap,
+  Home,
+  User,
+  Navigation,
 } from "lucide-react";
 import { loadLivestockById } from "@/lib/farmerClient";
 import { useCart } from "@/lib/cart-context";
@@ -26,12 +30,22 @@ import {
 } from "@/components/DetailsSurface";
 import DetailPageLoading from "@/components/DetailPageLoading";
 import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
+import StickyActionBar from "@/components/shop/StickyActionBar";
+import StatusChip from "@/components/shop/StatusChip";
+import { formatRM } from "@/lib/format";
+import {
+  ageLabel,
+  genderLabel,
+  listingState,
+  listingTitle,
+} from "@/lib/listing-display";
 import {
   animateProductToCart,
   captureCartAnimationSource,
 } from "@/lib/cart-animation";
 
 function AvailabilityModal({ state, onClose, onBrowse, backLabel }) {
+  const { t } = useTranslation("listings");
   if (!state) return null;
   const unavailable = state === "unavailable";
   return (
@@ -47,20 +61,20 @@ function AvailabilityModal({ state, onClose, onBrowse, backLabel }) {
       >
         <h2 className="text-lg font-bold text-gray-900">
           {unavailable
-            ? "Livestock Unavailable"
-            : "Unable to Verify Availability"}
+            ? t("livestockDetail.unavailableTitle")
+            : t("livestockDetail.verifyFailTitle")}
         </h2>
         <p className="mt-2 text-sm leading-6 text-gray-500">
           {unavailable
-            ? "This livestock is no longer available for purchase. Please browse other available livestock."
-            : "We couldn't verify this livestock right now. Please try again."}
+            ? t("livestockDetail.unavailableMessage")
+            : t("livestockDetail.verifyFailMessage")}
         </p>
         <button
           type="button"
           onClick={unavailable ? onBrowse : onClose}
-          className="mt-5 min-h-11 w-full rounded-xl bg-[#F7EDE2]0 px-4 text-sm font-bold text-white"
+          className="aisyah-primary-button mt-5 min-h-12 w-full"
         >
-          {unavailable ? backLabel : "Close"}
+          {unavailable ? backLabel : t("livestockDetail.close")}
         </button>
       </div>
     </div>
@@ -68,12 +82,16 @@ function AvailabilityModal({ state, onClose, onBrowse, backLabel }) {
 }
 
 export default function LivestockDetail() {
+  const { t } = useTranslation("listings");
+  const { t: tf } = useTranslation("shopflow");
   const { id } = useParams();
   const { navigateWithTransition, completeProductTransition } = useHeaderTransition();
   const [searchParams] = useSearchParams();
   const openedFromCart = searchParams.get("from") === "cart";
   const returnPath = openedFromCart ? "/cart" : "/browse";
-  const returnLabel = openedFromCart ? "Back to Cart" : "Back to Browse";
+  const returnLabel = openedFromCart
+    ? t("livestockDetail.backToCart")
+    : t("livestockDetail.backToBrowse");
   const { addToCart, buyNow, cartItems } = useCart();
   const requireAuth = useRequireAuth();
   const { reveal } = useReveal();
@@ -91,7 +109,7 @@ export default function LivestockDetail() {
     setError(null);
     loadLivestockById(id)
       .then(setLivestock)
-      .catch((e) => setError(e.message || "Failed to load livestock"))
+      .catch((e) => setError(e.message || t("livestockDetail.loadError")))
       .finally(() => setLoading(false));
   };
 
@@ -116,6 +134,8 @@ export default function LivestockDetail() {
     id: livestock.id,
     animal: livestock.species,
     breed: livestock.breed,
+    title: listingTitle(livestock),
+    state: listingState(livestock),
     price_per_head: Number(livestock.price) || 0,
     weight_min: livestock.weight ? Number(livestock.weight) : 0,
     weight_max: livestock.weight ? Number(livestock.weight) : 0,
@@ -150,7 +170,7 @@ export default function LivestockDetail() {
         return;
       }
       if (!addToCart(buildCartItem())) {
-        alert("This item is already in your cart.");
+        alert(t("livestockDetail.alreadyInCart"));
       } else {
         animateProductToCart(animationSource);
       }
@@ -187,7 +207,7 @@ export default function LivestockDetail() {
   if (loading && !livestock) {
     return (
       <DetailPageLoading
-        message="Loading livestock details..."
+        message={t("livestockDetail.loading")}
         backTo={returnPath}
         backLabel={returnLabel}
       />
@@ -197,19 +217,23 @@ export default function LivestockDetail() {
   if (error) {
     return (
       <div className="aisyah-page flex flex-col items-center justify-center gap-4 p-8">
-        <AlertCircle className="w-12 h-12 text-red-400" />
-        <p className="text-gray-600 font-semibold text-center">
-          Failed to load livestock
+        <AlertCircle aria-hidden="true" className="h-12 w-12 text-[#6B594A]" />
+        <p className="text-center text-lg font-bold text-[#41362D]">
+          {t("livestockDetail.loadError")}
         </p>
-        <p className="text-gray-400 text-sm text-center max-w-xs">{error}</p>
+        <p className="max-w-xs text-center text-sm text-[#6B594A]">{error}</p>
         <button
+          type="button"
           onClick={load}
-          className="bg-[#F7EDE2]0 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2"
+          className="aisyah-primary-button flex min-h-12 items-center gap-2 px-6"
         >
-          <RefreshCw className="w-4 h-4" /> Retry
+          <RefreshCw className="h-4 w-4" /> {t("livestockDetail.retry")}
         </button>
-        <Link to={returnPath} className="text-[#F7EDE2]0 text-sm font-semibold">
-          ← {returnLabel}
+        <Link
+          to={returnPath}
+          className="inline-flex min-h-11 items-center text-sm font-bold text-[#41362D] underline underline-offset-4"
+        >
+          {returnLabel}
         </Link>
       </div>
     );
@@ -217,38 +241,50 @@ export default function LivestockDetail() {
 
   if (!livestock) return null;
 
-  const statusLabel = String(livestock.status || "Unavailable").trim();
-  const isAvailableStatus = statusLabel.toLowerCase() === "available";
+  const title = listingTitle(livestock, t("livestockDetail.livestockFallback"));
   const allImages = [livestock.coverImage, ...(livestock.images || [])].filter(
-    Boolean,
+    (image, index, images) => image && images.indexOf(image) === index,
   );
   const videos = livestock.videos || [];
+  const price = formatRM(livestock.price);
+  const listedState = listingState(livestock);
 
   const infoItems = [
-    { label: "Species", value: livestock.species },
-    { label: "Breed", value: livestock.breed },
-    { label: "Gender", value: livestock.gender },
-    { label: "Age", value: livestock.age },
     {
-      label: "Weight",
+      label: t("livestockDetail.species"),
+      value: livestock.species,
+    },
+    { label: t("livestockDetail.breed"), value: livestock.breed },
+    { label: t("livestockDetail.gender"), value: genderLabel(tf, livestock.gender) },
+    { label: t("livestockDetail.age"), value: ageLabel(tf, livestock) },
+    {
+      label: t("livestockDetail.weight"),
       value: livestock.weight ? `${livestock.weight} kg` : null,
     },
+    { label: tf("detail.grade"), value: livestock.grade },
     {
-      label: "Height",
+      label: t("livestockDetail.height"),
       value: livestock.height ? `${livestock.height} cm` : null,
     },
     {
-      label: "Body Length",
+      label: t("livestockDetail.bodyLength"),
       value: livestock.bodyLength ? `${livestock.bodyLength} cm` : null,
     },
     {
-      label: "Chest Girth",
+      label: t("livestockDetail.chestGirth"),
       value: livestock.chestGirth ? `${livestock.chestGirth} cm` : null,
     },
-    { label: "Color", value: livestock.color },
-    { label: "Ear Tag", value: livestock.earTag },
-    { label: "RFID", value: livestock.rfid },
+    { label: t("livestockDetail.color"), value: livestock.color },
+    { label: t("livestockDetail.earTag"), value: livestock.earTag },
+    { label: t("livestockDetail.rfid"), value: livestock.rfid },
   ].filter((i) => i.value);
+
+  const farmRows = [
+    { icon: MapPin, label: tf("detail.listedIn"), value: listedState },
+    { icon: Home, label: tf("detail.farm"), value: livestock.farm_name },
+    { icon: User, label: t("livestockDetail.farmer"), value: livestock.farmer_name === "Unknown Farmer" ? "" : livestock.farmer_name },
+    { icon: Navigation, label: tf("detail.farmAddress"), value: livestock.farmLocation },
+  ].filter((row) => row.value);
 
   return (
     <div
@@ -263,11 +299,11 @@ export default function LivestockDetail() {
           type="button"
           onClick={() => navigateWithTransition(returnPath)}
           aria-label={returnLabel}
-          className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-xl border border-[#F7EDE2]/60 bg-[#41362D]/80 text-white shadow-lg backdrop-blur-sm active:scale-95"
+          className="absolute left-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-xl border border-[#F7EDE2]/60 bg-[#41362D]/80 text-white shadow-lg backdrop-blur-sm active:scale-95"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="pointer-events-none absolute inset-x-0 top-4 z-10 text-center">
+        <div className="pointer-events-none absolute inset-x-0 top-6 z-10 text-center">
           <p className="text-[15px] font-bold uppercase tracking-[0.3em] text-white drop-shadow">
             QURBI
           </p>
@@ -276,30 +312,34 @@ export default function LivestockDetail() {
           <button
             type="button"
             onClick={() => setPreviewImage(allImages[activeImage])}
-            className="block w-full h-72"
+            aria-label={tf("detail.enlargePhoto")}
+            className="block h-72 w-full sm:h-96"
           >
             <img
               data-cart-product-image
               src={allImages[activeImage]}
-              className="w-full h-full object-cover"
+              alt={title}
+              className="h-full w-full object-cover"
             />
           </button>
         ) : (
           <div className="flex h-72 w-full items-center justify-center bg-[#F7EDE2] text-sm font-bold text-[#41362D]">
-            {livestock.species || "Livestock"}
+            {livestock.species || t("livestockDetail.livestockFallback")}
           </div>
         )}
       </div>
 
-      <DetailOuterSheet raised={detailsRaised}>
+      <DetailOuterSheet raised={detailsRaised} withActionBar>
         {allImages.length > 1 && (
-          <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto rounded-2xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] p-2">
+          <div className="no-scrollbar mb-1 flex gap-2 overflow-x-auto rounded-2xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] p-2">
             {allImages.map((img, idx) => (
               <button
-                key={idx}
+                key={img}
                 type="button"
                 onClick={() => setActiveImage(idx)}
-                className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 ease-out active:scale-[0.98] ${activeImage === idx ? "border-[#41362D]" : "border-[#E3C19F]"}`}
+                aria-label={tf("detail.showPhoto", { number: idx + 1, total: allImages.length })}
+                aria-pressed={activeImage === idx}
+                className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 ease-out active:scale-[0.98] ${activeImage === idx ? "border-[#41362D] ring-2 ring-[#41362D]/40" : "border-[#E3C19F] opacity-80"}`}
               >
                 <img src={img} alt="" className="h-full w-full object-cover" />
               </button>
@@ -307,106 +347,51 @@ export default function LivestockDetail() {
           </div>
         )}
 
-        {videos.length > 0 && (
-          <section className="mb-5" aria-labelledby="livestock-videos-title">
-            <h2
-              id="livestock-videos-title"
-              className="mb-3 text-lg font-extrabold text-white"
-            >
-              Videos
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {videos.map((url, index) => (
-                <video
-                  key={`${url}-${index}`}
-                  src={url}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="aspect-video w-full rounded-2xl border border-[#F7EDE2]/30 bg-black shadow-lg shadow-black/20"
-                >
-                  Your browser does not support video playback.
-                </video>
+        {/* Title + price + status */}
+        <section className={reveal()} style={{ animationDelay: "80ms" }} aria-labelledby="livestock-title">
+          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-white/75">
+            {[livestock.species, livestock.breed].filter(Boolean).join(" · ")}
+          </p>
+          <h1 id="livestock-title" className="mt-1 break-words text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+            {title}
+          </h1>
+          <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-3">
+            <p className="min-w-0 text-3xl font-extrabold text-white sm:text-4xl">
+              {price}
+            </p>
+            <StatusChip status={livestock.status || "unavailable"} />
+          </div>
+          {listedState && (
+            <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-white/85">
+              <MapPin aria-hidden="true" className="h-4 w-4" />
+              {tf("detail.listedInState", { state: listedState })}
+            </p>
+          )}
+        </section>
+
+        {/* Farm & location */}
+        {farmRows.length > 0 && (
+          <LightDetailCard title={tf("detail.farmAndLocation")} className={reveal()}>
+            <dl className="space-y-3" style={{ animationDelay: "140ms" }}>
+              {farmRows.map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-[#F7EDE2]/60 bg-gradient-to-br from-[#41362D] to-[#6B594A]">
+                    <Icon aria-hidden="true" className="h-5 w-5 text-white" />
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="text-sm font-semibold text-black/70">{label}</dt>
+                    <dd className="break-words text-base font-bold text-black">{value}</dd>
+                  </div>
+                </div>
               ))}
-            </div>
-          </section>
+            </dl>
+          </LightDetailCard>
         )}
 
-        {/* Title + price + add to cart */}
-        <div className={reveal()} style={{ animationDelay: "80ms" }}>
-          <div className="mb-2 flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-white sm:text-3xl">
-              {livestock.breed}
-            </h1>
-          </div>
-          <div className="space-y-3">
-            <div className="flex min-w-0 items-center justify-between gap-3">
-              <p className="min-w-0 text-3xl font-extrabold text-white sm:text-4xl">
-                RM {(livestock.price || 0).toLocaleString()}
-              </p>
-              <span
-                className="max-w-[42%] flex-none truncate rounded-full px-3 py-1 text-xs font-bold text-white shadow-sm"
-                style={{
-                  backgroundColor: isAvailableStatus ? "#16a34a" : "#dc2626",
-                }}
-                title={statusLabel}
-              >
-                {statusLabel}
-              </span>
-            </div>
-            <div className="grid w-full grid-cols-2 gap-2">
-              <button
-                onClick={handleAddToCart}
-                disabled={isInCart}
-                className={`min-w-0 w-full px-3 py-3.5 rounded-2xl border border-[#F7EDE2]/60 font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 ease-out active:scale-[0.98] ${
-                  isInCart
-                    ? "bg-[#E3C19F] text-[#5A493C]" 
-                    : "bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white shadow-md shadow-black/20 transition-all duration-200 ease-out hover:scale-[1.02]"
-                }`}
-              >
-                {isInCart ? (
-                  <>
-                    <Check className="w-4 h-4" /> In Cart
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-4 h-4" /> Add
-                  </>
-                )}
-              </button>
-              <button
-                onClick={handleBuyNow}
-                className="mx-auto flex w-full min-w-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-3 py-3.5 text-sm font-bold text-black transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <Zap className="w-4 h-4" /> Buy Now
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Location */}
-        {livestock.farmLocation && <LightDetailCard title="Location" className={reveal()}>
-          <div className="space-y-4" style={{ animationDelay: "140ms" }}>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-[#F7EDE2]/60 bg-gradient-to-br from-[#41362D] to-[#6B594A]">
-                  <MapPin className="h-5 w-5 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-black/70">
-                    Farm Location
-                  </p>
-                  <p className="text-base font-bold text-black">
-                    {livestock.farmLocation}
-                  </p>
-                </div>
-              </div>
-          </div>
-        </LightDetailCard>}
-
         {/* Info grid */}
-        <LightDetailCard title="Livestock Details" className={reveal()}>
+        <LightDetailCard title={t("livestockDetail.livestockDetails")} className={reveal()}>
           <div
-            className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2"
+            className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3"
             style={{ animationDelay: "200ms" }}
           >
             {infoItems.map((item) => (
@@ -419,57 +404,104 @@ export default function LivestockDetail() {
           </div>
         </LightDetailCard>
 
+        {videos.length > 0 && (
+          <section aria-labelledby="livestock-videos-title">
+            <h2
+              id="livestock-videos-title"
+              className="mb-3 text-lg font-extrabold text-white"
+            >
+              {t("livestockDetail.videos")}
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {videos.map((url, index) => (
+                <video
+                  key={`${url}-${index}`}
+                  src={url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="aspect-video w-full rounded-2xl border border-[#F7EDE2]/30 bg-black shadow-lg shadow-black/20"
+                >
+                  {t("livestockDetail.videoUnsupported")}
+                </video>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Health records */}
         {(livestock.healthRecord || livestock.vaccinationRecord) && (
-          <div
-            className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-2 ${reveal()}`}
-            style={{ animationDelay: "260ms" }}
-          >
-            <h3 className="text-gray-900 font-bold">Health & Records</h3>
-            {livestock.healthRecord && (
-              <div>
-                <p className="text-gray-400 text-xs">Health Record</p>
-                <p className="text-gray-700 text-sm">
-                  {livestock.healthRecord}
-                </p>
-              </div>
-            )}
-            {livestock.vaccinationRecord && (
-              <div>
-                <p className="text-gray-400 text-xs">Vaccination</p>
-                <p className="text-gray-700 text-sm">
-                  {livestock.vaccinationRecord}
-                </p>
-              </div>
-            )}
-          </div>
+          <LightDetailCard title={t("livestockDetail.healthRecords")} className={reveal()}>
+            <div className="space-y-3" style={{ animationDelay: "260ms" }}>
+              {livestock.healthRecord && (
+                <div>
+                  <p className="text-sm font-semibold text-black/70">{t("livestockDetail.healthRecord")}</p>
+                  <p className="text-base text-black">{livestock.healthRecord}</p>
+                </div>
+              )}
+              {livestock.vaccinationRecord && (
+                <div>
+                  <p className="text-sm font-semibold text-black/70">{t("livestockDetail.vaccination")}</p>
+                  <p className="text-base text-black">{livestock.vaccinationRecord}</p>
+                </div>
+              )}
+            </div>
+          </LightDetailCard>
         )}
 
         {/* Notes */}
         {(livestock.description || livestock.specialNotes) && (
-          <div
-            className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-2 ${reveal()}`}
-            style={{ animationDelay: "320ms" }}
-          >
-            <h3 className="text-gray-900 font-bold">Notes</h3>
-            {livestock.description && (
-              <p className="text-gray-600 text-sm">{livestock.description}</p>
-            )}
-            {livestock.specialNotes && (
-              <div>
-                <p className="text-gray-400 text-xs">Special Notes</p>
-                <p className="text-gray-600 text-sm">
-                  {livestock.specialNotes}
-                </p>
-              </div>
-            )}
-          </div>
+          <LightDetailCard title={t("livestockDetail.notes")} className={reveal()}>
+            <div className="space-y-3" style={{ animationDelay: "320ms" }}>
+              {livestock.description && (
+                <p className="text-base leading-relaxed text-black">{livestock.description}</p>
+              )}
+              {livestock.specialNotes && (
+                <div>
+                  <p className="text-sm font-semibold text-black/70">{t("livestockDetail.specialNotes")}</p>
+                  <p className="text-base leading-relaxed text-black">{livestock.specialNotes}</p>
+                </div>
+              )}
+            </div>
+          </LightDetailCard>
         )}
       </DetailOuterSheet>
 
+      {/* Primary actions stay reachable above the bottom nav */}
+      <StickyActionBar tone="light" label={tf("detail.actionsLabel")} className="gap-2">
+        <div className="min-w-0 flex-none">
+          <p className="text-xs font-semibold text-[#6B594A]">{tf("detail.price")}</p>
+          <p className="whitespace-nowrap text-lg font-extrabold leading-tight text-[#41362D]">{price}</p>
+        </div>
+        <button
+          type="button"
+          onClick={isInCart ? () => navigateWithTransition("/cart") : handleAddToCart}
+          aria-label={isInCart ? tf("detail.inCartViewAria") : tf("detail.addToCartAria", { title })}
+          className="flex min-h-12 flex-none items-center justify-center gap-1.5 rounded-xl border-2 border-[#41362D] bg-[#F7EDE2] px-2.5 text-sm font-bold leading-tight text-[#41362D] transition-all duration-200 ease-out active:scale-[0.98]"
+        >
+          {isInCart ? (
+            <>
+              <Check aria-hidden="true" className="h-4 w-4" /> {t("livestockDetail.inCart")}
+            </>
+          ) : (
+            <>
+              <ShoppingCart aria-hidden="true" className="h-4 w-4" /> {t("livestockDetail.add")}
+            </>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={handleBuyNow}
+          className="flex min-h-12 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#41362D] to-[#6B594A] px-3 text-sm font-bold text-white shadow-md shadow-black/20 transition-all duration-200 ease-out active:scale-[0.98]"
+        >
+          <Zap aria-hidden="true" className="hidden h-4 w-4 flex-none min-[420px]:block" />
+          <span className="text-center leading-tight">{t("livestockDetail.buyNow")}</span>
+        </button>
+      </StickyActionBar>
+
       <ImageLightbox
         image={previewImage}
-        alt={livestock.breed}
+        alt={title}
         onClose={() => setPreviewImage("")}
       />
       <AvailabilityModal

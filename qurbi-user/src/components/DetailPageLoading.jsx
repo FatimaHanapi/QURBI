@@ -14,7 +14,7 @@ export default function DetailPageLoading({ message, backTo, backLabel }) {
           type="button"
           onClick={() => navigateWithTransition(backTo)}
           aria-label={backLabel}
-          className="absolute left-4 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white shadow-lg transition-transform active:scale-90"
+          className="absolute left-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-xl border border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white shadow-lg transition-transform active:scale-90"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>

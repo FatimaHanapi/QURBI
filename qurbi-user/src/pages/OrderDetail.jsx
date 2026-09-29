@@ -1,26 +1,61 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
-import { Camera, Check, Package } from "lucide-react";
+  Camera,
+  Check,
+  CircleAlert,
+  Clock3,
+  ImagePlus,
+  MapPin,
+  Package,
+  ReceiptText,
+  ShoppingBag,
+  Truck,
+} from "lucide-react";
 import { qurbiApi } from "@/api/qurbiClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useAuthPrompt } from "@/lib/auth-prompt-context";
 import { formatOrderDateTime } from "@/lib/order-date";
+import { formatRM } from "@/lib/format";
 import ImageLightbox from "@/components/ImageLightbox";
 import AppHeader from "@/components/AppHeader";
 import PageLoading from "@/components/PageLoading";
-
-const RECEIVABLE_STATUSES = ["in_transit", "shipped", "to_receive", "delivering", "delivered"];
+import StatusChip from "@/components/account/StatusChip";
+import StickyActionBar from "@/components/account/StickyActionBar";
+import {
+  PAID_STATUSES,
+  PROGRESS_STEPS,
+  RECEIVABLE_STATUSES,
+  orderRefundStatus,
+  orderStatusInfo,
+  progressIndex,
+} from "@/components/account/orderStatus";
+import { accountMediaUrl, orderProofPhotos } from "@/components/account/media";
+import { shortDateTime } from "@/components/account/dates";
+import { primaryBtn, secondaryBtn } from "@/components/account/buttons";
 
 const TRACKING_STAGES = [
-  { key: "before", label: "Before", owner: "Farmer" },
-  { key: "during", label: "During", owner: "Farmer" },
-  { key: "after", label: "After", owner: "Farmer" },
-  { key: "received", label: "Received", owner: "You" },
+  {
+    key: "before",
+    labelKey: "orderDetail.stages.before",
+    ownerKey: "orderDetail.stages.ownerFarmer",
+  },
+  {
+    key: "during",
+    labelKey: "orderDetail.stages.during",
+    ownerKey: "orderDetail.stages.ownerFarmer",
+  },
+  {
+    key: "after",
+    labelKey: "orderDetail.stages.after",
+    ownerKey: "orderDetail.stages.ownerFarmer",
+  },
+  {
+    key: "received",
+    labelKey: "orderDetail.stages.received",
+    ownerKey: "orderDetail.stages.ownerYou",
+  },
 ];
 
 const TAB_FOR_STATUS = {
@@ -37,8 +72,8 @@ const TAB_FOR_STATUS = {
   shipped: "to-receive",
   to_receive: "to-receive",
   delivering: "to-receive",
+  delivered: "to-receive",
   completed: "completed",
-  delivered: "completed",
   received: "completed",
   return_requested: "return-refund",
   refund_requested: "return-refund",
@@ -46,15 +81,19 @@ const TAB_FOR_STATUS = {
   refunded: "return-refund",
 };
 
+const cardCls = "qurbi-dark-surface rounded-2xl border p-4 shadow-md";
+
+// Previous stage-by-stage tracking layout (not currently rendered).
 function LegacyOrderTracking({ order, onPreview }) {
+  const { t } = useTranslation("orders");
   const tracking = order.tracking_photos || {};
 
   return (
     <section className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-      <h2 className="text-gray-900 font-bold">Order tracking</h2>
+      <h2 className="text-gray-900 font-bold">{t("orderDetail.legacyTracking.title")}</h2>
 
       <p className="mt-1 text-xs text-gray-400">
-        Before → During → After → Received
+        {t("orderDetail.legacyTracking.stagesLine")}
       </p>
 
       <div className="mt-4 space-y-3">
@@ -72,12 +111,14 @@ function LegacyOrderTracking({ order, onPreview }) {
             );
 
           const waitingFor = proof?.image_url
-            ? "Complete"
+            ? t("orderDetail.legacyTracking.complete")
             : awaitingBuyer
-              ? "Locked until farmer photos are complete"
+              ? t("orderDetail.legacyTracking.lockedUntilFarmer")
               : priorComplete
-                ? `Waiting for ${stage.owner}`
-                : "Locked";
+                ? t("orderDetail.legacyTracking.waitingFor", {
+                    owner: t(stage.ownerKey),
+                  })
+                : t("orderDetail.legacyTracking.locked");
 
           return (
             <div key={stage.key} className="flex gap-3">
@@ -95,11 +136,13 @@ function LegacyOrderTracking({ order, onPreview }) {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="text-sm font-bold text-gray-800">
-                      {stage.label}
+                      {t(stage.labelKey)}
                     </p>
 
                     <p className="text-xs text-gray-400">
-                      Action: {stage.owner}
+                      {t("orderDetail.legacyTracking.action", {
+                        owner: t(stage.ownerKey),
+                      })}
                     </p>
                   </div>
 
@@ -116,13 +159,16 @@ function LegacyOrderTracking({ order, onPreview }) {
                   <button
                     type="button"
                     onClick={() =>
-                      onPreview(proof.image_url, `${stage.label} order proof`)
+                      onPreview(
+                        proof.image_url,
+                        t("orderDetail.proofAlt", { stage: t(stage.labelKey) }),
+                      )
                     }
                     className="mt-2 block h-24 w-24 overflow-hidden rounded-xl bg-gray-100"
                   >
                     <img
                       src={proof.image_url}
-                      alt={`${stage.label} order proof`}
+                      alt={t("orderDetail.proofAlt", { stage: t(stage.labelKey) })}
                       className="h-full w-full object-cover"
                     />
                   </button>
@@ -136,12 +182,13 @@ function LegacyOrderTracking({ order, onPreview }) {
   );
 }
 
-function OrderTracking({ order, onPreview }) {
-  const tracking = order.tracking_photos || {};
+function OrderTracking({ order, photos, onPreview }) {
+  const { t } = useTranslation("orders");
+  const { t: ta } = useTranslation("account");
 
   const proofs = TRACKING_STAGES.map((stage) => ({
     ...stage,
-    image: tracking[stage.key]?.image_url,
+    image: photos[stage.key]?.image_url,
   })).filter((proof) => proof.image);
 
   const [selectedKey, setSelectedKey] = useState(() => proofs[0]?.key || "");
@@ -156,135 +203,223 @@ function OrderTracking({ order, onPreview }) {
   }, [order.id, selectedKey, proofs]);
 
   return (
-    <section className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-      <h2 className="text-gray-900 font-bold">Order Photo Proof</h2>
-
-      <p className="mt-1 text-xs text-gray-400">
-        Farmer Before, During, After and your Received proof
+    <section className={cardCls} aria-labelledby="proof-title">
+      <h2 id="proof-title" className="text-base font-bold text-white">
+        {t("orderDetail.tracking.title")}
+      </h2>
+      <p className="mt-1 text-sm leading-relaxed text-white/80">
+        {ta("orderDetail.proof.subtitle")}
       </p>
+
+      <ol className="mt-3 grid grid-cols-4 gap-1.5">
+        {TRACKING_STAGES.map((stage) => {
+          const done = Boolean(photos[stage.key]?.image_url);
+          return (
+            <li
+              key={stage.key}
+              className={`flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-center ${done ? "bg-[#E3C19F] text-[#41362D]" : "bg-white/10 text-white/85"}`}
+            >
+              <span
+                className={`flex h-6 w-6 items-center justify-center rounded-full ${done ? "bg-[#41362D] text-white" : "border border-white/50"}`}
+                aria-hidden="true"
+              >
+                {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
+              </span>
+              <span className="text-xs font-bold leading-tight">{t(stage.labelKey)}</span>
+              <span className="text-xs leading-tight opacity-80">
+                {done ? ta("orderDetail.proof.done") : t(stage.ownerKey)}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
 
       {selected ? (
         <>
           <button
             type="button"
             onClick={() =>
-              onPreview(selected.image, `${selected.label} order proof`)
+              onPreview(
+                selected.image,
+                t("orderDetail.proofAlt", { stage: t(selected.labelKey) }),
+              )
             }
-            className="mt-4 flex h-64 w-full items-center justify-center overflow-hidden rounded-2xl bg-gray-50"
+            aria-label={ta("orderDetail.proof.open", { stage: t(selected.labelKey) })}
+            className="mt-4 flex h-56 w-full items-center justify-center overflow-hidden rounded-2xl bg-black/20"
           >
             <img
               src={selected.image}
-              alt={`${selected.label} order proof`}
+              alt={t("orderDetail.proofAlt", { stage: t(selected.labelKey) })}
               className="h-full w-full object-contain"
             />
           </button>
 
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {proofs.map((proof) => (
-              <button
-                type="button"
-                key={proof.key}
-                onClick={() => setSelectedKey(proof.key)}
-                className={`flex-none overflow-hidden rounded-xl border-2 p-0.5 ${
-                  selected.key === proof.key
-                    ? "border-[#F7EDE2]0"
-                    : "border-transparent"
-                }`}
-              >
-                <img
-                  src={proof.image}
-                  alt={proof.label}
-                  className="h-16 w-16 object-cover"
-                />
-
-                <span className="block px-1 pb-1 pt-0.5 text-[10px] font-bold text-gray-600">
-                  {proof.label}
-                </span>
-              </button>
-            ))}
-          </div>
+          {proofs.length > 1 && (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {proofs.map((proof) => (
+                <button
+                  type="button"
+                  key={proof.key}
+                  onClick={() => setSelectedKey(proof.key)}
+                  aria-pressed={selected.key === proof.key}
+                  className={`flex-none overflow-hidden rounded-xl border-2 p-0.5 ${
+                    selected.key === proof.key
+                      ? "border-[#E3C19F]"
+                      : "border-transparent"
+                  }`}
+                >
+                  <img
+                    src={proof.image}
+                    alt={t(proof.labelKey)}
+                    className="h-16 w-16 rounded-lg object-cover"
+                  />
+                  <span className="block px-1 pb-1 pt-0.5 text-xs font-bold text-white">
+                    {t(proof.labelKey)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </>
       ) : (
-        <p className="mt-4 rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2]
-         px-3 py-4 text-sm font-bold text-black">
-          No proof photos have been uploaded yet.
+        <p className="mt-4 rounded-xl bg-white/10 px-3 py-3 text-sm leading-relaxed text-white/90">
+          {t("orderDetail.tracking.noProofYet")} {ta("orderDetail.proof.emptyHint")}
         </p>
       )}
     </section>
   );
 }
 
-function statusLabel(order) {
-  if (order.status === "out_of_stock") return "Out of Stock";
+function ProgressTimeline({ order }) {
+  const { t: ta } = useTranslation("account");
+  const reached = progressIndex(order);
+  const status = orderStatusInfo(order);
+  const stopped = ["cancelled", "outOfStock"].includes(status.key);
+  const events = Array.isArray(order.tracking_events) ? order.tracking_events : [];
+  const eventDate = (statuses) => {
+    const match = events
+      .filter((event) => statuses.includes(String(event?.status || "").toLowerCase()))
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
+    return match?.createdAt || "";
+  };
 
-  if (order.status === "cancelled") return "Cancelled";
-
-  if (order.status === "refunded" || order.refund_status === "completed") {
-    return "Refund Complete";
-  }
-
-  if (
-    order.status === "refund_requested" &&
-    order.refund_status === "rejected"
-  ) {
-    return "Refund Rejected";
-  }
-
-  if (order.status === "refund_requested") {
-    return "Refund Pending Approval";
-  }
-
-  return order.status?.replaceAll("_", " ");
+  return (
+    <section className={cardCls} aria-labelledby="progress-title">
+      <h2 id="progress-title" className="text-base font-bold text-white">
+        {ta("orderDetail.timeline.title")}
+      </h2>
+      <ol className="mt-3">
+        {PROGRESS_STEPS.map((step, index) => {
+          const done = index <= reached;
+          const current = index === reached + 1 && !stopped;
+          const date = step.key === "placed" ? order.created_date : eventDate(step.statuses);
+          const last = index === PROGRESS_STEPS.length - 1;
+          return (
+            <li key={step.key} className="relative flex gap-3 pb-4 last:pb-0">
+              {!last && (
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-[13px] top-7 h-[calc(100%-1.5rem)] w-0.5 ${index < reached ? "bg-[#E3C19F]" : "bg-white/20"}`}
+                />
+              )}
+              <span
+                aria-hidden="true"
+                className={`relative z-10 flex h-7 w-7 flex-none items-center justify-center rounded-full ${done ? "bg-[#E3C19F] text-[#41362D]" : current ? "border-2 border-[#E3C19F] bg-[#41362D]" : "border-2 border-white/30 bg-transparent"}`}
+              >
+                {done ? <Check className="h-4 w-4" strokeWidth={3} /> : current ? <span className="h-2.5 w-2.5 rounded-full bg-[#E3C19F]" /> : null}
+              </span>
+              <div className="min-w-0 pt-0.5">
+                <p className={`text-[15px] font-bold leading-snug ${done || current ? "text-white" : "text-white/60"}`}>
+                  {ta(`orderDetail.timeline.steps.${step.key}`)}
+                  {current && (
+                    <span className="ml-2 text-xs font-semibold text-[#E3C19F]">
+                      {ta("orderDetail.timeline.next")}
+                    </span>
+                  )}
+                </p>
+                {done && date && (
+                  <p className="text-[13px] text-white/75">{shortDateTime(date, ta)}</p>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      {stopped && (
+        <p className="mt-3 rounded-xl bg-white/10 px-3 py-2.5 text-sm text-white/90">
+          {ta(status.hintKey)}
+        </p>
+      )}
+    </section>
+  );
 }
 
 function RefundRequestSheet({ order, loading, error, onClose, onSubmit }) {
+  const { t } = useTranslation("orders");
+  const { t: ta } = useTranslation("account");
   const [reason, setReason] = useState("");
   const [evidenceFiles, setEvidenceFiles] = useState([]);
+  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     setReason("");
     setEvidenceFiles([]);
+    setTouched(false);
   }, [order?.id]);
 
   if (!order) return null;
+
+  const reasonMissing = touched && !reason.trim();
+  const photosMissing = touched && !evidenceFiles.length;
 
   return (
     <div
       className="fixed inset-0 z-[70] flex items-end bg-black/45 backdrop-blur-sm sm:items-center sm:justify-center"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="refund-sheet-title"
       onClick={() => !loading && onClose()}
     >
       <div
-        className="w-full max-w-md rounded-t-3xl bg-white p-5 pb-7 shadow-xl sm:rounded-3xl"
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-[#FFFDF9] p-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-xl sm:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-gray-200 sm:hidden" />
+        <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-[#E3C19F] sm:hidden" />
 
-        <h2 className="text-lg font-bold text-gray-900">Request a refund</h2>
+        <h2 id="refund-sheet-title" className="text-lg font-bold text-[#41362D]">
+          {t("orderDetail.refundSheet.title")}
+        </h2>
 
-        <p className="mt-1 text-sm text-gray-500">
-          Tell us why you are requesting a refund for {order.order_number}.
+        <p className="mt-1 text-[15px] leading-relaxed text-[#5A493C]">
+          {t("orderDetail.refundSheet.subtitle", { orderNumber: order.order_number })}
         </p>
 
+        <label htmlFor="refund-reason" className="mt-4 block text-sm font-bold text-[#41362D]">
+          {ta("orderDetail.refund.reasonLabel")} <span className="text-[#9A2E0C]">*</span>
+        </label>
         <textarea
+          id="refund-reason"
           value={reason}
           onChange={(event) => setReason(event.target.value)}
           disabled={loading}
           rows={4}
-          placeholder="Enter your reason"
-          className="mt-4 w-full resize-none rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-800 outline-none focus:border-[#A9825F] disabled:bg-gray-50"
+          aria-invalid={reasonMissing}
+          aria-describedby={reasonMissing ? "refund-reason-error" : undefined}
+          placeholder={t("orderDetail.refundSheet.reasonPlaceholder")}
+          className={`mt-1.5 w-full resize-none rounded-xl border-2 bg-white px-3 py-3 text-[15px] text-[#41362D] outline-none placeholder:text-[#6B594A]/70 focus:border-[#A9825F] disabled:opacity-60 ${reasonMissing ? "border-[#B42318]" : "border-[#E3C19F]"}`}
         />
+        {reasonMissing && (
+          <p id="refund-reason-error" className="mt-1 text-sm font-semibold text-[#9A2E0C]">
+            {ta("orderDetail.refund.reasonRequired")}
+          </p>
+        )}
 
-        <label className="mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#C49A72] bg-[#F7EDE2] px-3 text-center text-sm font-bold text-[#41362D]">
-          <Camera className="h-5 w-5" />
-
-          <span className="mt-1">Upload refund photo evidence</span>
-
-          <span className="mt-0.5 text-[11px] font-medium text-[#5A493C]">
-            At least one photo is required (up to 5)
+        <label className={`mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-[#F7EDE2] px-3 py-3 text-center text-[15px] font-bold text-[#41362D] ${photosMissing ? "border-[#B42318]" : "border-[#C49A72]"}`}>
+          <Camera className="h-6 w-6" aria-hidden="true" />
+          <span className="mt-1">{t("orderDetail.refundSheet.uploadLabel")} *</span>
+          <span className="mt-0.5 text-[13px] font-medium text-[#5A493C]">
+            {t("orderDetail.refundSheet.uploadHint")}
           </span>
-
           <input
             type="file"
             accept="image/*"
@@ -298,19 +433,26 @@ function RefundRequestSheet({ order, loading, error, onClose, onSubmit }) {
         </label>
 
         {evidenceFiles.length > 0 && (
-          <p className="mt-2 text-xs font-semibold text-[#41362D]">
-            {evidenceFiles.length} photo
-            {evidenceFiles.length === 1 ? "" : "s"} selected
+          <p className="mt-2 text-sm font-semibold text-[#41362D]">
+            {t("orderDetail.refundSheet.photosSelected", {
+              count: evidenceFiles.length,
+            })}
+          </p>
+        )}
+        {photosMissing && (
+          <p className="mt-1 text-sm font-semibold text-[#9A2E0C]">
+            {t("orderDetail.errors.evidenceRequired")}
           </p>
         )}
 
         {error && (
-          <p className="mt-2 text-sm font-medium text-red-500">{error}</p>
+          <p role="alert" className="mt-3 rounded-xl bg-[#FBE4E1] px-3 py-2.5 text-sm font-semibold text-[#8A1C12]">
+            {error}
+          </p>
         )}
 
-        <p className="mt-3 text-xs leading-5 text-gray-400">
-          Your request will be sent to an administrator for review. A refund is
-          not completed until it is approved.
+        <p className="mt-3 text-[13px] leading-5 text-[#5A493C]">
+          {t("orderDetail.refundSheet.disclaimer")}
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -318,18 +460,24 @@ function RefundRequestSheet({ order, loading, error, onClose, onSubmit }) {
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="min-h-11 rounded-xl border border-gray-200 px-4 text-sm font-bold text-gray-600 disabled:opacity-50"
+            className={secondaryBtn}
           >
-            Keep Order
+            {t("orderDetail.refundSheet.keep")}
           </button>
 
           <button
             type="button"
-            onClick={() => onSubmit(reason, evidenceFiles)}
-            disabled={loading || !reason.trim() || !evidenceFiles.length}
-            className="min-h-11 rounded-xl bg-[#F7EDE2]0 px-4 text-sm font-bold text-white disabled:opacity-50"
+            onClick={() => {
+              setTouched(true);
+              if (!reason.trim() || !evidenceFiles.length) return;
+              onSubmit(reason, evidenceFiles);
+            }}
+            disabled={loading}
+            className={primaryBtn}
           >
-            {loading ? "Submitting..." : "Submit Request"}
+            {loading
+              ? t("orderDetail.refundSheet.submitting")
+              : t("orderDetail.refundSheet.submit")}
           </button>
         </div>
       </div>
@@ -337,9 +485,80 @@ function RefundRequestSheet({ order, loading, error, onClose, onSubmit }) {
   );
 }
 
+function DeliveryCard({ order }) {
+  const { t: ta } = useTranslation("account");
+  const address = order.deliveryAddress || order.delivery_address || null;
+  const isPickup = order.fulfillment_method === "pickup";
+  const lines = address
+    ? [
+        address.addressLine1,
+        address.addressLine2,
+        [address.postcode, address.city].filter(Boolean).join(" "),
+        [address.state, address.country].filter(Boolean).join(", "),
+      ].filter(Boolean)
+    : [];
+  const scheduled = order.scheduledDate || order.scheduled_date || "";
+  const notes = order.buyerNotes || order.buyer_notes || "";
+  if (!lines.length && !scheduled && !notes && !isPickup) return null;
+  return (
+    <section className={cardCls} aria-labelledby="delivery-title">
+      <h2 id="delivery-title" className="flex items-center gap-2 text-base font-bold text-white">
+        {isPickup ? <MapPin className="h-5 w-5" aria-hidden="true" /> : <Truck className="h-5 w-5" aria-hidden="true" />}
+        {isPickup ? ta("orderDetail.delivery.pickupTitle") : ta("orderDetail.delivery.title")}
+      </h2>
+      <dl className="mt-3 space-y-2.5 text-[15px]">
+        {address?.recipientName && (
+          <div>
+            <dt className="text-[13px] text-white/70">{ta("orderDetail.delivery.recipient")}</dt>
+            <dd className="font-semibold text-white">
+              {address.recipientName}
+              {address.recipientPhone ? ` · ${address.recipientPhone}` : ""}
+            </dd>
+          </div>
+        )}
+        {lines.length > 0 && (
+          <div>
+            <dt className="text-[13px] text-white/70">{ta("orderDetail.delivery.address")}</dt>
+            <dd className="break-words text-white">{lines.join(", ")}</dd>
+          </div>
+        )}
+        {scheduled && (
+          <div>
+            <dt className="text-[13px] text-white/70">{ta("orderDetail.delivery.scheduled")}</dt>
+            <dd className="font-semibold text-white">
+              {new Intl.DateTimeFormat("en-MY", { day: "numeric", month: "long", year: "numeric" }).format(new Date(scheduled))}
+            </dd>
+          </div>
+        )}
+        {notes && (
+          <div>
+            <dt className="text-[13px] text-white/70">{ta("orderDetail.delivery.notes")}</dt>
+            <dd className="break-words text-white">{notes}</dd>
+          </div>
+        )}
+      </dl>
+    </section>
+  );
+}
+
+function ItemImage({ src }) {
+  const [failed, setFailed] = useState(false);
+  const url = accountMediaUrl(src);
+  return (
+    <div className="flex h-14 w-14 flex-none items-center justify-center overflow-hidden rounded-xl bg-[#F7EDE2] text-[#6B594A]">
+      {url && !failed ? (
+        <img src={url} alt="" className="h-full w-full object-cover" onError={() => setFailed(true)} />
+      ) : (
+        <ShoppingBag className="h-6 w-6" aria-hidden="true" />
+      )}
+    </div>
+  );
+}
+
 export default function OrderDetail() {
+  const { t } = useTranslation("orders");
+  const { t: ta } = useTranslation("account");
   const { orderId } = useParams();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const { user, isAuthenticated, authChecked } = useAuth();
@@ -377,7 +596,7 @@ export default function OrderDetail() {
       setLoadError(
         error.data?.error ||
           error.message ||
-          "We couldn't load this order. Please try again.",
+          t("orderDetail.errors.loadFallback"),
       );
     } finally {
       setLoading(false);
@@ -388,12 +607,30 @@ export default function OrderDetail() {
     loadOrder();
   }, [loadOrder]);
 
+  useEffect(() => {
+    if (!message) return undefined;
+    const timer = window.setTimeout(() => setMessage(""), 3500);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
+  // Local preview of the photo the buyer picked but has not saved yet.
+  const selectedPreview = useMemo(
+    () => (receivedFile ? URL.createObjectURL(receivedFile) : ""),
+    [receivedFile],
+  );
+  useEffect(
+    () => () => {
+      if (selectedPreview) URL.revokeObjectURL(selectedPreview);
+    },
+    [selectedPreview],
+  );
+
   const confirmReceipt = async () => {
     if (!order || actionLoading) return;
 
     if (!order.tracking_photos?.received?.image_url) {
       setActionError(
-        "Upload and save a photo showing that you received the order first.",
+        t("orderDetail.errors.uploadReceivedFirst"),
       );
       return;
     }
@@ -413,12 +650,12 @@ export default function OrderDetail() {
         },
       );
 
-      setMessage("Order received and completed successfully.");
+      setMessage(t("orderDetail.confirmSuccess"));
     } catch (error) {
       setActionError(
         error.data?.error ||
           error.message ||
-          "We couldn't confirm receipt of this order.",
+          t("orderDetail.errors.confirmReceiptFallback"),
       );
 
       await loadOrder();
@@ -443,17 +680,19 @@ export default function OrderDetail() {
         {
           orderId: order.id,
           receivedPhotoUrl: file_url,
+          // Private uploads need an auth header, so show the local file.
+          previewUrl: URL.createObjectURL(receivedFile),
         },
       );
 
       setOrder(response.data?.order || order);
       setReceivedFile(null);
-      setMessage("Received proof photo saved.");
+      setMessage(t("orderDetail.saveProofSuccess"));
     } catch (error) {
       setActionError(
         error.data?.error ||
           error.message ||
-          "We couldn't save your received proof photo.",
+          t("orderDetail.errors.saveProofFallback"),
       );
     } finally {
       setActionLoading(false);
@@ -471,7 +710,7 @@ export default function OrderDetail() {
 
       if (!files.length) {
         throw new Error(
-          "Upload at least one photo as refund evidence before submitting your request.",
+          t("orderDetail.errors.evidenceRequired"),
         );
       }
 
@@ -504,12 +743,12 @@ export default function OrderDetail() {
 
       setRefundSheetOpen(false);
 
-      setMessage("Your refund request has been sent for admin approval.");
+      setMessage(t("orderDetail.refundRequestSuccess"));
     } catch (error) {
       setActionError(
         error.data?.error ||
           error.message ||
-          "We couldn't submit your refund request.",
+          t("orderDetail.errors.refundRequestFallback"),
       );
     } finally {
       setActionLoading(false);
@@ -518,120 +757,293 @@ export default function OrderDetail() {
 
   if (loading) {
     return (
-      <div className="qurbi-page">
+      <div className="aisyah-page">
         <AppHeader
-          title="Order Details"
+          title={t("orderDetail.title")}
           backTo="/orders"
-          subtitle="Track your purchase and delivery progress"
+          subtitle={t("orderDetail.loadingSubtitle")}
         />
-        <PageLoading contentOnly message="Loading order details..." />
+        <PageLoading contentOnly message={t("orderDetail.loadingMessage")} />
       </div>
     );
   }
 
   if (authChecked && !isAuthenticated) {
     return (
-      <div className="aisyah-page min-h-screen pb-28">
-        <AppHeader title="Order Details" backTo="/orders" subtitle="Track your purchase and delivery progress" />
-        <div className="aisyah-content flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <Package className="h-12 w-12 text-[#41362D]/35" />
-          <p className="text-sm text-[#41362D]/65">Sign in to view this order.</p>
+      <div className="aisyah-page min-h-screen">
+        <AppHeader title={t("orderDetail.title")} backTo="/orders" subtitle={t("orderDetail.loadingSubtitle")} />
+        <div className="aisyah-content flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <Package className="h-12 w-12 text-[#41362D]/40" aria-hidden="true" />
+          <p className="max-w-xs text-[15px] text-[#41362D]/75">{t("orderDetail.signInPrompt")}</p>
           <button
             type="button"
-            onClick={() => requestSignIn({ returnTo: `/orders/${orderId}`, message: "Sign in to view this order and its delivery progress." })}
-            className="mt-2 rounded-xl bg-gradient-to-br from-[#41362D] to-[#6B594A] px-6 py-3 text-sm font-bold text-white"
+            onClick={() => requestSignIn({ returnTo: `/orders/${orderId}`, message: t("orderDetail.signInMessage") })}
+            className={`${primaryBtn} mt-2 px-8`}
           >
-            Sign In
+            {t("orderDetail.signIn")}
           </button>
         </div>
       </div>
     );
   }
 
-  if (loadError) {
+  if (loadError || !order) {
     return (
-      <div className="qurbi-page flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
-        <Package className="h-12 w-12 text-[#41362D]/25" />
-        <p className="max-w-sm text-sm text-[#41362D]/65">{loadError}</p>
-        <button type="button" onClick={loadOrder} className="qurbi-primary-button">
-          Retry
-        </button>
-        <Link to="/orders" className="text-sm font-bold text-[#6B594A]">
-          Back to My Orders
-        </Link>
+      <div className="aisyah-page min-h-screen">
+        <AppHeader title={t("orderDetail.title")} backTo="/orders" subtitle={t("orderDetail.loadingSubtitle")} />
+        <div className="aisyah-content flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <Package className="h-12 w-12 text-[#41362D]/40" aria-hidden="true" />
+          <p className="max-w-sm text-[15px] font-semibold text-[#41362D]">
+            {loadError || t("orderDetail.notFound")}
+          </p>
+          {loadError && (
+            <button type="button" onClick={loadOrder} className={`${primaryBtn} px-8`}>
+              {t("orderDetail.retry")}
+            </button>
+          )}
+          <Link to="/orders" className={`${secondaryBtn} px-6`}>
+            {t("orderDetail.backToOrders")}
+          </Link>
+        </div>
       </div>
     );
   }
 
-  if (!order) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center gap-4 p-8">
-        <Package className="w-12 h-12 text-gray-300" />
-
-        <p className="text-gray-500">Order not found.</p>
-
-        <Link to="/orders" className="text-[#5A493C] font-semibold">
-          Back to My Orders
-        </Link>
-      </div>
-    );
-  }
-
+  const status = orderStatusInfo(order);
+  const photos = orderProofPhotos(order);
   const canConfirmReceipt = RECEIVABLE_STATUSES.includes(order.status);
 
   const farmerPhotosComplete = ["before", "during", "after"].every(
-    (stage) => order.tracking_photos?.[stage]?.image_url,
+    (stage) => photos[stage]?.image_url,
   );
+  const receivedProofSaved = Boolean(order.tracking_photos?.received?.image_url);
 
   const progressImages = Array.isArray(order.progress_images)
     ? order.progress_images.filter(Boolean)
     : [];
 
   const returnTab =
-    searchParams.get("fromTab") || TAB_FOR_STATUS[order.status] || "to-pay";
+    searchParams.get("fromTab") || TAB_FOR_STATUS[order.status] || status.tab || "to-pay";
 
-  const isRefundRejected = order.refund_status?.toLowerCase() === "rejected";
+  const refundStatus = orderRefundStatus(order);
+  const isRefundRejected = refundStatus === "rejected";
+  const hasRefund =
+    status.tab === "return-refund" || order.status === "refund_requested" || order.status === "refunded";
+  const refundReason = order.refund_reason || order.refundReason || "";
+  const refundEvidence = Array.isArray(order.refund_evidence) ? order.refund_evidence : [];
+  const refundAdminNote = order.refund_admin_note || order.refundAdminNote || "";
+  const isPaid = PAID_STATUSES.includes(order.status) || order.payment_status === "paid";
+  const reservationExpiry =
+    status.next === "pay" && order.reservation_expires_at && order.reservation_status === "active"
+      ? shortDateTime(order.reservation_expires_at, ta)
+      : "";
+
+  // Exactly one primary action, pinned above the bottom navigation.
+  let stickyAction = null;
+  if (status.next === "pay") {
+    stickyAction = (
+      <Link to={`/payment?order_id=${encodeURIComponent(order.id)}`} className={`${primaryBtn} w-full`}>
+        {t("orders.completePayment")}
+      </Link>
+    );
+  } else if (canConfirmReceipt && farmerPhotosComplete) {
+    stickyAction = receivedFile ? (
+      <button type="button" onClick={saveReceivedProof} disabled={actionLoading} className={`${primaryBtn} w-full`}>
+        {actionLoading ? t("orderDetail.confirm.saving") : t("orderDetail.confirm.savePhoto")}
+      </button>
+    ) : receivedProofSaved ? (
+      <button type="button" onClick={confirmReceipt} disabled={actionLoading} className={`${primaryBtn} w-full`}>
+        <Check className="h-5 w-5" aria-hidden="true" />
+        {actionLoading ? t("orderDetail.confirm.updating") : ta("orderDetail.receive.confirmButton")}
+      </button>
+    ) : (
+      <label htmlFor="received-photo-input" className={`${primaryBtn} w-full cursor-pointer`}>
+        <Camera className="h-5 w-5" aria-hidden="true" />
+        {t("orderDetail.confirm.uploadPhoto")}
+      </label>
+    );
+  } else if (isPaid && status.tab !== "return-refund") {
+    stickyAction = (
+      <Link to={`/receipt?order_id=${encodeURIComponent(order.id)}`} className={`${primaryBtn} w-full`}>
+        <ReceiptText className="h-5 w-5" aria-hidden="true" />
+        {ta("orders.actions.receipt")}
+      </Link>
+    );
+  }
+
+  const receiveStep = !farmerPhotosComplete ? 0 : receivedFile || !receivedProofSaved ? 1 : 2;
 
   return (
-    <div className="qurbi-page">
+    <div className={`aisyah-page ${stickyAction ? "pb-[calc(11rem+env(safe-area-inset-bottom))]" : ""}`}>
       <AppHeader
-        title="Order Details"
+        title={t("orderDetail.title")}
         backTo={`/orders?tab=${encodeURIComponent(returnTab)}`}
         subtitle={`${order.order_number} · ${formatOrderDateTime(order.created_date)}`}
       />
 
       {message && (
-        <div className="fixed top-5 left-4 right-4 z-50 rounded-xl bg-[#5A493C] px-4 py-3 text-sm font-semibold text-white shadow-lg">
+        <div
+          role="status"
+          className="fixed left-4 right-4 top-5 z-50 mx-auto max-w-md rounded-xl bg-[#41362D] px-4 py-3 text-[15px] font-semibold text-white shadow-lg"
+        >
           {message}
         </div>
       )}
 
-      <main className="p-4 space-y-3">
-        {actionError && (
-          <p className="rounded-xl bg-red-50 px-3 py-3 text-sm font-medium text-red-500">
+      <main className="aisyah-content mx-auto max-w-3xl space-y-3">
+        {actionError && !refundSheetOpen && (
+          <p role="alert" className="flex items-start gap-2 rounded-xl border border-[#E8A39A] bg-[#FBE4E1] px-3 py-3 text-[15px] font-semibold text-[#8A1C12]">
+            <CircleAlert className="mt-0.5 h-5 w-5 flex-none" aria-hidden="true" />
             {actionError}
           </p>
         )}
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50 flex justify-between">
-          <span className="text-gray-400 text-sm">Status</span>
+        <section className={cardCls} aria-labelledby="status-title">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="status-title" className="text-sm font-semibold text-white/80">
+              {t("orderDetail.statusLabel")}
+            </h2>
+            <StatusChip order={order} size="md" />
+          </div>
+          <p className="mt-2 text-[15px] leading-relaxed text-white">{ta(status.hintKey)}</p>
+          {reservationExpiry && (
+            <p className="mt-3 flex items-start gap-2 rounded-xl bg-[#FDF0D5] px-3 py-2.5 text-sm font-semibold text-[#7A4B00]">
+              <Clock3 className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+              {ta("orderDetail.reservedUntil", { time: reservationExpiry })}
+            </p>
+          )}
+          <p className="mt-3 flex items-baseline justify-between gap-3 border-t border-white/15 pt-3">
+            <span className="text-sm text-white/80">{t("orderDetail.items.total")}</span>
+            <span className="text-xl font-bold text-white">{formatRM(order.total)}</span>
+          </p>
+        </section>
 
-          <span className="text-right text-sm font-bold capitalize text-white">
-            {statusLabel(order)}
-          </span>
-        </div>
+        {canConfirmReceipt && (
+          <section className={`${cardCls} border-2`} aria-labelledby="receive-title">
+            <h2 id="receive-title" className="text-lg font-bold text-white">
+              {ta("orderDetail.receive.title")}
+            </h2>
+            <p className="mt-1 text-[15px] leading-relaxed text-white/90">
+              {t("orderDetail.confirm.instructions")}
+            </p>
 
-        <OrderTracking
-          order={order}
-          onPreview={(image, alt) => setPreviewImage({ image, alt })}
-        />
+            <ol className="mt-3 space-y-2">
+              {["farmerPhotos", "yourPhoto", "confirm"].map((key, index) => {
+                const done = index < receiveStep;
+                const current = index === receiveStep;
+                return (
+                  <li key={key} className={`flex items-start gap-3 rounded-xl px-3 py-2.5 ${current ? "bg-white/15" : ""}`}>
+                    <span
+                      aria-hidden="true"
+                      className={`flex h-7 w-7 flex-none items-center justify-center rounded-full text-sm font-bold ${done ? "bg-[#E3C19F] text-[#41362D]" : current ? "border-2 border-[#E3C19F] text-white" : "border-2 border-white/30 text-white/60"}`}
+                    >
+                      {done ? <Check className="h-4 w-4" strokeWidth={3} /> : index + 1}
+                    </span>
+                    <span className="min-w-0">
+                      <span className={`block text-[15px] font-bold ${done || current ? "text-white" : "text-white/65"}`}>
+                        {ta(`orderDetail.receive.steps.${key}.title`)}
+                      </span>
+                      {current && (
+                        <span className="block text-sm leading-relaxed text-white/85">
+                          {ta(`orderDetail.receive.steps.${key}.body`)}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+
+            {farmerPhotosComplete ? (
+              <div className="mt-3">
+                {(selectedPreview || order.tracking_photos?.received?.image_url) && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviewImage({
+                        image: selectedPreview || order.tracking_photos?.received?.image_url,
+                        alt: t("orderDetail.proofAlt", { stage: t("orderDetail.stages.received") }),
+                      })
+                    }
+                    className="mb-3 block h-44 w-full overflow-hidden rounded-xl bg-black/20"
+                    aria-label={ta("orderDetail.proof.open", { stage: t("orderDetail.stages.received") })}
+                  >
+                    <img
+                      src={selectedPreview || order.tracking_photos?.received?.image_url}
+                      alt={t("orderDetail.proofAlt", { stage: t("orderDetail.stages.received") })}
+                      className="h-full w-full object-contain"
+                    />
+                  </button>
+                )}
+                <label
+                  htmlFor="received-photo-input"
+                  className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#E3C19F] px-3 text-center text-[15px] font-bold text-white"
+                >
+                  <ImagePlus className="h-5 w-5 flex-none" aria-hidden="true" />
+                  <span className="min-w-0 break-all">
+                    {receivedFile
+                      ? receivedFile.name
+                      : receivedProofSaved
+                        ? t("orderDetail.confirm.replacePhoto")
+                        : t("orderDetail.confirm.uploadPhoto")}
+                  </span>
+                </label>
+                <input
+                  id="received-photo-input"
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(event) =>
+                    setReceivedFile(event.target.files?.[0] || null)
+                  }
+                  disabled={actionLoading}
+                />
+                {receivedProofSaved && !receivedFile && (
+                  <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-[#E3C19F]">
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                    {t("orderDetail.confirm.proofSaved")}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl bg-[#FDF0D5] px-3 py-2.5 text-sm font-semibold leading-relaxed text-[#7A4B00]">
+                {t("orderDetail.confirm.waitingFarmerPhotos")}
+              </p>
+            )}
+
+            <div className="mt-4 border-t border-white/15 pt-3">
+              <p className="text-sm text-white/80">{ta("orderDetail.refund.problemPrompt")}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setActionError("");
+                  setRefundSheetOpen(true);
+                }}
+                disabled={actionLoading}
+                className="mt-2 inline-flex min-h-11 items-center justify-center rounded-xl border border-[#E3C19F]/70 px-4 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {t("orderDetail.confirm.returnRefund")}
+              </button>
+            </div>
+          </section>
+        )}
+
+        <ProgressTimeline order={order} />
+
+        {(isPaid || Object.keys(photos).length > 0) && (
+          <OrderTracking
+            order={order}
+            photos={photos}
+            onPreview={(image, alt) => setPreviewImage({ image, alt })}
+          />
+        )}
 
         {progressImages.length > 0 && (
-          <section className="qurbi-photo-area rounded-2xl p-4 shadow-sm border">
-            <h2 className="text-gray-900 font-bold">Order progress</h2>
+          <section className="qurbi-photo-area rounded-2xl border p-4 shadow-sm">
+            <h2 className="text-base font-bold text-[#41362D]">{t("orderDetail.progress.title")}</h2>
 
-            <p className="mt-1 text-xs text-gray-400">
-              Photos uploaded by the farmer
+            <p className="mt-1 text-sm text-[#5A493C]">
+              {t("orderDetail.progress.subtitle")}
             </p>
 
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -642,14 +1054,14 @@ export default function OrderDetail() {
                   onClick={() =>
                     setPreviewImage({
                       image,
-                      alt: `Order progress ${index + 1}`,
+                      alt: t("orderDetail.progress.photoAlt", { index: index + 1 }),
                     })
                   }
-                  className="h-20 w-20 flex-none overflow-hidden rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2]"
+                  className="h-20 w-20 flex-none overflow-hidden rounded-xl bg-[#F7EDE2]"
                 >
                   <img
                     src={image}
-                    alt={`Order progress ${index + 1}`}
+                    alt={t("orderDetail.progress.photoAlt", { index: index + 1 })}
                     className="h-full w-full object-cover"
                   />
                 </button>
@@ -658,40 +1070,48 @@ export default function OrderDetail() {
           </section>
         )}
 
-        {(order.status === "refund_requested" ||
-          order.status === "refunded") && (
-          <section className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-            <h2 className="text-gray-900 font-bold">Refund request</h2>
+        {hasRefund && (
+          <section className={cardCls} aria-labelledby="refund-title">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="refund-title" className="text-base font-bold text-white">
+                {t("orderDetail.refundSection.title")}
+              </h2>
+              <StatusChip order={order} />
+            </div>
 
-            {order.refund_reason && (
-              <p className="mt-2 text-sm text-gray-600">
-                <span className="font-semibold">Reason: </span>
-                {order.refund_reason}
+            {refundReason && (
+              <p className="mt-2 text-[15px] text-white/90">
+                <span className="font-semibold">{t("orderDetail.refundSection.reasonLabel")}</span>
+                {refundReason}
               </p>
             )}
 
-            {order.refund_evidence?.length > 0 && (
+            {refundEvidence.length > 0 && (
               <div className="mt-3">
-                <p className="text-xs font-semibold text-gray-500">
-                  Photo evidence
+                <p className="text-sm font-semibold text-white/80">
+                  {t("orderDetail.refundSection.photoEvidence")}
                 </p>
 
                 <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                  {order.refund_evidence.map((image, index) => (
+                  {refundEvidence.map((image, index) => (
                     <button
                       type="button"
                       key={image}
                       onClick={() =>
                         setPreviewImage({
                           image,
-                          alt: `Refund evidence ${index + 1}`,
+                          alt: t("orderDetail.refundSection.evidenceAlt", {
+                            index: index + 1,
+                          }),
                         })
                       }
-                      className="h-20 w-20 flex-none overflow-hidden rounded-xl bg-gray-100"
+                      className="h-20 w-20 flex-none overflow-hidden rounded-xl bg-[#F7EDE2]"
                     >
                       <img
                         src={image}
-                        alt={`Refund evidence ${index + 1}`}
+                        alt={t("orderDetail.refundSection.evidenceAlt", {
+                          index: index + 1,
+                        })}
                         className="h-full w-full object-cover"
                       />
                     </button>
@@ -700,152 +1120,85 @@ export default function OrderDetail() {
               </div>
             )}
 
-            {order.refund_admin_note && (
-              <p className="mt-2 text-sm text-gray-600">
-                <span className="font-semibold">Admin note: </span>
-                {order.refund_admin_note}
+            {refundAdminNote && (
+              <p className="mt-2 text-[15px] text-white/90">
+                <span className="font-semibold">{t("orderDetail.refundSection.adminNoteLabel")}</span>
+                {refundAdminNote}
               </p>
             )}
 
-            <p
-              className={`mt-2 text-xs font-semibold ${
-                isRefundRejected ? "text-red-600" : "text-[#5A493C]"
-              }`}
-            >
-              {statusLabel(order)}
+            <p className={`mt-2 text-sm font-semibold ${isRefundRejected ? "text-[#F6B7AE]" : "text-[#E3C19F]"}`}>
+              {ta(status.hintKey)}
             </p>
 
-            {order.refund_status === "pending_admin_approval" && (
-              <p className="mt-2 text-xs text-gray-400">
-                Waiting for Admin review.
+            {(refundStatus === "pending_admin_approval" || refundStatus === "requested") && (
+              <p className="mt-1 text-sm text-white/80">
+                {t("orderDetail.refundSection.waitingAdminReview")}
               </p>
             )}
           </section>
         )}
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-          <h2 className="text-gray-900 font-bold mb-3">Items</h2>
+        <section className={cardCls} aria-labelledby="items-title">
+          <h2 id="items-title" className="mb-1 text-base font-bold text-white">
+            {t("orderDetail.items.title")}
+          </h2>
 
           {order.items?.map((item, index) => (
             <div
-              key={index}
-              className="flex justify-between gap-3 py-3 border-b border-gray-50 last:border-0"
+              key={item.id || index}
+              className="flex items-center gap-3 border-b border-white/15 py-3 last:border-0"
             >
-              <div>
-                <p className="text-gray-800 font-semibold text-sm">
-                  {item.breed} × {item.quantity}
+              <ItemImage src={item.image} />
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-[15px] font-semibold text-white">
+                  {item.breed || item.listing_name || t("orders.fallbackItemName")}
                 </p>
-
-                <p className="text-gray-400 text-xs mt-0.5">
-                  {item.animal}
-                  {item.grade ? ` · Grade ${item.grade}` : ""}
+                <p className="mt-0.5 text-[13px] text-white/75">
+                  {item.quantity} × {formatRM(item.price_per_head)}
+                  {item.animal ? ` · ${item.animal}` : ""}
+                  {item.grade
+                    ? t("orderDetail.items.gradeSuffix", { grade: item.grade })
+                    : ""}
                 </p>
               </div>
-
-              <p className="text-white font-bold text-sm whitespace-nowrap">
-                RM {item.total?.toLocaleString()}
+              <p className="whitespace-nowrap text-[15px] font-bold text-white">
+                {formatRM(item.total)}
               </p>
             </div>
           ))}
 
-          <div className="flex justify-between pt-3 mt-1 border-t border-gray-100">
-            <span className="text-white font-bold">Total</span>
-
-            <span className="text-white text-lg font-bold">
-              RM {order.total?.toLocaleString()}
-            </span>
-          </div>
-        </div>
-
-        {canConfirmReceipt && (
-          <section className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-            <p className="text-sm text-gray-500">
-              Only confirm once you have received your order.
-            </p>
-
-            {farmerPhotosComplete ? (
-              <>
-                <label className="mt-3 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#C49A72] bg-[#F7EDE2] px-3 text-sm font-bold text-[#41362D]">
-                  <Camera className="h-4 w-4" />
-
-                  <span>
-                    {receivedFile
-                      ? receivedFile.name
-                      : order.tracking_photos?.received?.image_url
-                        ? "Replace received proof photo"
-                        : "Upload received proof photo"}
-                  </span>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(event) =>
-                      setReceivedFile(event.target.files?.[0] || null)
-                    }
-                    disabled={actionLoading}
-                  />
-                </label>
-
-                {receivedFile && (
-                  <button
-                    type="button"
-                    onClick={saveReceivedProof}
-                    disabled={actionLoading}
-                    className="mt-3 min-h-11 w-full rounded-xl border border-[#D5B18D] bg-white px-3 text-sm font-bold text-[#41362D] disabled:opacity-50"
-                  >
-                    {actionLoading ? "Saving..." : "Save received proof photo"}
-                  </button>
-                )}
-
-                {order.tracking_photos?.received?.image_url && (
-                  <p className="mt-2 text-xs font-semibold text-[#5A493C]"> 
-                    Received proof saved. You may now confirm receipt.
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-                Waiting for the farmer to upload Before, During, and After
-                photos.
-              </p>
+          <dl className="mt-1 space-y-1.5 border-t border-white/25 pt-3 text-[15px]">
+            {Number(order.subtotal) > 0 && Number(order.subtotal) !== Number(order.total) && (
+              <div className="flex justify-between text-white/85">
+                <dt>{ta("orderDetail.summary.subtotal")}</dt>
+                <dd>{formatRM(order.subtotal)}</dd>
+              </div>
             )}
-
-            {actionError && (
-              <p className="mt-2 text-sm font-medium text-red-500">
-                {actionError}
-              </p>
+            {Number(order.delivery_fee) > 0 && (
+              <div className="flex justify-between text-white/85">
+                <dt>{ta("orderDetail.summary.delivery")}</dt>
+                <dd>{formatRM(order.delivery_fee)}</dd>
+              </div>
             )}
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setActionError("");
-                  setRefundSheetOpen(true);
-                }}
-                disabled={actionLoading}
-                className="min-h-11 rounded-xl border border-red-100 px-3 text-sm font-bold text-red-500 disabled:opacity-50"
-              >
-                Return / Refund
-              </button>
-
-              <button
-                type="button"
-                onClick={confirmReceipt}
-                disabled={
-                  actionLoading ||
-                  !farmerPhotosComplete ||
-                  !order.tracking_photos?.received?.image_url
-                }
-                className="min-h-11 rounded-xl  px-3 text-sm font-bold text-white disabled:opacity-50"
-              >
-                {actionLoading ? "Updating..." : "Approve Receive"}
-              </button>
+            {Number(order.discount) > 0 && (
+              <div className="flex justify-between text-white/85">
+                <dt>{ta("orderDetail.summary.discount")}</dt>
+                <dd>− {formatRM(order.discount)}</dd>
+              </div>
+            )}
+            <div className="flex items-baseline justify-between">
+              <dt className="font-bold text-white">{t("orderDetail.items.total")}</dt>
+              <dd className="text-xl font-bold text-white">{formatRM(order.total)}</dd>
             </div>
-          </section>
-        )}
+          </dl>
+        </section>
+
+        <DeliveryCard order={order} />
+
       </main>
+
+      {stickyAction && <StickyActionBar>{stickyAction}</StickyActionBar>}
 
       <RefundRequestSheet
         order={refundSheetOpen ? order : null}

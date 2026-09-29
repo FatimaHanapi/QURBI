@@ -1,0 +1,88 @@
+{
+  "home": {
+    "headerTitle": "Layari Ternakan",
+    "headerSubtitle": "Layari ternakan, urus troli anda dan jejaki pesanan anda.",
+    "quickActionsTitle": "Tindakan Pantas",
+    "swipe": "Leret",
+    "quickActions": {
+      "browse": "Layari",
+      "bulkBuy": "Beli Pukal",
+      "cart": "Troli",
+      "orders": "Pesanan",
+      "profile": "Profil"
+    },
+    "categoriesTitle": "Kategori",
+    "species": {
+      "cow": "Lembu",
+      "goat": "Kambing"
+    },
+    "highlightsAriaLabel": "Sorotan",
+    "highlightsTitle": "Sorotan",
+    "highlights": {
+      "findLivestock": {
+        "title": "Cari Ternakan Qurban Anda",
+        "description": "Terokai lembu dan kambing yang tersedia daripada penternak yang dipercayai.",
+        "action": "Layari Ternakan"
+      },
+      "bulkBuy": {
+        "title": "Beli Lot Pukal Lengkap",
+        "description": "Dapatkan sepenuh lot ternakan dengan satu pembelian yang mudah.",
+        "action": "Terokai Beli Pukal"
+      },
+      "trackOrders": {
+        "title": "Ikuti Setiap Peringkat Pesanan",
+        "description": "Semak kemas kini kemajuan dan jejaki pembelian aktif anda.",
+        "action": "Jejak Pesanan"
+      }
+    },
+    "showHighlight": "Tunjuk sorotan {{number}}: {{title}}"
+  },
+  "browse": {
+    "headerTitle": "Layari Ternakan",
+    "searchPlaceholder": "Cari nama, tag, baka, penternak...",
+    "clearSearch": "Kosongkan carian",
+    "openFilters": "Buka penapis",
+    "allSpecies": "Semua",
+    "loadingLivestock": "Memuatkan ternakan...",
+    "resultsCount_one": "{{count}} keputusan",
+    "resultsCount_other": "{{count}} keputusan",
+    "noLivestockFound": "Tiada ternakan dijumpai.",
+    "clearFilters": "Kosongkan penapis",
+    "statusUnknown": "T/B",
+    "detailsUnavailable": "Butiran ternakan tidak tersedia",
+    "noLocation": "Tiada lokasi",
+    "error": {
+      "title": "Gagal memuatkan ternakan",
+      "defaultMessage": "Gagal memuatkan ternakan",
+      "retry": "Cuba Lagi"
+    },
+    "livestockFallback": "Ternakan",
+    "locationUnavailable": "Lokasi tidak tersedia",
+    "gradeUnavailable": "Gred T/A",
+    "male": "Jantan",
+    "female": "Betina"
+  },
+  "filterDropdown": {
+    "allOption": "Semua {{title}}"
+  },
+  "filterSidebar": {
+    "title": "Penapis & Susunan",
+    "clear": "Kosongkan",
+    "priceRangeLabel": "Julat Harga (RM)",
+    "minPlaceholder": "Min",
+    "maxPlaceholder": "Maks",
+    "sortOptions": {
+      "newest": "Terbaharu",
+      "price-asc": "Harga: Rendah → Tinggi",
+      "price-desc": "Harga: Tinggi → Rendah"
+    },
+    "filterLabels": {
+      "sortBy": "Susun Mengikut",
+      "breed": "Baka",
+      "gender": "Jantina",
+      "age": "Umur",
+      "status": "Status",
+      "location": "Lokasi"
+    }
+  }
+}

@@ -12,7 +12,9 @@ export class OrderTrackingEvent extends BaseEntity {
   @Column({ type: 'varchar', length: 36 })
   orderId: string;
 
-  @ManyToOne(() => Order, (order) => order.trackingEvents, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Order, (order) => order.trackingEvents, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'orderId' })
   order: Order;
 

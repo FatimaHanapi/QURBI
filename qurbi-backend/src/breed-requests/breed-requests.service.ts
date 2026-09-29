@@ -1,7 +1,17 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
-import { Breed, BreedRequest, Livestock, RequestStatus, UserRole } from '../entities';
+import {
+  Breed,
+  BreedRequest,
+  Livestock,
+  RequestStatus,
+  UserRole,
+} from '../entities';
 import { BaseCrudService } from '../common/base-crud.service';
 import { slugify } from '../common/slugify';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
@@ -17,7 +27,8 @@ export interface BreedRequestsQuery extends PageQuery {
 export class BreedRequestsService extends BaseCrudService<BreedRequest> {
   constructor(
     @InjectRepository(BreedRequest) repository: Repository<BreedRequest>,
-    @InjectRepository(Breed) private readonly breedRepository: Repository<Breed>,
+    @InjectRepository(Breed)
+    private readonly breedRepository: Repository<Breed>,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {
     super(repository);
@@ -28,14 +39,18 @@ export class BreedRequestsService extends BaseCrudService<BreedRequest> {
   // another user's, or everyone's. speciesId stays a public filter either way
   // (reference data); status/pagination apply on top of the ownership scope,
   // never in place of it.
-  async findAllForViewer(viewer: AuthenticatedUser, query: BreedRequestsQuery): Promise<Paginated<BreedRequest>> {
+  async findAllForViewer(
+    viewer: AuthenticatedUser,
+    query: BreedRequestsQuery,
+  ): Promise<Paginated<BreedRequest>> {
     const { page, limit, skip, take } = resolvePage(query);
     const where: FindOptionsWhere<BreedRequest> = {};
     if (query.status) where.status = query.status;
     if (query.speciesId) where.speciesId = query.speciesId;
 
     if (viewer.role === UserRole.ADMIN) {
-      if (query.requestedByUserId) where.requestedByUserId = query.requestedByUserId;
+      if (query.requestedByUserId)
+        where.requestedByUserId = query.requestedByUserId;
     } else {
       where.requestedByUserId = viewer.id;
     }
@@ -51,9 +66,15 @@ export class BreedRequestsService extends BaseCrudService<BreedRequest> {
 
   // Fetches a request and confirms `viewer` is the requester (or an admin).
   // Anyone else gets the exact same 404 a made-up id would return.
-  async findOwned(id: string, viewer: AuthenticatedUser): Promise<BreedRequest> {
+  async findOwned(
+    id: string,
+    viewer: AuthenticatedUser,
+  ): Promise<BreedRequest> {
     const request = await this.findOne(id);
-    if (viewer.role !== UserRole.ADMIN && request.requestedByUserId !== viewer.id) {
+    if (
+      viewer.role !== UserRole.ADMIN &&
+      request.requestedByUserId !== viewer.id
+    ) {
       throw new NotFoundException(`BreedRequest ${id} not found`);
     }
     return request;
@@ -86,7 +107,11 @@ export class BreedRequestsService extends BaseCrudService<BreedRequest> {
         );
         request.status = RequestStatus.APPROVED;
         request.createdBreedId = breed.id;
-        await manager.update(Livestock, { breedId: breed.id }, { breedApprovalStatus: RequestStatus.APPROVED });
+        await manager.update(
+          Livestock,
+          { breedId: breed.id },
+          { breedApprovalStatus: RequestStatus.APPROVED },
+        );
       } else {
         request.status = RequestStatus.REJECTED;
       }

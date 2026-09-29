@@ -1,10 +1,22 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { RequestStatus, UserRole } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
-import { BreedRequestsQuery, BreedRequestsService } from './breed-requests.service';
+import {
+  BreedRequestsQuery,
+  BreedRequestsService,
+} from './breed-requests.service';
 import { CreateBreedRequestDto } from './dto/create-breed-request.dto';
 import { ReviewBreedRequestDto } from './dto/review-breed-request.dto';
 import { toPageInt } from '../common/pagination';
@@ -17,8 +29,14 @@ export class BreedRequestsController {
   @Roles(UserRole.FARMER)
   @UseGuards(RolesGuard)
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateBreedRequestDto) {
-    return this.breedRequestsService.create({ ...body, requestedByUserId: user.id });
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: CreateBreedRequestDto,
+  ) {
+    return this.breedRequestsService.create({
+      ...body,
+      requestedByUserId: user.id,
+    });
   }
 
   @Get()
@@ -54,6 +72,9 @@ export class BreedRequestsController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: ReviewBreedRequestDto,
   ) {
-    return this.breedRequestsService.review(id, { ...body, reviewerId: user.id });
+    return this.breedRequestsService.review(id, {
+      ...body,
+      reviewerId: user.id,
+    });
   }
 }

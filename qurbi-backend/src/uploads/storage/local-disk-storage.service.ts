@@ -19,8 +19,15 @@ export const PRIVATE_UPLOADS_DIR = join(UPLOADS_ROOT, 'private');
 
 @Injectable()
 export class LocalDiskStorageService extends StorageService {
-  async save(buffer: Buffer, extension: string, visibility: UploadVisibility): Promise<StoredFile> {
-    const dir = visibility === UploadVisibility.PUBLIC ? PUBLIC_UPLOADS_DIR : PRIVATE_UPLOADS_DIR;
+  async save(
+    buffer: Buffer,
+    extension: string,
+    visibility: UploadVisibility,
+  ): Promise<StoredFile> {
+    const dir =
+      visibility === UploadVisibility.PUBLIC
+        ? PUBLIC_UPLOADS_DIR
+        : PRIVATE_UPLOADS_DIR;
     await mkdir(dir, { recursive: true });
 
     // The filename is entirely server-generated — never the client's
@@ -31,7 +38,10 @@ export class LocalDiskStorageService extends StorageService {
 
     return {
       storageKey: filename,
-      url: visibility === UploadVisibility.PUBLIC ? `/uploads/public/${filename}` : '',
+      url:
+        visibility === UploadVisibility.PUBLIC
+          ? `/uploads/public/${filename}`
+          : '',
     };
   }
 }

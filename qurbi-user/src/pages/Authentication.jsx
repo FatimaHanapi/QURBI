@@ -1,22 +1,21 @@
 import React from "react";
-import { Home, LogIn, UserPlus } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Home, LogIn, ShieldCheck, UserPlus, CircleAlert } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { useAuth } from "@/lib/AuthContext";
 import { safeReturnTo } from "@/lib/authReturnTo";
 import apiClient from "@/api/apiClient";
 
-const loginGoogleButton =
-  "w-full bg-white border border-[#E3C19F] text-black py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm shadow-black/10";
-const registerGoogleButton =
-  "w-full bg-white border border-gray-200 text-black py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all";
-const loginGuestButton =
-  "w-full bg-[#E3C19F]/40 border border-[#E3C19F] text-black py-3 rounded-xl font-bold text-sm active:scale-95 transition-all flex items-center justify-center gap-2";
-const registerGuestButton =
-  "flex w-full items-center justify-center gap-2 rounded-xl border border-[#E3C19F] bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] py-3 text-sm font-bold text-black transition-all active:scale-95";
+const googleButton =
+  "flex w-full min-h-[52px] items-center justify-center gap-3 rounded-xl border-2 border-[#41362D] bg-[#FFFFFF] px-4 text-base font-bold text-[#41362D] shadow-sm shadow-black/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A9825F] focus-visible:ring-offset-2 active:scale-[0.98]";
+const guestButton =
+  "flex w-full min-h-12 items-center justify-center gap-2 rounded-xl border border-[#E3C19F] bg-[#E3C19F]/40 px-4 text-[15px] font-bold text-[#41362D] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A9825F] active:scale-[0.98]";
 
 export default function Authentication() {
+  const { t } = useTranslation("auth");
+  const { t: ta } = useTranslation("account");
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { loginWithGoogle, authError, isLoadingAuth } = useAuth();
@@ -58,60 +57,79 @@ export default function Authentication() {
     navigate("/");
   };
 
+  const copy = isRegister ? "register" : "login";
+
   return (
     <AuthLayout
       mode={mode}
       icon={isRegister ? UserPlus : LogIn}
-      title={isRegister ? "Create your account" : "Welcome back"}
-      subtitle={isRegister ? "Sign up to get started" : "Sign in to your account"}
+      title={t(`${copy}.title`)}
+      subtitle={t(`${copy}.subtitle`)}
       footer={
         <>
-          {isRegister ? "Already have an account? " : "Don’t have an account? "}
+          {isRegister ? t("register.haveAccount") : t("login.noAccount")}{" "}
           <button
             type="button"
             onClick={() => changeMode(isRegister ? "login" : "register")}
-            className="font-bold text-[#41362D] hover:underline"
+            className="inline-flex min-h-11 items-center px-1 font-bold text-[#41362D] underline underline-offset-4"
           >
-            {isRegister ? "Sign in" : "Create one"}
+            {isRegister ? t("register.signIn") : t("login.createOne")}
           </button>
         </>
       }
     >
       <div key={mode} className={isRegister ? "auth-mode-content-register" : "auth-mode-content-login"}>
         {authError?.type === "auth_failed" && (
-          <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {authError.message}
-          </p>
+          <div role="alert" className="mb-4 flex items-start gap-2 rounded-xl border border-[#E8A39A] bg-[#FBE4E1] px-3 py-3 text-sm font-semibold text-[#8A1C12]">
+            <CircleAlert className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+            <span>
+              <span className="block">{ta("auth.signInFailed")}</span>
+              <span className="block font-medium">{authError.message}</span>
+            </span>
+          </div>
         )}
 
         <button
           type="button"
           disabled={isLoadingAuth}
+          aria-busy={isLoadingAuth}
           onClick={handleGoogle}
-          className={`${isRegister ? registerGoogleButton : loginGoogleButton} mb-5 disabled:cursor-not-allowed disabled:opacity-60`}
+          className={`${googleButton} disabled:cursor-not-allowed disabled:opacity-60`}
         >
-          <GoogleIcon className="h-5 w-5" />
+          {isLoadingAuth ? (
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#41362D]/30 border-t-[#41362D]" aria-hidden="true" />
+          ) : (
+            <GoogleIcon className="h-5 w-5" />
+          )}
           {isLoadingAuth
-            ? isRegister ? "Signing up…" : "Signing in…"
-            : isRegister ? "Sign up with Google" : "Sign in with Google"}
+            ? isRegister ? ta("auth.signingUp") : ta("auth.signingIn")
+            : isRegister ? t("register.signUpWithGoogle") : t("login.signInWithGoogle")}
         </button>
 
-        <div className="relative mb-5">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-100" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-white px-3 text-gray-400">or</span>
-          </div>
+        <p className="mt-3 flex items-start gap-2 text-[13px] leading-relaxed text-[#5A493C]">
+          <ShieldCheck className="mt-0.5 h-4 w-4 flex-none text-[#6B594A]" aria-hidden="true" />
+          <span>
+            {ta("auth.trustNote")}{" "}
+            <Link to="/privacy-policy" className="font-bold text-[#41362D] underline underline-offset-2">
+              {ta("auth.privacyLink")}
+            </Link>
+          </span>
+        </p>
+
+        <div className="my-5 flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-[#E3C19F]" />
+          <span className="text-sm text-[#6B594A]">{t(`${copy}.or`)}</span>
+          <span className="h-px flex-1 bg-[#E3C19F]" />
         </div>
 
         <button
           type="button"
           onClick={handleContinueHome}
-          className={isRegister ? registerGuestButton : loginGuestButton}
+          className={guestButton}
         >
-          <Home className="h-4 w-4" /> Continue to Home
+          <Home className="h-4 w-4" aria-hidden="true" /> {t(`${copy}.continueToHome`)}
         </button>
+        <p className="mt-2 text-center text-[13px] text-[#5A493C]">{ta("auth.guestNote")}</p>
       </div>
     </AuthLayout>
   );

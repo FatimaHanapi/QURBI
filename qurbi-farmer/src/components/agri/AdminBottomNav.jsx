@@ -32,7 +32,7 @@ export default function AdminBottomNav({ pendingRefunds = 0 }) {
               to={to}
               end={end}
               className={({ isActive }) => cn(
-                "relative flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "relative flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 featured && "-mt-5",
                 isActive ? "text-primary" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
               )}
@@ -47,7 +47,7 @@ export default function AdminBottomNav({ pendingRefunds = 0 }) {
                   )}>
                     <Icon className={cn("h-5 w-5", featured && "h-6 w-6")} strokeWidth={isActive ? 2.6 : 2} />
                     {to === "/admin/orders" && pendingRefunds > 0 && (
-                      <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-extrabold leading-none text-destructive-foreground">
+                      <span className="absolute -right-2 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-extrabold leading-none text-destructive-foreground">
                         {pendingRefunds > 99 ? "99+" : pendingRefunds}
                       </span>
                     )}
@@ -63,7 +63,7 @@ export default function AdminBottomNav({ pendingRefunds = 0 }) {
             onClick={() => setMoreOpen(true)}
             aria-label="More admin pages"
             className={cn(
-              "flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               moreActive ? "text-primary" : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
             )}
           >

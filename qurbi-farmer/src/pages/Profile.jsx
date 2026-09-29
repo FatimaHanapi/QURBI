@@ -99,7 +99,7 @@ export default function Profile() {
     <div className="animate-fade-in max-w-2xl mx-auto">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Profile</h1>
-        <Button type="button" variant="outline" size="sm" onClick={openEditor} disabled={!profile} className="rounded-xl">
+        <Button type="button" variant="outline" onClick={openEditor} disabled={!profile} className="h-11 rounded-2xl">
           <Pencil className="mr-1.5 h-4 w-4" /> Edit profile
         </Button>
       </div>
@@ -110,13 +110,13 @@ export default function Profile() {
             {userVal(user, "profilePhoto") ? <Image src={userVal(user, "profilePhoto")} fittingType="fill" className="h-full w-full" /> : initials(name)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-white/55">Farmer account</p>
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/85">Farmer account</p>
             <h2 className="mt-1 truncate text-xl font-extrabold tracking-tight text-white">{name}</h2>
-            <p className="mt-0.5 truncate text-xs text-white/70">{user?.email}</p>
+            <p className="mt-0.5 truncate text-sm text-white/90">{user?.email}</p>
           </div>
         </div>
         <div className="relative z-10 mt-4 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-[10px] font-bold text-white ring-1 ring-white/15 backdrop-blur-sm">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/15 backdrop-blur-sm">
             <Shield className="h-3.5 w-3.5" /> {vInfo.label}
           </span>
         </div>
@@ -125,11 +125,11 @@ export default function Profile() {
       {verificationStatus !== "Approved" && (
         <div className="soft-card mt-4 flex items-center justify-between p-4">
           <div>
-            <p className="text-xs text-muted-foreground">Verification Status</p>
+            <p className="text-sm text-muted-foreground">Verification status</p>
             <div className="mt-1"><StatusBadge tone={toneMap[vInfo.tone]} dot>{vInfo.label}</StatusBadge></div>
           </div>
-          <button onClick={() => navigate("/verify")} className="text-xs font-semibold text-primary flex items-center gap-1">
-            Update <ChevronRight className="w-4 h-4" />
+          <button type="button" onClick={() => navigate(verificationStatus === "Rejected" ? "/rejected" : verificationStatus === "Pending" ? "/pending" : "/verify")} className="flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-primary hover:bg-secondary/60">
+            {verificationStatus === "Rejected" ? "See what to fix" : verificationStatus === "Pending" ? "View status" : "Verify now"} <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -150,12 +150,12 @@ export default function Profile() {
 
       <button
         onClick={() => logout()}
-        className="mt-6 w-full h-12 rounded-2xl bg-destructive/10 text-destructive font-semibold flex items-center justify-center gap-2 hover:bg-destructive/20"
+        className="mt-6 w-full h-12 rounded-2xl border border-border bg-card text-destructive font-semibold flex items-center justify-center gap-2 hover:bg-destructive/5"
       >
         <LogOut className="w-5 h-5" /> Log out
       </button>
 
-      <p className="text-center text-[11px] text-muted-foreground mt-6">QURBI Farmer · Phase 1</p>
+      <p className="text-center text-xs text-muted-foreground mt-6">QURBI Farmer · Phase 1</p>
 
       <Dialog open={editOpen} onOpenChange={(open) => !saving && setEditOpen(open)}>
         <DialogContent className="max-h-[90vh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl sm:max-w-lg">
@@ -221,8 +221,8 @@ function Row({ icon: Icon, label, value }) {
     <div className="flex items-center gap-3 p-4">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary/60"><Icon className="h-4 w-4 text-primary" /></span>
       <div className="min-w-0">
-        <p className="text-[11px] text-muted-foreground">{label}</p>
-        <p className="text-sm font-semibold text-foreground break-words">{value}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="text-base font-semibold text-foreground break-words">{value}</p>
       </div>
     </div>
   );

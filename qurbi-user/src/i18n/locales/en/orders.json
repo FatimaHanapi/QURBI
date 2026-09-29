@@ -1,0 +1,190 @@
+{
+  "orders": {
+    "title": "My Orders",
+    "subtitle": "Track and manage your purchases",
+    "tabs": {
+      "toPay": "To Pay",
+      "toShip": "To Ship",
+      "toReceive": "To Receive",
+      "completed": "Completed",
+      "returnRefund": "Return / Refunded"
+    },
+    "status": {
+      "toPay": "To Pay",
+      "toShip": "To Ship",
+      "toReceive": "To Receive",
+      "completed": "Completed",
+      "returnRequested": "Return Requested",
+      "refundRequested": "Refund Requested",
+      "returnRefund": "Return / Refund",
+      "refundComplete": "Refund Complete",
+      "cancelled": "Cancelled",
+      "outOfStock": "Out of Stock",
+      "rejected": "Rejected"
+    },
+    "aria": {
+      "selectOrder": "Select order",
+      "deselectOrder": "Deselect order",
+      "viewOrder": "View order {{orderNumber}}",
+      "currentView": "Current order view",
+      "listView": "List order view"
+    },
+    "fallbackItemName": "Order items",
+    "headCount": "{{count}} head",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
+    "cancel": "Cancel",
+    "cancelling": "Cancelling...",
+    "cancelOrder": "Cancel Order",
+    "payNow": "Pay Now",
+    "viewOrderLink": "View order",
+    "selectOrderLabel": "Select order",
+    "select": "Select",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "deleteWithCount": "Delete ({{count}})",
+    "deleteModal": {
+      "title": "Delete selected orders?",
+      "body_one": "{{count}} order will be removed from your order history.",
+      "body_other": "{{count}} orders will be removed from your order history.",
+      "keep": "Keep Orders",
+      "deleting": "Deleting...",
+      "confirm": "Delete"
+    },
+    "signInPrompt": "Sign in to view your orders.",
+    "signIn": "Sign In",
+    "loadingOrders": "Loading orders...",
+    "loadError": "We couldn't load your orders. Please try again.",
+    "retry": "Retry",
+    "emptyTitle": "No orders to show",
+    "emptyBody": "Orders in {{tab}} will appear here.",
+    "cancelSuccess": "Order cancelled successfully.",
+    "cancelErrorFallback": "We couldn't cancel this order. Please try again.",
+    "deleteHistoryError": "We couldn't remove those orders from history.",
+    "completePayment": "Complete Payment",
+    "signInMessage": "Sign in to view and manage your orders.",
+    "reservation": {
+      "reservedFor24h": "Reserved for 24 hours",
+      "paymentFailedPrefix": "Payment failed · ",
+      "reservedUntil": "Reserved until {{time}}",
+      "retryHint": "You can retry payment from this order."
+    }
+  },
+  "orderDetail": {
+    "title": "Order Details",
+    "loadingSubtitle": "Track your purchase and delivery progress",
+    "loadingMessage": "Loading order details...",
+    "retry": "Retry",
+    "backToOrders": "Back to My Orders",
+    "notFound": "Order not found.",
+    "statusLabel": "Status",
+    "status": {
+      "outOfStock": "Out of Stock",
+      "cancelled": "Cancelled",
+      "refundComplete": "Refund Complete",
+      "refundRejected": "Refund Rejected",
+      "refundPending": "Refund Pending Approval"
+    },
+    "stages": {
+      "before": "Before",
+      "during": "During",
+      "after": "After",
+      "received": "Received",
+      "ownerFarmer": "Farmer",
+      "ownerYou": "You"
+    },
+    "proofAlt": "{{stage}} order proof",
+    "legacyTracking": {
+      "title": "Order tracking",
+      "stagesLine": "Before → During → After → Received",
+      "complete": "Complete",
+      "lockedUntilFarmer": "Locked until farmer photos are complete",
+      "waitingFor": "Waiting for {{owner}}",
+      "locked": "Locked",
+      "action": "Action: {{owner}}"
+    },
+    "tracking": {
+      "title": "Order Photo Proof",
+      "subtitle": "Farmer Before, During, After and your Received proof",
+      "noProofYet": "No proof photos have been uploaded yet."
+    },
+    "progress": {
+      "title": "Order progress",
+      "subtitle": "Photos uploaded by the farmer",
+      "photoAlt": "Order progress {{index}}"
+    },
+    "refundSection": {
+      "title": "Refund request",
+      "reasonLabel": "Reason: ",
+      "photoEvidence": "Photo evidence",
+      "evidenceAlt": "Refund evidence {{index}}",
+      "adminNoteLabel": "Admin note: ",
+      "waitingAdminReview": "Waiting for Admin review."
+    },
+    "items": {
+      "title": "Items",
+      "gradeSuffix": " · Grade {{grade}}",
+      "total": "Total"
+    },
+    "refundSheet": {
+      "title": "Request a refund",
+      "subtitle": "Tell us why you are requesting a refund for {{orderNumber}}.",
+      "reasonPlaceholder": "Enter your reason",
+      "uploadLabel": "Upload refund photo evidence",
+      "uploadHint": "At least one photo is required (up to 5)",
+      "photosSelected_one": "{{count}} photo selected",
+      "photosSelected_other": "{{count}} photos selected",
+      "disclaimer": "Your request will be sent to an administrator for review. A refund is not completed until it is approved.",
+      "keep": "Keep Order",
+      "submitting": "Submitting...",
+      "submit": "Submit Request"
+    },
+    "confirm": {
+      "instructions": "Only confirm once you have received your order.",
+      "replacePhoto": "Replace received proof photo",
+      "uploadPhoto": "Upload received proof photo",
+      "saving": "Saving...",
+      "savePhoto": "Save received proof photo",
+      "proofSaved": "Received proof saved. You may now confirm receipt.",
+      "waitingFarmerPhotos": "Waiting for the farmer to upload Before, During, and After photos.",
+      "returnRefund": "Return / Refund",
+      "updating": "Updating...",
+      "approveReceive": "Approve Receive"
+    },
+    "confirmSuccess": "Order received and completed successfully.",
+    "saveProofSuccess": "Received proof photo saved.",
+    "refundRequestSuccess": "Your refund request has been sent for admin approval.",
+    "errors": {
+      "loadFallback": "We couldn't load this order. Please try again.",
+      "uploadReceivedFirst": "Upload and save a photo showing that you received the order first.",
+      "confirmReceiptFallback": "We couldn't confirm receipt of this order.",
+      "saveProofFallback": "We couldn't save your received proof photo.",
+      "evidenceRequired": "Upload at least one photo as refund evidence before submitting your request.",
+      "refundRequestFallback": "We couldn't submit your refund request."
+    },
+    "signInPrompt": "Sign in to view this order.",
+    "signInMessage": "Sign in to view this order and its delivery progress.",
+    "signIn": "Sign In"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "signInPrompt": "Sign in to view your order notifications.",
+    "signIn": "Sign In",
+    "clearAll": "Clear All",
+    "goBackAria": "Go back",
+    "refreshAria": "Refresh notifications",
+    "emptyTitle": "No notifications yet",
+    "emptyBody": "Farmer photo and refund updates will appear here.",
+    "clearAria": "Clear {{title}}",
+    "clear": "Clear",
+    "clearing": "Clearing…",
+    "clearAllModal": {
+      "title": "Clear all notifications?",
+      "body": "This only clears notifications from your account.",
+      "keep": "Keep Notifications"
+    }
+  },
+  "notificationBanner": {
+    "dismissAria": "Dismiss notification"
+  }
+}

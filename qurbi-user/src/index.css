@@ -329,21 +329,12 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
 }
 
+/* Selected cart line: same taupe card, highlighted with the cream brand ring. */
 #root .qurbi-cart-item-selected {
-  border-color: #22c55e !important;
-  background-color: #ecfdf5 !important;
-  background-image: linear-gradient(
-    135deg,
-    rgba(34, 197, 94, 0.16),
-    rgba(247, 237, 226, 0.94)
-  ) !important;
+  border-color: #e3c19f !important;
   box-shadow:
-    0 0 0 2px rgba(34, 197, 94, 0.3),
-    0 20px 38px -20px rgba(22, 163, 74, 0.58) !important;
-}
-
-#root .qurbi-cart-item-selected :where(p, span) {
-  color: #41362d !important;
+    0 0 0 3px #a9825f,
+    0 20px 38px -20px rgba(65, 54, 45, 0.7) !important;
 }
 
 /* Hide scrollbar but keep scrolling functional */
@@ -1068,4 +1059,34 @@ html {
     #22c55e 50%,
     #86efac 100%
   ) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Shopping flow: sticky action bars that sit just above the bottom nav. */
+:root {
+  /* Bottom nav (76px + safe area) plus the part of the centre Home button
+     that rises above it. */
+  --qurbi-nav-clearance: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+.qurbi-above-nav {
+  bottom: var(--qurbi-nav-clearance);
+}
+
+.qurbi-action-bar {
+  box-shadow:
+    0 18px 40px -12px rgba(65, 54, 45, 0.55),
+    0 4px 12px -4px rgba(65, 54, 45, 0.35) !important;
+}
+
+/* Page padding so the last content clears the action bar + bottom nav. */
+.qurbi-action-bar-space {
+  padding-bottom: calc(var(--qurbi-nav-clearance) + 6.5rem) !important;
+}
+
+/* Visible keyboard focus for the shopping flow controls. */
+#root :where(a, button, [role="button"], [role="link"]):focus-visible,
+.qurbi-action-bar :where(a, button):focus-visible {
+  outline: 3px solid #a9825f;
+  outline-offset: 2px;
 }

@@ -1,4 +1,4 @@
-import apiClient, { getAccessToken } from "@/api/apiClient";
+import apiClient, { getAccessToken, uploadApi } from "@/api/apiClient";
 
 const API_ORIGIN = new URL(
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
@@ -198,6 +198,23 @@ function availabilityFor(item, availableStatus) {
   return { available, state: available ? "available" : item.status || "unavailable", item };
 }
 
+/** @type {Map<string, string>} orderId -> uploaded proof photo URL awaiting confirmation */
+const pendingReceivedProof = new Map();
+
+// The API sends camelCase notifications; the notification context, banner and
+// page read the older snake_case shape. Keep both so either reader works.
+/** @param {any} n */
+function notificationForUser(n) {
+  const orderFromLink = typeof n.linkUrl === "string" ? n.linkUrl.match(/\/orders\/([^/?#]+)/)?.[1] : null;
+  return {
+    ...n,
+    message: n.message ?? n.body ?? "",
+    event_at: n.event_at ?? n.createdAt ?? null,
+    is_read: n.is_read ?? Boolean(n.isRead),
+    order_id: n.order_id ?? (n.relatedType === "order" ? n.relatedId : null) ?? orderFromLink ?? null,
+  };
+}
+
 const functionHandlers = {
   /** @param {{ id?: string }} [payload] */
   async fetchLivestock({ id } = {}) {
@@ -243,7 +260,7 @@ const functionHandlers = {
       url: "/notifications",
       params: { userId: currentUserId(), audience: "buyer" },
     });
-    return wrap({ notifications });
+    return wrap({ notifications: (Array.isArray(notifications) ? notifications : []).map(notificationForUser) });
   },
   async markMyNotificationRead({ notificationId }) {
     return wrap({ notification: await request({ method: "patch", url: `/notifications/${notificationId}/read` }) });
@@ -280,7 +297,9 @@ const functionHandlers = {
     return wrap({ success: true });
   },
   async confirmMyOrderReceived({ orderId }) {
-    const order = await request({ method: "patch", url: `/orders/${orderId}/received`, data: { proofImages: [] } });
+    const proofImages = pendingReceivedProof.has(orderId) ? [pendingReceivedProof.get(orderId)] : [];
+    const order = await request({ method: "patch", url: `/orders/${orderId}/received`, data: { proofImages } });
+    pendingReceivedProof.delete(orderId);
     return wrap({ order: orderForUser(order) });
   },
   async requestMyOrderRefund({ orderId, reason }) {
@@ -313,8 +332,21 @@ const functionHandlers = {
     const firstOrder = mappedOrders[0];
     return wrap({ orders: mappedOrders, order: firstOrder, url: firstOrder ? `/orders/${firstOrder.id}` : "/orders" });
   },
-  async saveMyReceivedOrderProof() {
-    throw new Error("The NestJS backend does not yet expose a proof-upload endpoint.");
+  // The backend only accepts the buyer's proof photo as part of marking the
+  // order received, so hold the uploaded file's URL until the buyer confirms.
+  async saveMyReceivedOrderProof({ orderId, receivedPhotoUrl, previewUrl }) {
+    pendingReceivedProof.set(orderId, receivedPhotoUrl);
+    const order = orderForUser(await request({ method: "get", url: `/orders/${orderId}` }));
+    const tracking = order.tracking_photos || {};
+    return wrap({
+      order: {
+        ...order,
+        tracking_photos: {
+          ...tracking,
+          received: { ...(tracking.received || {}), image_url: previewUrl || receivedPhotoUrl },
+        },
+      },
+    });
   },
   async createTestOrder() {
     throw new Error("Test-order creation is not available through the current NestJS API.");
@@ -343,8 +375,15 @@ export const qurbiApi = {
   },
   integrations: {
     Core: {
-      UploadFile: async () => {
-        throw new Error("The NestJS backend does not yet expose a file-upload endpoint.");
+      /**
+       * Buyer uploads (delivery proof, refund evidence) are private: only the
+       * uploader and admins can read them back.
+       * @param {{ file: File }} payload
+       * @returns {Promise<{ file_url: string }>}
+       */
+      async UploadFile({ file }) {
+        const { fileUrl } = await uploadApi.upload(file, "private");
+        return { file_url: fileUrl };
       },
     },
   },

@@ -1,0 +1,275 @@
+{
+  "status": {
+    "awaitingPayment": {
+      "label": "Awaiting payment",
+      "hint": "Complete payment to confirm your order. The animal is reserved for you until the time shown."
+    },
+    "paymentFailed": {
+      "label": "Payment failed",
+      "hint": "Your last payment did not go through. You can try again before the reservation ends."
+    },
+    "paid": {
+      "label": "Paid",
+      "hint": "Payment received. The farmer will start preparing your animal."
+    },
+    "preparing": {
+      "label": "Preparing",
+      "hint": "The farmer is preparing your animal and will upload photos along the way."
+    },
+    "onTheWay": {
+      "label": "On the way",
+      "hint": "Your animal is on its way. Confirm receipt once it arrives."
+    },
+    "delivered": {
+      "label": "Delivered",
+      "hint": "The farmer has marked this order as delivered. Please confirm you received it."
+    },
+    "completed": {
+      "label": "Completed",
+      "hint": "You confirmed receipt. Thank you for ordering with QURBI."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "hint": "This order was cancelled. No payment is due."
+    },
+    "outOfStock": {
+      "label": "Out of stock",
+      "hint": "This animal is no longer available, so the order could not continue."
+    },
+    "refundRequested": {
+      "label": "Refund requested",
+      "hint": "We received your return / refund request. Our team will review it."
+    },
+    "refundApproved": {
+      "label": "Refund approved",
+      "hint": "Your refund was approved and is being processed."
+    },
+    "refundRejected": {
+      "label": "Refund rejected",
+      "hint": "Your refund request was not approved. See the note below or contact support."
+    },
+    "refunded": {
+      "label": "Refunded",
+      "hint": "Your refund has been completed."
+    },
+    "unknown": {
+      "label": "In progress",
+      "hint": "We are processing this order."
+    }
+  },
+  "dates": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "unavailable": "Date not available"
+  },
+  "orders": {
+    "titleMore": "{{name}} + {{count}} more",
+    "fromFarmer": "From {{name}}",
+    "orderNumber": "Order {{number}}",
+    "total": "Total",
+    "guestTitle": "Your orders",
+    "viewToggle": "Choose how orders are shown",
+    "historyHint": "You can remove cancelled orders from your history.",
+    "selectHint": "Tap cancelled orders to select them.",
+    "browseLivestock": "Browse livestock",
+    "actions": {
+      "track": "Track order",
+      "confirm": "Confirm receipt",
+      "receipt": "View receipt",
+      "refund": "View refund"
+    },
+    "empty": {
+      "to-pay": "Orders waiting for payment will appear here.",
+      "to-ship": "Paid orders being prepared by the farmer will appear here.",
+      "to-receive": "Orders on the way to you will appear here.",
+      "completed": "Orders you have received will appear here.",
+      "return-refund": "Return and refund requests will appear here."
+    }
+  },
+  "orderDetail": {
+    "reservedUntil": "Reserved for you until {{time}}",
+    "proof": {
+      "subtitle": "The farmer adds a photo Before, During and After delivery. You add the Received photo.",
+      "done": "Uploaded",
+      "open": "Open {{stage}} photo full size",
+      "emptyHint": "Photos appear here as the farmer uploads them."
+    },
+    "timeline": {
+      "title": "Order progress",
+      "next": "Next",
+      "steps": {
+        "placed": "Order placed",
+        "paid": "Payment received",
+        "preparing": "Farmer preparing",
+        "onTheWay": "On the way",
+        "delivered": "Delivered",
+        "received": "Received by you"
+      }
+    },
+    "receive": {
+      "title": "Received your animal?",
+      "confirmButton": "Confirm receipt",
+      "steps": {
+        "farmerPhotos": {
+          "title": "Farmer uploads delivery photos",
+          "body": "We will let you know when the Before, During and After photos are ready."
+        },
+        "yourPhoto": {
+          "title": "Add a photo of what you received",
+          "body": "Take or choose a clear photo of the animal, then save it."
+        },
+        "confirm": {
+          "title": "Confirm receipt",
+          "body": "Everything looks right? Tap Confirm receipt to complete your order."
+        }
+      }
+    },
+    "refund": {
+      "problemPrompt": "Something wrong with your order? You can ask for a return or refund.",
+      "reasonLabel": "Reason for the request",
+      "reasonRequired": "Please tell us what went wrong."
+    },
+    "delivery": {
+      "title": "Delivery details",
+      "pickupTitle": "Self pickup",
+      "recipient": "Recipient",
+      "address": "Address",
+      "scheduled": "Preferred date",
+      "notes": "Your notes"
+    },
+    "summary": {
+      "subtotal": "Subtotal",
+      "delivery": "Delivery fee",
+      "discount": "Discount"
+    }
+  },
+  "receipt": {
+    "signInTitle": "Sign in to see your receipt",
+    "errorTitle": "Receipt not available",
+    "notFoundHelp": "Open a receipt from one of your paid orders in My Orders.",
+    "dateLabel": "Date",
+    "itemLine": "{{quantity}} head × {{price}}",
+    "viewOrder": "View order details"
+  },
+  "profile": {
+    "groups": {
+      "account": "Account",
+      "ordersDelivery": "Orders & delivery",
+      "helpLegal": "Help & legal"
+    },
+    "notSet": "Not added yet",
+    "editDetails": "Edit my details",
+    "closeEdit": "Close",
+    "emailLocked": "Your email comes from your Google account and cannot be changed here.",
+    "nameRequired": "Please enter your name.",
+    "phoneInvalid": "Please enter a valid phone number, e.g. 012-345 6789."
+  },
+  "address": {
+    "optional": "(optional)",
+    "labelField": "Address name",
+    "labelPlaceholder": "Home",
+    "contactHeading": "Who will receive it?",
+    "nameField": "Full name",
+    "namePlaceholder": "Name of the person receiving",
+    "phoneField": "Phone / WhatsApp",
+    "emailField": "Email",
+    "emailHelp": "We send order updates to your account email.",
+    "addressHeading": "Delivery address",
+    "streetField": "Street, unit or building",
+    "streetPlaceholder": "No. 12, Jalan Setia 3/5",
+    "postcodeField": "Postcode",
+    "postcodeInvalid": "Postcode should be 5 digits.",
+    "cityField": "City / town",
+    "cityPlaceholder": "Johor Bahru",
+    "stateField": "State",
+    "statePlaceholder": "Choose or type a state",
+    "countryField": "Country",
+    "defaultBadge": "Default",
+    "selectedBadge": "Selected",
+    "makeDefault": "Make default",
+    "editAria": "Edit address {{name}}",
+    "deleteAria": "Delete address {{name}}",
+    "savedNotice": "Address saved.",
+    "defaultNotice": "Default address updated.",
+    "deletedNotice": "Address deleted."
+  },
+  "notifications": {
+    "unreadPrefix": "Unread: ",
+    "new": "New",
+    "viewOrder": "View order",
+    "unreadCount_one": "{{count}} unread notification",
+    "unreadCount_other": "{{count}} unread notifications",
+    "allRead": "You're all caught up",
+    "retry": "Try again",
+    "goToOrders": "Go to My Orders"
+  },
+  "auth": {
+    "signingIn": "Signing in…",
+    "signingUp": "Signing up…",
+    "signInFailed": "We couldn't sign you in.",
+    "trustNote": "We only use your Google name and email to set up your QURBI account. We never post anything for you.",
+    "privacyLink": "Privacy Policy",
+    "guestNote": "You can browse livestock without an account."
+  },
+  "onboarding": {
+    "progressLabel": "Sign-up progress",
+    "stepOf": "Step {{step}} of {{total}}",
+    "steps": {
+      "agreement": "Terms",
+      "details": "Your details",
+      "address": "Address"
+    },
+    "phoneHelp": "The farmer uses this number to arrange delivery, e.g. 012-345 6789."
+  },
+  "agreement": {
+    "title": "Before you continue",
+    "subtitle": "Please review and accept the QURBI User terms and privacy policy",
+    "acceptedTitle": "QURBI terms",
+    "acceptedSubtitle": "The terms and privacy policy you accepted",
+    "acceptedOn": "You accepted these terms on {{date}}.",
+    "intro": "Your acceptance is saved securely with your QURBI account. Policy version: 20 September 2026.",
+    "read": "Read",
+    "hide": "Hide",
+    "confirmHeading": "Please confirm",
+    "tickAll": "Please tick all three boxes to continue.",
+    "saveError": "Your agreement could not be saved. Please try again.",
+    "saving": "Saving agreement…",
+    "acceptAll": "Accept all & continue",
+    "continue": "Continue",
+    "confirm": {
+      "agreement": "I have read and agree to the QURBI User Agreement.",
+      "privacy": "I have read and agree to the QURBI User Privacy Policy.",
+      "adult": "I confirm that I am 18 years old or older."
+    },
+    "sections": {
+      "agreement": {
+        "title": "QURBI User Agreement",
+        "summary": "Rules for using your buyer account and marketplace services.",
+        "points": [
+          "Provide accurate account, contact and delivery information.",
+          "Use QURBI only for lawful marketplace activity and keep your account secure.",
+          "Orders, payments, delivery, cancellations and refunds are handled through the QURBI service and its stated processes.",
+          "QURBI may restrict an account when required for safety, fraud prevention, disputes or legal compliance."
+        ]
+      },
+      "privacy": {
+        "title": "QURBI User Privacy Policy",
+        "summary": "How your personal data is used to provide the User app.",
+        "points": [
+          "We collect account details, saved addresses, cart activity, orders, payment references, delivery information and necessary technical records.",
+          "Google Sign-In may provide your Google ID, name, email and profile image according to your Google settings.",
+          "Only information needed to fulfil an order is shared with the relevant farmer and authorised service providers.",
+          "We do not sell personal data. You may request access, correction, consent withdrawal, portability or account deletion, subject to lawful retention.",
+          "Data is protected with access controls, secure transmission and retention limits appropriate to the service."
+        ]
+      }
+    }
+  },
+  "notFound": {
+    "browse": "Browse livestock"
+  },
+  "authRequired": {
+    "title": "Sign in required",
+    "message": "Sign in to continue."
+  }
+}

@@ -14,13 +14,19 @@ export class OrderItemsController {
   // OrdersService.findOne enforces buyer/farmer/admin party membership (404
   // for anyone else) before we ever touch this order's items.
   @Get()
-  async findAllForOrder(@Query('orderId') orderId: string, @CurrentUser() user: AuthenticatedUser) {
+  async findAllForOrder(
+    @Query('orderId') orderId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     await this.ordersService.findOne(orderId, user);
     return this.orderItemsService.findAllForOrder(orderId);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+  async findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     const item = await this.orderItemsService.findOne(id);
     await this.ordersService.findOne(item.orderId, user);
     return item;

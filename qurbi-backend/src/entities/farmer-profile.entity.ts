@@ -67,6 +67,9 @@ export class FarmerProfile extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   totalSales: number;
 
-  @OneToMany(() => FarmVerification, (verification) => verification.farmerProfile)
+  @OneToMany(
+    () => FarmVerification,
+    (verification) => verification.farmerProfile,
+  )
   verifications: FarmVerification[];
 }

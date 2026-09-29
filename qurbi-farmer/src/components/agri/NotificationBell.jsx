@@ -99,7 +99,7 @@ export default function NotificationBell() {
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-background bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-background bg-destructive px-1 text-xs font-bold text-destructive-foreground">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
@@ -115,13 +115,13 @@ export default function NotificationBell() {
         <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
           <div>
             <h2 className="font-extrabold tracking-tight">Notifications</h2>
-            <p className="text-[11px] text-muted-foreground">{unreadCount ? `${unreadCount} unread update${unreadCount === 1 ? "" : "s"}` : "You're all caught up"}</p>
+            <p className="text-sm text-muted-foreground">{unreadCount ? `${unreadCount} unread update${unreadCount === 1 ? "" : "s"}` : "You're all caught up"}</p>
           </div>
           <button
             type="button"
             onClick={markAllRead}
             disabled={!unreadCount || marking}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-default disabled:opacity-40"
+            className="flex items-center gap-1.5 min-h-10 rounded-full px-3 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-default disabled:opacity-40"
           >
             {marking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
             Mark all read
@@ -147,11 +147,11 @@ export default function NotificationBell() {
                 <span className="min-w-0 flex-1">
                   <span className="flex items-start gap-2">
                     <span className="line-clamp-1 flex-1 text-sm font-bold text-foreground">{notification.title}</span>
-                    {notification.priority === "Important" && <span className="rounded-full bg-destructive px-2 py-0.5 text-[9px] font-extrabold tracking-wide text-destructive-foreground">IMPORTANT</span>}
+                    {notification.priority === "Important" && <span className="rounded-full bg-destructive px-2 py-0.5 text-[11px] font-extrabold tracking-wide text-destructive-foreground">IMPORTANT</span>}
                     {!notification.isRead && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />}
                   </span>
                   <span className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{notification.message}</span>
-                  <span className="mt-1.5 block text-[10px] font-medium text-muted-foreground">{relativeTime(notification.created_date)}</span>
+                  <span className="mt-1.5 block text-xs font-medium text-muted-foreground">{relativeTime(notification.created_date)}</span>
                 </span>
                 <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
               </button>

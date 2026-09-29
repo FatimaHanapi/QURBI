@@ -1,23 +1,41 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { UserRole, VerificationStatus } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
-import { FarmVerificationsQuery, FarmVerificationsService } from './farm-verifications.service';
+import {
+  FarmVerificationsQuery,
+  FarmVerificationsService,
+} from './farm-verifications.service';
 import { SubmitFarmVerificationDto } from './dto/submit-farm-verification.dto';
 import { ReviewFarmVerificationDto } from './dto/review-farm-verification.dto';
 import { toPageInt } from '../common/pagination';
 
 @Controller('farm-verifications')
 export class FarmVerificationsController {
-  constructor(private readonly farmVerificationsService: FarmVerificationsService) {}
+  constructor(
+    private readonly farmVerificationsService: FarmVerificationsService,
+  ) {}
 
   // No farmerProfileId — always resolved from the authenticated caller's own profile.
   @Roles(UserRole.FARMER)
   @UseGuards(RolesGuard)
   @Post()
-  submit(@CurrentUser() user: AuthenticatedUser, @Body() body: SubmitFarmVerificationDto) {
+  submit(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: SubmitFarmVerificationDto,
+  ) {
     return this.farmVerificationsService.submitForViewer(user, body);
   }
 
@@ -52,7 +70,10 @@ export class FarmVerificationsController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: ReviewFarmVerificationDto,
   ) {
-    return this.farmVerificationsService.review(id, { ...body, reviewerId: user.id });
+    return this.farmVerificationsService.review(id, {
+      ...body,
+      reviewerId: user.id,
+    });
   }
 
   // Admin-only: this is the audit trail of every submission attempt, not a

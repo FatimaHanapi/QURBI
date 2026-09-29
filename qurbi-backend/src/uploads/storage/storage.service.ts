@@ -15,5 +15,9 @@ export interface StoredFile {
 // interface, so moving from local disk to S3 (or anything else) later is a
 // new class + a DI binding change, not a rewrite of the upload flow.
 export abstract class StorageService {
-  abstract save(buffer: Buffer, extension: string, visibility: UploadVisibility): Promise<StoredFile>;
+  abstract save(
+    buffer: Buffer,
+    extension: string,
+    visibility: UploadVisibility,
+  ): Promise<StoredFile>;
 }

@@ -1,10 +1,13 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, X } from "lucide-react";
+import { formatRM } from "@/lib/format";
 
 export default function CancelOrderModal({ order, loading, error, onConfirm, onClose }) {
+  const { t } = useTranslation("cart");
   const firstItem = order?.items?.[0];
-  const orderDisplayName = firstItem?.breed || firstItem?.listing_name || firstItem?.animal || order?.order_number || "Order";
+  const orderDisplayName = firstItem?.breed || firstItem?.listing_name || firstItem?.animal || order?.order_number || t("cancelOrderModal.orderFallback");
   useEffect(() => {
     if (!order) return undefined;
     const handleKeyDown = (event) => {
@@ -35,10 +38,10 @@ export default function CancelOrderModal({ order, loading, error, onConfirm, onC
             </div>
             <div className="min-w-0">
               <h2 id="cancel-order-title" className="text-lg font-bold text-white">
-                Cancel unpaid order?
+                {t("cancelOrderModal.heading")}
               </h2>
-              <p className="mt-0.5 break-words text-xs text-[#F7EDE2]/80">
-                {orderDisplayName} · RM {Number(order.total || 0).toLocaleString()}
+              <p className="mt-0.5 break-words text-sm text-white/85">
+                {orderDisplayName} · {formatRM(order.total)}
               </p>
             </div>
           </div>
@@ -46,8 +49,8 @@ export default function CancelOrderModal({ order, loading, error, onConfirm, onC
             type="button"
             onClick={onClose}
             disabled={loading}
-            aria-label="Close cancel order dialog"
-            className="flex h-9 w-9 flex-none items-center justify-center rounded-xl border border-[#F7EDE2]/60 text-white disabled:opacity-50"
+            aria-label={t("cancelOrderModal.closeDialog")}
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-[#F7EDE2]/60 text-white disabled:opacity-50"
           >
             <X className="h-4 w-4" />
           </button>
@@ -55,10 +58,10 @@ export default function CancelOrderModal({ order, loading, error, onConfirm, onC
 
         <div className="p-5">
           <p className="rounded-2xl border border-[#41362D]/30 bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] p-4 text-sm leading-relaxed text-[#41362D]">
-            This unpaid order will be cancelled and cannot be restored.
+            {t("cancelOrderModal.warningMessage")}
           </p>
           {error && (
-            <p className="mt-3 rounded-xl border border-red-300/60 bg-red-950/25 p-3 text-center text-xs font-medium text-white">
+            <p role="alert" className="mt-3 rounded-xl bg-[#FBE4E1] p-3 text-center text-sm font-semibold text-[#8A1C12]">
               {error}
             </p>
           )}
@@ -69,15 +72,15 @@ export default function CancelOrderModal({ order, loading, error, onConfirm, onC
               disabled={loading}
               className="min-h-12 rounded-xl border border-[#F7EDE2] text-sm font-bold text-white disabled:opacity-50"
             >
-              Keep Order
+              {t("cancelOrderModal.keepOrderButton")}
             </button>
             <button
               type="button"
               onClick={onConfirm}
               disabled={loading}
-              className="min-h-12 rounded-xl border-2 border-[#41362D] bg-gradient-to-br from-[#EF4444] to-[#B91C1C] text-sm font-bold text-white shadow-sm shadow-red-950/25 disabled:opacity-50"
+              className="min-h-12 rounded-xl bg-[#B42318] text-sm font-bold text-white shadow-sm disabled:opacity-50"
             >
-              {loading ? "Cancelling..." : "Cancel Order"}
+              {loading ? t("cancelOrderModal.cancelling") : t("cancelOrderModal.cancelOrderButton")}
             </button>
           </div>
         </div>

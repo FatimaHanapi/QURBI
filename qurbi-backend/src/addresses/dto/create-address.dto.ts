@@ -1,4 +1,11 @@
-import { IsBoolean, IsEnum, IsLatitude, IsLongitude, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsLatitude,
+  IsLongitude,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { AddressLabel } from '../../entities';
 
 // No userId — the owner is always the authenticated caller (see

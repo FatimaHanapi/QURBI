@@ -35,7 +35,7 @@ describe('AuthService Firebase portal roles', () => {
     email_verified: true,
     name: 'QURBI Person',
     picture: 'https://example.com/avatar.jpg',
-  } as DecodedIdToken;
+  } as unknown as DecodedIdToken;
 
   function setup(existingUser: User | null = null) {
     const findOne = jest

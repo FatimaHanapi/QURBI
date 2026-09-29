@@ -12,7 +12,10 @@ export class AddressesService extends BaseCrudService<Address> {
   }
 
   findByUser(userId: string): Promise<Address[]> {
-    return this.repository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    return this.repository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   // Fetches an address and confirms `viewer` owns it (or is an admin). Anyone
@@ -35,17 +38,29 @@ export class AddressesService extends BaseCrudService<Address> {
   async create(data: DeepPartial<Address>): Promise<Address> {
     return this.repository.manager.transaction(async (manager) => {
       if (data.isDefault) {
-        await manager.update(Address, { userId: data.userId }, { isDefault: false });
+        await manager.update(
+          Address,
+          { userId: data.userId },
+          { isDefault: false },
+        );
       }
       return manager.save(manager.create(Address, data));
     });
   }
 
-  async updateOwned(id: string, viewer: AuthenticatedUser, data: DeepPartial<Address>): Promise<Address> {
+  async updateOwned(
+    id: string,
+    viewer: AuthenticatedUser,
+    data: DeepPartial<Address>,
+  ): Promise<Address> {
     const address = await this.findOwned(id, viewer);
     if (data.isDefault) {
       await this.repository.manager.transaction(async (manager) => {
-        await manager.update(Address, { userId: address.userId }, { isDefault: false });
+        await manager.update(
+          Address,
+          { userId: address.userId },
+          { isDefault: false },
+        );
         await manager.update(Address, { id }, data);
       });
       return this.findOne(id);
@@ -58,10 +73,17 @@ export class AddressesService extends BaseCrudService<Address> {
     await this.repository.remove(address);
   }
 
-  async setDefault(viewer: AuthenticatedUser, addressId: string): Promise<Address> {
+  async setDefault(
+    viewer: AuthenticatedUser,
+    addressId: string,
+  ): Promise<Address> {
     const address = await this.findOwned(addressId, viewer);
     return this.repository.manager.transaction(async (manager) => {
-      await manager.update(Address, { userId: address.userId }, { isDefault: false });
+      await manager.update(
+        Address,
+        { userId: address.userId },
+        { isDefault: false },
+      );
       await manager.update(Address, { id: addressId }, { isDefault: true });
       return manager.findOneByOrFail(Address, { id: addressId });
     });

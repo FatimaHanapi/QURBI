@@ -15,7 +15,7 @@ export default function StatCard({ icon: Icon, label, value, tone = "primary", t
         {Icon && <Icon className="w-5 h-5" />}
       </div>
       <p className="text-2xl font-extrabold tracking-tight text-foreground">{value}</p>
-      <p className="mt-0.5 text-[11px] font-semibold leading-tight text-muted-foreground sm:text-xs">{label}</p>
+      <p className="mt-0.5 text-xs font-semibold leading-tight text-muted-foreground sm:text-sm">{label}</p>
     </>
   );
   const baseClass = cn("soft-card min-w-0 p-3.5 sm:p-4", className);

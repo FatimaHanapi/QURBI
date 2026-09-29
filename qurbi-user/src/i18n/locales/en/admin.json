@@ -1,0 +1,69 @@
+{
+  "adminBreeds": {
+    "title": "Breed Management",
+    "subtitle": "{{count}} breeds total",
+    "manageSubtitle": "Manage marketplace breeds",
+    "add": "Add",
+    "filterAll": "All",
+    "noBreedsFound": "No breeds found.",
+    "confirmDelete": "Delete \"{{name}}\"?",
+    "form": {
+      "editTitle": "Edit Breed",
+      "addTitle": "Add New Breed",
+      "nameLabel": "Name *",
+      "namePlaceholder": "e.g. Brahman",
+      "categoryLabel": "Category *",
+      "categoryPlaceholder": "Select category...",
+      "originLabel": "Origin",
+      "originPlaceholder": "e.g. India",
+      "imageUrlLabel": "Image URL",
+      "ageRangeLabel": "Age Range",
+      "ageRangePlaceholder": "e.g. 2-3 years",
+      "genderLabel": "Gender",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "genderMixed": "Mixed",
+      "priceByGradeLabel": "Price per Seekor by Grade (RM)",
+      "gradeLabel": "Grade {{grade}}",
+      "activeLabel": "Active (visible in marketplace)",
+      "saving": "Saving...",
+      "save": "Save"
+    },
+    "row": {
+      "hidden": "HIDDEN"
+    },
+    "loading": "Loading breed management…",
+    "adminRequired": "Administrator access is required.",
+    "backToHome": "Back to Home"
+  },
+  "adminTest": {
+    "loadError": "Unable to load available livestock.",
+    "orderNotCreated": "The test order was not created.",
+    "createError": "Unable to create the test order.",
+    "preparing": "Preparing the shipping test…",
+    "adminRequired": "Administrator access is required.",
+    "backToHome": "Back to Home",
+    "title": "Shipping Flow Test",
+    "subtitle": "Create an admin-only To Ship order without opening Stripe.",
+    "paymentBypassTitle": "Payment bypass",
+    "paymentBypassDescription": "Available only on this admin test page. The resulting order starts in To Ship; normal cart, checkout and Stripe flows are unchanged.",
+    "noLivestock": "No available livestock for a test order.",
+    "livestockFallback": "Livestock",
+    "creating": "Creating…",
+    "testToShip": "Test To Ship"
+  },
+  "adminTestOrders": {
+    "loadError": "Unable to load available livestock.",
+    "createError": "Unable to create the test order.",
+    "preparing": "Preparing test orders…",
+    "adminRequired": "Administrator access is required.",
+    "backToHome": "Back to Home",
+    "title": "Create Test Order",
+    "subtitle": "No payment — begins in To Ship",
+    "restrictedNotice": "This is restricted to administrators and intended only for testing order tracking. It does not charge payment or change the selected livestock's availability.",
+    "noLivestock": "No available livestock.",
+    "livestockFallback": "Livestock",
+    "creating": "Creating...",
+    "useForTest": "Use for test"
+  }
+}

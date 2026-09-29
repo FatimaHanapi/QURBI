@@ -1,143 +1,32 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   X,
   SlidersHorizontal,
   RefreshCw,
   AlertCircle,
-  Mars,
-  Venus,
 } from "lucide-react";
 import { loadLivestockWithFarmers } from "@/lib/farmerClient";
-import {
-  extractState,
-  MALAYSIAN_STATES,
-} from "@/lib/livestock-data";
+import { MALAYSIAN_STATES } from "@/lib/livestock-data";
 import FilterSidebar from "@/components/FilterSidebar";
 import { useReveal } from "@/hooks/useReveal";
 import AppHeader from "@/components/AppHeader";
 import PageLoading from "@/components/PageLoading";
+import LivestockCard from "@/components/shop/LivestockCard";
 import { isProductExpired } from "@/lib/product-expiry";
-import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
-
-function LivestockCard({ livestock, index = 0 }) {
-  const { navigateFromProductCard } = useHeaderTransition();
-  const imageReferences = [livestock.coverImage, ...(livestock.images || [])]
-    .map((image) => {
-      if (typeof image === "string") return image.trim();
-      return image?.url || image?.file_url || image?.src || "";
-    })
-    .filter((image, position, images) => image && images.indexOf(image) === position);
-  const [imageIndex, setImageIndex] = useState(0);
-  const img = imageReferences[imageIndex] || "";
-
-  useEffect(() => {
-    setImageIndex(0);
-  }, [livestock.id]);
-
-  const productName = livestock.breed || livestock.name || livestock.species || "Livestock";
-  const speciesLabel = livestock.species || "Livestock";
-  const normalizedGender = String(livestock.gender || "").trim().toLowerCase();
-  const isMale = normalizedGender === "male";
-  const isFemale = normalizedGender === "female";
-  const GenderIcon = isMale ? Mars : isFemale ? Venus : null;
-  const locationState = extractState(livestock.farmLocation);
-  const displayGrade = livestock.grade || "Grade N/A";
-
-  return (
-    <div
-      onClick={(event) =>
-        navigateFromProductCard(
-          `/livestock/${livestock.id}`,
-          event.currentTarget,
-          { image: img, label: productName },
-        )
-      }
-      className="relative min-h-[210px] cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] shadow-lg shadow-[#41362D]/30 animate-fade-in-up active:scale-[0.98] transition-transform sm:min-h-[285px]"
-      style={{
-        animationDelay: `${Math.min(index * 40, 300)}ms`,
-      }}
-    >
-      <div className="absolute inset-0">
-        {img ? (
-          <img
-            src={img}
-            alt={livestock.breed}
-            loading="lazy"
-            onError={() => setImageIndex((current) => current + 1)}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#E3C19F] text-sm font-bold text-[#41362D]">
-            {livestock.species || "Livestock"}
-          </div>
-        )}
-
-        <div className="absolute bottom-[6rem] right-0 z-20 inline-flex max-w-[82%] items-center rounded-l-lg border border-r-0 border-[#41362D] bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-2 py-1 text-xs font-bold leading-tight text-[#41362D] shadow-[0_3px_10px_rgba(65,54,45,0.24)] transition-[transform,box-shadow] duration-200 ease-out sm:bottom-[6.25rem] sm:max-w-[72%] sm:px-2.5 sm:text-sm">
-          <span className="truncate whitespace-nowrap">{locationState || "Location unavailable"}</span>
-        </div>
-      </div>
-
-      <div
-        className="absolute inset-x-0 bottom-0 h-28 px-2.5 pb-2.5 pt-1.5 text-white sm:h-28 sm:px-4 sm:pb-3 sm:pt-2"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(65, 54, 45, 0.82), rgba(107, 89, 74, 0.68))",
-          backdropFilter: "blur(2px)",
-          WebkitBackdropFilter: "blur(2px)",
-        }}
-      >
-        <div className="relative flex h-full min-w-0 flex-col justify-start">
-          <div className="mt-1 h-[3.15rem] min-w-0 overflow-hidden pr-6 sm:h-14 sm:pr-7">
-            <p className="truncate text-[9px] font-bold uppercase leading-none tracking-[0.12em] text-white/70 sm:text-xs sm:leading-tight">
-              {speciesLabel}
-            </p>
-            <h2 className="mt-0.5 line-clamp-2 min-w-0 break-words text-[17px] font-extrabold leading-[1.05] sm:text-2xl sm:leading-tight">
-              {productName}
-            </h2>
-          </div>
-          {GenderIcon && (
-            <span
-              aria-label={isMale ? "Male" : "Female"}
-              className={`absolute right-0 top-4 inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-white sm:top-2.5 sm:h-5 sm:w-5 ${
-                isMale ? "!text-[#2563EB]" : "!text-[#EC4899]"
-              }`}
-            >
-              <GenderIcon
-                aria-hidden="true"
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                strokeWidth={3}
-              />
-            </span>
-          )}
-          <div className="absolute bottom-7 left-0 right-0 flex min-w-0 flex-nowrap items-center gap-0.5 overflow-hidden text-[11px] font-semibold leading-none text-white/90 sm:bottom-8 sm:gap-1 sm:text-sm sm:leading-normal">
-            {livestock.age && (
-              <span className="whitespace-nowrap px-1 py-0.5">
-                {livestock.age}
-              </span>
-            )}
-            {livestock.age && (
-              <span aria-hidden="true">·</span>
-            )}
-            <span className="whitespace-nowrap px-1 py-0.5">
-              {displayGrade}
-            </span>
-          </div>
-          <div
-            className="absolute -bottom-2.5 -right-2.5 max-w-[8.5rem] truncate rounded-tl-xl bg-gradient-to-br from-[#41362D] to-[#6B594A] px-2 py-1 text-right text-lg font-extrabold leading-tight text-white shadow-md sm:-bottom-3 sm:-right-4 sm:max-w-[10rem] sm:px-2.5 sm:text-2xl"
-            title={`RM ${Number(livestock.price || 0).toLocaleString()}`}
-          >
-            RM {Number(livestock.price || 0).toLocaleString()}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+import {
+  genderLabel,
+  listingState,
+  statusLabel,
+} from "@/lib/listing-display";
 
 export default function Browse() {
+  const { t } = useTranslation("shop");
+  const { t: tf } = useTranslation("shopflow");
   const location = useLocation();
+  const searchInputRef = useRef(/** @type {HTMLInputElement | null} */ (null));
 
   const [livestock, setLivestock] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -177,10 +66,16 @@ export default function Browse() {
    */
   useEffect(() => {
     const speciesFromHome = location.state?.species;
+    const queryFromHome = location.state?.query;
+    const focusFromHome = location.state?.focusSearch;
 
-    if (!speciesFromHome) return;
+    if (!speciesFromHome && !queryFromHome && !focusFromHome) return;
 
-    setActiveSpecies(speciesFromHome);
+    if (speciesFromHome) setActiveSpecies(speciesFromHome);
+    if (typeof queryFromHome === "string") setSearchQuery(queryFromHome);
+    if (focusFromHome) {
+      window.setTimeout(() => searchInputRef.current?.focus(), 350);
+    }
 
     /*
      * Clear the navigation state after reading it.
@@ -204,7 +99,7 @@ export default function Browse() {
       .then(setLivestock)
       .catch((e) =>
         setError(
-          e.message || "Failed to load livestock",
+          e.message || t("browse.error.defaultMessage"),
         ),
       )
       .finally(() => setLoading(false));
@@ -252,8 +147,10 @@ export default function Browse() {
             .map((l) => l.gender)
             .filter(Boolean),
         ),
-      ].sort(),
-    [livestock],
+      ]
+        .sort()
+        .map((value) => ({ value, label: genderLabel(tf, value) })),
+    [livestock, tf],
   );
 
   const ageOptions = useMemo(
@@ -276,8 +173,10 @@ export default function Browse() {
             .map((l) => l.status)
             .filter(Boolean),
         ),
-      ].sort(),
-    [livestock],
+      ]
+        .sort()
+        .map((value) => ({ value, label: statusLabel(tf, value) })),
+    [livestock, tf],
   );
 
   const locationOptions = useMemo(
@@ -338,7 +237,7 @@ export default function Browse() {
       // Location
       if (
         filterLocation &&
-        extractState(l.farmLocation) !==
+        listingState(l) !==
           filterLocation
       ) {
         return false;
@@ -423,8 +322,8 @@ export default function Browse() {
     } else {
       result = [...result].sort(
         (a, b) =>
-          new Date(b.created_date) -
-          new Date(a.created_date),
+          new Date(b.created_date).getTime() -
+          new Date(a.created_date).getTime(),
       );
     }
 
@@ -550,25 +449,26 @@ export default function Browse() {
 
   if (error && !livestock.length) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-8">
+      <div className="aisyah-page flex flex-col items-center justify-center gap-4 p-8">
         {sharedStyles}
 
-        <AlertCircle className="h-12 w-12 text-red-400" />
+        <AlertCircle aria-hidden="true" className="h-12 w-12 text-[#6B594A]" />
 
-        <p className="text-center font-semibold text-gray-600">
-          Failed to load livestock
+        <p className="text-center text-lg font-bold text-[#41362D]">
+          {t("browse.error.title")}
         </p>
 
-        <p className="max-w-xs text-center text-sm text-gray-400">
+        <p className="max-w-xs text-center text-sm text-[#6B594A]">
           {error}
         </p>
 
         <button
+          type="button"
           onClick={loadData}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#5A493C] to-[#41362D] px-6 py-3 text-sm font-bold text-white shadow-md shadow-[#D5B18D] transition-all active:scale-95"
+          className="aisyah-primary-button flex min-h-12 items-center gap-2 px-6"
         >
           <RefreshCw className="h-4 w-4" />
-          Retry
+          {t("browse.error.retry")}
         </button>
       </div>
     );
@@ -587,20 +487,24 @@ export default function Browse() {
       <AppHeader
         sticky
         thresholdShrink
-        title="Browse Livestock"
+        title={t("browse.headerTitle")}
         search={
           <div className="flex gap-2">
             {/* Search */}
-            <label className="qurbi-search flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border px-3 focus-within:ring-2 focus-within:ring-[#E3C19F]">
-              <Search className="h-4 w-4 flex-none text-[#41362D]" />
+            <label className="qurbi-search flex h-12 min-w-0 flex-1 items-center gap-2 rounded-2xl border pl-3 focus-within:ring-2 focus-within:ring-[#E3C19F]">
+              <Search aria-hidden="true" className="h-5 w-5 flex-none text-[#41362D]" />
+              <span className="sr-only">{tf("browse.searchLabel")}</span>
 
               <input
+                ref={searchInputRef}
+                type="search"
+                enterKeyHint="search"
                 value={searchQuery}
                 onChange={(e) =>
                   setSearchQuery(e.target.value)
                 }
-                placeholder="Search name, tag, breed, farmer..."
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                placeholder={t("browse.searchPlaceholder")}
+                className="min-w-0 flex-1 bg-transparent py-2 pr-3 text-base outline-none [&::-webkit-search-cancel-button]:hidden"
               />
 
               {searchQuery && (
@@ -609,7 +513,8 @@ export default function Browse() {
                   onClick={() =>
                     setSearchQuery("")
                   }
-                  aria-label="Clear search"
+                  aria-label={t("browse.clearSearch")}
+                  className="-ml-3 flex h-11 w-11 flex-none items-center justify-center rounded-xl"
                 >
                   <X className="h-4 w-4 text-[#41362D]" />
                 </button>
@@ -622,13 +527,13 @@ export default function Browse() {
               onClick={() =>
                 setShowFilters(true)
               }
-              aria-label="Open filters"
-              className="relative flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-[#E3C19F] text-[#41362D] shadow-md transition-transform active:scale-90"
+              aria-label={t("browse.openFilters")}
+              className="relative flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-[#E3C19F] text-[#41362D] shadow-md transition-transform active:scale-90"
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <SlidersHorizontal className="h-5 w-5" />
 
               {activeFilterCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#5A493C] px-1 text-[10px] font-bold text-white">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-[#F7EDE2] bg-[#41362D] px-1 text-[11px] font-bold text-white">
                   {activeFilterCount}
                 </span>
               )}
@@ -645,53 +550,71 @@ export default function Browse() {
               onClick={() =>
                 setActiveSpecies(sp)
               }
-              className={`flex-shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all active:scale-95 ${
+              aria-pressed={activeSpecies === sp}
+              className={`min-h-11 flex-shrink-0 rounded-full px-5 text-sm font-semibold transition-all active:scale-95 ${
                 activeSpecies === sp
                   ? "bg-[#E3C19F] text-[#41362D] shadow-md"
-                  : "bg-white/10 text-white/80"
+                  : "border border-white/25 bg-white/10 text-white"
               }`}
             >
               {sp === "All"
-                ? "All"
-                : sp}
+                ? t("browse.allSpecies")
+                : t(`home.species.${String(sp).toLowerCase()}`, { defaultValue: sp })}
             </button>
           ))}
         </div>
       </AppHeader>
 
       {loading && !livestock.length ? (
-        <PageLoading contentOnly message="Loading livestock..." />
+        <PageLoading contentOnly message={t("browse.loadingLivestock")} />
       ) : (
         <>
           {/* Result count */}
           <div
-            className={`flex items-center justify-between px-4 pt-3 ${reveal()}`}
+            className={`mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 pt-3 ${reveal()}`}
             style={{ animationDelay: "120ms" }}
           >
-            <p className="text-xs text-gray-400">
-              {`${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
+            <p className="text-sm font-semibold text-[#41362D]" aria-live="polite">
+              {t("browse.resultsCount", { count: filtered.length })}
             </p>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="min-h-11 rounded-xl px-2 text-sm font-bold text-[#41362D] underline underline-offset-4"
+              >
+                {t("browse.clearFilters")}
+              </button>
+            )}
           </div>
 
           {/* Results */}
-          <div className="space-y-4 px-4 pt-3">
+          <div className="mx-auto max-w-6xl space-y-4 px-4 pt-3">
             {filtered.length === 0 ? (
               <div className="flex animate-fade-in-up flex-col items-center justify-center py-16 text-center">
-                <Search className="mb-2 h-10 w-10 text-[#E3C19F]" />
-                <p className="text-sm text-gray-400">No livestock found.</p>
-                {hasFilters && (
+                <Search aria-hidden="true" className="mb-3 h-10 w-10 text-[#6B594A]" />
+                <p className="text-base font-bold text-[#41362D]">{t("browse.noLivestockFound")}</p>
+                <p className="mt-1 max-w-xs text-sm text-[#6B594A]">
+                  {hasFilters ? tf("browse.emptyWithFilters") : tf("browse.emptyNoListings")}
+                </p>
+                {hasFilters ? (
                   <button
+                    type="button"
                     onClick={clearAllFilters}
-                    className="mt-2 text-sm font-semibold text-[#41362D] transition-all active:scale-95" 
+                    className="aisyah-primary-button mt-4 min-h-12 px-6"
                   >
-                    Clear filters
+                    {t("browse.clearFilters")}
                   </button>
+                ) : (
+                  <Link to="/bulk-buy" className="aisyah-primary-button mt-4 inline-flex min-h-12 items-center px-6">
+                    {tf("browse.tryBulkBuy")}
+                  </Link>
                 )}
               </div>
             ) : (
               <div
                 key={`${searchQuery}-${activeSpecies}`}
-                className="grid animate-fade-in-up grid-cols-2 gap-3 sm:gap-4"
+                className="grid animate-fade-in-up grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4"
               >
                 {filtered.map((l, idx) => (
                   <LivestockCard
@@ -712,6 +635,7 @@ export default function Browse() {
         onClose={() =>
           setShowFilters(false)
         }
+        resultCount={filtered.length}
         filters={{
           filterBreed,
           setFilterBreed,

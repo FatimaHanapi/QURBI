@@ -1,6 +1,9 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * @param {{ icon?: React.ElementType, title: React.ReactNode, description?: React.ReactNode, action?: React.ReactNode, className?: string }} props
+ */
 export default function EmptyState({ icon: Icon, title, description, action, className }) {
   return (
     <div className={cn("soft-card flex flex-col items-center justify-center px-6 py-12 text-center", className)}>

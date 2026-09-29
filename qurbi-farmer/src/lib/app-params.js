@@ -1,6 +1,8 @@
 const isNode = typeof window === 'undefined';
 const windowObj = isNode ? { localStorage: new Map() } : window;
-const storage = windowObj.localStorage;
+// The Map fallback is only reachable under Node, where getAppParamValue
+// returns before touching storage, so the browser Storage API is what is used.
+const storage = /** @type {Storage} */ (windowObj.localStorage);
 
 const toSnakeCase = (str) => {
 	return str.replace(/([A-Z])/g, '_$1').toLowerCase();

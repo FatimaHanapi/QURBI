@@ -54,8 +54,8 @@ export default function DeliveryPreference({ profile }) {
           <Truck className="w-4 h-4 text-primary" />
         </span>
         <div>
-          <p className="text-sm font-semibold">Delivery Method</p>
-          <p className="text-[11px] text-muted-foreground">How you deliver livestock to buyers</p>
+          <p className="text-base font-semibold">Delivery method</p>
+          <p className="text-sm text-muted-foreground">How you deliver livestock to buyers</p>
         </div>
       </div>
       <DeliveryMethodCards
@@ -67,11 +67,11 @@ export default function DeliveryPreference({ profile }) {
       />
       <div className="flex items-center justify-between mt-3 min-h-[20px]">
         {error ? (
-          <span className="text-xs text-destructive">{error}</span>
+          <span role="alert" className="text-sm text-destructive">{error}</span>
         ) : (
-          <span className="text-xs text-muted-foreground">{dirty ? "Unsaved changes" : "\u00A0"}</span>
+          <span className="text-sm text-muted-foreground">{dirty ? "Unsaved changes" : "\u00A0"}</span>
         )}
-        <Button onClick={save} disabled={!dirty || saving} size="sm" className="h-9">
+        <Button onClick={save} disabled={!dirty || saving} className="h-11 rounded-xl px-5">
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
           Save
         </Button>

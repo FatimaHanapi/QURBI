@@ -1,11 +1,16 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 const pulse = "animate-pulse bg-[#41362D]/10";
 
 export function QurbiCardSkeleton({ count = 6, variant = "grid" }) {
+  const { t } = useTranslation("common");
   if (variant === "list") {
     return (
-      <div className="w-full space-y-3" aria-label="Loading content">
+      <div
+        className="w-full space-y-3"
+        aria-label={t("qurbiLoading.loadingContent")}
+      >
         {Array.from({ length: count }, (_, index) => (
           <div
             key={index}
@@ -26,7 +31,7 @@ export function QurbiCardSkeleton({ count = 6, variant = "grid" }) {
   return (
     <div
       className="grid w-full grid-cols-2 gap-2.5 sm:grid-cols-3"
-      aria-label="Loading products"
+      aria-label={t("qurbiLoading.loadingProducts")}
     >
       {Array.from({ length: count }, (_, index) => (
         <div
@@ -45,7 +50,9 @@ export function QurbiCardSkeleton({ count = 6, variant = "grid" }) {
   );
 }
 
-export function QurbiPageLoader({ label = "Loading…" }) {
+export function QurbiPageLoader({ label }) {
+  const { t } = useTranslation("common");
+  const resolvedLabel = label ?? t("qurbiLoading.loading");
   return (
     <div className="qurbi-page flex min-h-screen items-center justify-center px-5">
       <div className="w-full max-w-sm rounded-3xl border border-[#41362D]/15 bg-white/55 p-5 shadow-sm">
@@ -57,7 +64,7 @@ export function QurbiPageLoader({ label = "Loading…" }) {
           </div>
         </div>
         <p className="mt-5 text-center text-xs font-semibold text-[#41362D]/55">
-          {label}
+          {resolvedLabel}
         </p>
       </div>
     </div>
@@ -65,10 +72,11 @@ export function QurbiPageLoader({ label = "Loading…" }) {
 }
 
 export function LivestockDetailSkeleton() {
+  const { t } = useTranslation("common");
   return (
     <div
       className="min-h-screen overflow-hidden bg-gradient-to-br from-[#41362D] to-[#6B594A]"
-      aria-label="Loading livestock details"
+      aria-label={t("qurbiLoading.loadingLivestockDetails")}
     >
       <div className="h-72 animate-pulse bg-gradient-to-br from-[#E3C19F]/70 to-[#F7EDE2]/80" />
       <div className="relative -mt-7 min-h-[55vh] rounded-t-[32px] border-t border-white/20 bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-5 pb-28 pt-7">

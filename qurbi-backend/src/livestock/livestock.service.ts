@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, DeepPartial, EntityManager, Repository } from 'typeorm';
 import {
@@ -7,6 +12,8 @@ import {
   Livestock,
   LivestockStatus,
   RequestStatus,
+  Reservation,
+  ReservationStatus,
   Species,
   User,
   UserRole,
@@ -52,10 +59,16 @@ export class LivestockService extends BaseCrudService<Livestock> {
   // place of it — a non-admin can never use them to see past their own scope,
   // at worst they narrow it down to nothing (e.g. adminBlocked=true as a
   // buyer: blocked listings are never in the buyer-visible set anyway).
-  async findAllForViewer(query: LivestockQuery, viewer?: AuthenticatedUser): Promise<Paginated<LivestockWithVisibility>> {
-    await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager));
+  async findAllForViewer(
+    query: LivestockQuery,
+    viewer?: AuthenticatedUser,
+  ): Promise<Paginated<LivestockWithVisibility>> {
+    await this.dataSource.transaction((manager) =>
+      this.reservationsService.expireDue(manager),
+    );
     const { page, limit, skip, take } = resolvePage(query);
-    const isOwnInventory = viewer?.role === UserRole.FARMER && query.farmerId === viewer.id;
+    const isOwnInventory =
+      viewer?.role === UserRole.FARMER && query.farmerId === viewer.id;
     const isAdmin = viewer?.role === UserRole.ADMIN;
     const showEverything = isAdmin || isOwnInventory;
 
@@ -68,12 +81,24 @@ export class LivestockService extends BaseCrudService<Livestock> {
       .innerJoinAndSelect('farmer.farmerProfile', 'farmerProfile')
       .orderBy('livestock.createdAt', 'DESC');
 
-    if (query.farmerId) qb.andWhere('livestock.farmerId = :farmerId', { farmerId: query.farmerId });
-    if (query.speciesId) qb.andWhere('livestock.speciesId = :speciesId', { speciesId: query.speciesId });
-    if (query.categoryId) qb.andWhere('livestock.categoryId = :categoryId', { categoryId: query.categoryId });
-    if (query.status) qb.andWhere('livestock.status = :status', { status: query.status });
+    if (query.farmerId)
+      qb.andWhere('livestock.farmerId = :farmerId', {
+        farmerId: query.farmerId,
+      });
+    if (query.speciesId)
+      qb.andWhere('livestock.speciesId = :speciesId', {
+        speciesId: query.speciesId,
+      });
+    if (query.categoryId)
+      qb.andWhere('livestock.categoryId = :categoryId', {
+        categoryId: query.categoryId,
+      });
+    if (query.status)
+      qb.andWhere('livestock.status = :status', { status: query.status });
     if (query.adminBlocked !== undefined) {
-      qb.andWhere('livestock.adminBlocked = :adminBlocked', { adminBlocked: query.adminBlocked });
+      qb.andWhere('livestock.adminBlocked = :adminBlocked', {
+        adminBlocked: query.adminBlocked,
+      });
     }
 
     if (!showEverything) {
@@ -81,14 +106,24 @@ export class LivestockService extends BaseCrudService<Livestock> {
         availableStatus: LivestockStatus.AVAILABLE,
       })
         .andWhere('livestock.adminBlocked = false')
-        .andWhere('farmerProfile.verificationStatus = :verified', { verified: VerificationStatus.VERIFIED })
-        .andWhere('livestock.speciesApprovalStatus = :approved', { approved: RequestStatus.APPROVED })
-        .andWhere('(livestock.breedId IS NULL OR livestock.breedApprovalStatus = :approved)', {
+        .andWhere('farmerProfile.verificationStatus = :verified', {
+          verified: VerificationStatus.VERIFIED,
+        })
+        .andWhere('livestock.speciesApprovalStatus = :approved', {
           approved: RequestStatus.APPROVED,
         })
-        .andWhere('(livestock.marketplaceEligibleFrom IS NULL OR livestock.marketplaceEligibleFrom <= :now)', {
-          now: new Date(),
-        })
+        .andWhere(
+          '(livestock.breedId IS NULL OR livestock.breedApprovalStatus = :approved)',
+          {
+            approved: RequestStatus.APPROVED,
+          },
+        )
+        .andWhere(
+          '(livestock.marketplaceEligibleFrom IS NULL OR livestock.marketplaceEligibleFrom <= :now)',
+          {
+            now: new Date(),
+          },
+        )
         .andWhere(
           'COALESCE(livestock.marketplaceExpiresAt, DATE_ADD(livestock.createdAt, INTERVAL 14 DAY)) > :now',
           { now: new Date() },
@@ -99,8 +134,13 @@ export class LivestockService extends BaseCrudService<Livestock> {
     qb.skip(skip).take(take);
     const rows = await qb.getRawAndEntities();
     const data = rows.entities.map((listing, index) => {
-      const verificationStatus = rows.raw[index].farmerProfile_verificationStatus as VerificationStatus;
-      return this.withPublicFarmer(this.withDerivedVisibility(listing, verificationStatus));
+      const raw = rows.raw[index] as {
+        farmerProfile_verificationStatus: VerificationStatus;
+      };
+      const verificationStatus = raw.farmerProfile_verificationStatus;
+      return this.withPublicFarmer(
+        this.withDerivedVisibility(listing, verificationStatus),
+      );
     });
     return { data, total, page, limit };
   }
@@ -116,11 +156,17 @@ export class LivestockService extends BaseCrudService<Livestock> {
       },
     });
     if (!listing) throw new NotFoundException(`Livestock ${id} not found`);
-    const verificationStatus = listing.farmer?.farmerProfile?.verificationStatus ?? VerificationStatus.UNVERIFIED;
-    return this.withPublicFarmer(this.withDerivedVisibility(listing, verificationStatus));
+    const verificationStatus =
+      listing.farmer?.farmerProfile?.verificationStatus ??
+      VerificationStatus.UNVERIFIED;
+    return this.withPublicFarmer(
+      this.withDerivedVisibility(listing, verificationStatus),
+    );
   }
 
-  private withPublicFarmer(listing: LivestockWithVisibility): LivestockWithVisibility {
+  private withPublicFarmer(
+    listing: LivestockWithVisibility,
+  ): LivestockWithVisibility {
     const farmer = listing.farmer;
     const profile = farmer?.farmerProfile;
     if (!farmer || !profile) return listing;
@@ -149,12 +195,18 @@ export class LivestockService extends BaseCrudService<Livestock> {
     return listing;
   }
 
-  async findOneForViewer(id: string, viewer?: AuthenticatedUser): Promise<LivestockWithVisibility> {
-    await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager, id));
+  async findOneForViewer(
+    id: string,
+    viewer?: AuthenticatedUser,
+  ): Promise<LivestockWithVisibility> {
+    await this.dataSource.transaction((manager) =>
+      this.reservationsService.expireDue(manager, id),
+    );
     const listing = await this.findOneWithVisibility(id);
     const canSeeHidden =
       viewer?.role === UserRole.ADMIN ||
-      (viewer?.role === UserRole.FARMER && listing.farmerId === viewer.id);
+      (viewer?.role === UserRole.FARMER && listing.farmerId === viewer.id) ||
+      (await this.isReservedBy(id, viewer));
     if (!canSeeHidden && !listing.marketplaceVisible) {
       throw new NotFoundException(`Livestock ${id} not found`);
     }
@@ -163,6 +215,21 @@ export class LivestockService extends BaseCrudService<Livestock> {
       listing.viewCount += 1;
     }
     return listing;
+  }
+
+  // A buyer who reserved or bought this animal can still open it (to resume
+  // payment or look back at an order) even though it has left the marketplace.
+  private async isReservedBy(
+    livestockId: string,
+    viewer?: AuthenticatedUser,
+  ): Promise<boolean> {
+    if (viewer?.role !== UserRole.BUYER) return false;
+    return this.dataSource.getRepository(Reservation).exists({
+      where: [
+        { livestockId, userId: viewer.id, status: ReservationStatus.ACTIVE },
+        { livestockId, userId: viewer.id, status: ReservationStatus.COMPLETED },
+      ],
+    });
   }
 
   availability(id: string, viewer: AuthenticatedUser) {
@@ -177,13 +244,25 @@ export class LivestockService extends BaseCrudService<Livestock> {
     listing: Livestock,
     farmerVerificationStatus: VerificationStatus,
   ): LivestockWithVisibility {
-    return Object.assign(listing, computeMarketplaceVisibility(listing, farmerVerificationStatus));
+    return Object.assign(
+      listing,
+      computeMarketplaceVisibility(listing, farmerVerificationStatus),
+    );
   }
 
-  async createForFarmer(farmerId: string, data: DeepPartial<Livestock>): Promise<Livestock> {
-    if (!data.speciesId) throw new BadRequestException('Select an active species');
-    if (data.status === LivestockStatus.RESERVED || data.status === LivestockStatus.SOLD) {
-      throw new BadRequestException('A new listing cannot start as reserved or sold');
+  async createForFarmer(
+    farmerId: string,
+    data: DeepPartial<Livestock>,
+  ): Promise<Livestock> {
+    if (!data.speciesId)
+      throw new BadRequestException('Select an active species');
+    if (
+      data.status === LivestockStatus.RESERVED ||
+      data.status === LivestockStatus.SOLD
+    ) {
+      throw new BadRequestException(
+        'A new listing cannot start as reserved or sold',
+      );
     }
     await this.validateReferenceData(data.speciesId, data.breedId);
     return this.create({
@@ -205,7 +284,9 @@ export class LivestockService extends BaseCrudService<Livestock> {
   ): Promise<Livestock> {
     const listing = await this.findOwned(id, viewer);
     if (data.status === LivestockStatus.SOLD) {
-      throw new BadRequestException('status SOLD can only be set by completing a purchase');
+      throw new BadRequestException(
+        'status SOLD can only be set by completing a purchase',
+      );
     }
     if (data.status === LivestockStatus.AVAILABLE) {
       data.marketplaceExpiresAt = new Date(Date.now() + LISTING_LIFETIME_MS);
@@ -213,7 +294,8 @@ export class LivestockService extends BaseCrudService<Livestock> {
     }
     if (data.speciesId !== undefined || data.breedId !== undefined) {
       const speciesId = data.speciesId ?? listing.speciesId;
-      const breedId = data.breedId === undefined ? listing.breedId : data.breedId;
+      const breedId =
+        data.breedId === undefined ? listing.breedId : data.breedId;
       await this.validateReferenceData(speciesId, breedId);
       data.speciesApprovalStatus = RequestStatus.APPROVED;
       data.breedApprovalStatus = RequestStatus.APPROVED;
@@ -221,12 +303,22 @@ export class LivestockService extends BaseCrudService<Livestock> {
     return super.update(listing.id, data);
   }
 
-  private async validateReferenceData(speciesId: string, breedId?: string | null): Promise<void> {
-    const species = await this.dataSource.getRepository(Species).findOne({ where: { id: speciesId, isActive: true } });
+  private async validateReferenceData(
+    speciesId: string,
+    breedId?: string | null,
+  ): Promise<void> {
+    const species = await this.dataSource
+      .getRepository(Species)
+      .findOne({ where: { id: speciesId, isActive: true } });
     if (!species) throw new BadRequestException('Select an active species');
     if (!breedId) return;
-    const breed = await this.dataSource.getRepository(Breed).findOne({ where: { id: breedId, speciesId, isActive: true } });
-    if (!breed) throw new BadRequestException('Select an active breed that belongs to this species');
+    const breed = await this.dataSource
+      .getRepository(Breed)
+      .findOne({ where: { id: breedId, speciesId, isActive: true } });
+    if (!breed)
+      throw new BadRequestException(
+        'Select an active breed that belongs to this species',
+      );
   }
 
   async removeOwned(id: string, viewer: AuthenticatedUser): Promise<void> {
@@ -236,7 +328,10 @@ export class LivestockService extends BaseCrudService<Livestock> {
 
   // Fetches a listing and confirms `viewer` owns it (or is an admin). Anyone
   // else gets the exact same 404 a made-up id would return.
-  private async findOwned(id: string, viewer: AuthenticatedUser): Promise<Livestock> {
+  private async findOwned(
+    id: string,
+    viewer: AuthenticatedUser,
+  ): Promise<Livestock> {
     const listing = await this.findOne(id);
     if (viewer.role !== UserRole.ADMIN && listing.farmerId !== viewer.id) {
       throw new NotFoundException(`Livestock ${id} not found`);
@@ -246,7 +341,11 @@ export class LivestockService extends BaseCrudService<Livestock> {
 
   // Admin override: force a listing off the marketplace (or clear that
   // override) regardless of what the derived rule would otherwise compute.
-  async setMarketplaceBlock(id: string, blocked: boolean, reason: string | null): Promise<LivestockWithVisibility> {
+  async setMarketplaceBlock(
+    id: string,
+    blocked: boolean,
+    reason: string | null,
+  ): Promise<LivestockWithVisibility> {
     await this.findOne(id);
     await this.repository.update(id, {
       adminBlocked: blocked,
@@ -257,7 +356,10 @@ export class LivestockService extends BaseCrudService<Livestock> {
 
   // Admin-only, same shape as setMarketplaceBlock: isFeatured is a homepage
   // curation decision, not something a farmer can grant their own listing.
-  async setFeatured(id: string, featured: boolean): Promise<LivestockWithVisibility> {
+  async setFeatured(
+    id: string,
+    featured: boolean,
+  ): Promise<LivestockWithVisibility> {
     await this.findOne(id);
     await this.repository.update(id, { isFeatured: featured });
     return this.findOneWithVisibility(id);
@@ -282,7 +384,9 @@ export class LivestockService extends BaseCrudService<Livestock> {
         farmerProfile?.verificationStatus ?? VerificationStatus.UNVERIFIED,
       );
       if (!visibility.marketplaceVisible) {
-        throw new ConflictException(`Livestock ${id} is no longer available for purchase`);
+        throw new ConflictException(
+          `Livestock ${id} is no longer available for purchase`,
+        );
       }
 
       listing.status = LivestockStatus.SOLD;
@@ -338,28 +442,56 @@ export function computeMarketplaceVisibility(
   farmerVerificationStatus: VerificationStatus,
 ): DerivedMarketplaceVisibility {
   if (listing.status !== LivestockStatus.AVAILABLE) {
-    return { marketplaceVisible: false, marketplaceVisibilityReason: `Listing is ${listing.status}` };
+    return {
+      marketplaceVisible: false,
+      marketplaceVisibilityReason: `Listing is ${listing.status}`,
+    };
   }
   if (listing.adminBlocked) {
-    return { marketplaceVisible: false, marketplaceVisibilityReason: listing.adminBlockReason ?? 'Blocked by admin' };
+    return {
+      marketplaceVisible: false,
+      marketplaceVisibilityReason:
+        listing.adminBlockReason ?? 'Blocked by admin',
+    };
   }
   if (farmerVerificationStatus !== VerificationStatus.VERIFIED) {
-    return { marketplaceVisible: false, marketplaceVisibilityReason: 'Farmer is not verified' };
+    return {
+      marketplaceVisible: false,
+      marketplaceVisibilityReason: 'Farmer is not verified',
+    };
   }
   if (listing.speciesApprovalStatus !== RequestStatus.APPROVED) {
-    return { marketplaceVisible: false, marketplaceVisibilityReason: 'Species is pending approval' };
+    return {
+      marketplaceVisible: false,
+      marketplaceVisibilityReason: 'Species is pending approval',
+    };
   }
-  if (listing.breedId && listing.breedApprovalStatus !== RequestStatus.APPROVED) {
-    return { marketplaceVisible: false, marketplaceVisibilityReason: 'Breed is pending approval' };
+  if (
+    listing.breedId &&
+    listing.breedApprovalStatus !== RequestStatus.APPROVED
+  ) {
+    return {
+      marketplaceVisible: false,
+      marketplaceVisibilityReason: 'Breed is pending approval',
+    };
   }
-  if (listing.marketplaceEligibleFrom && listing.marketplaceEligibleFrom > new Date()) {
-    return { marketplaceVisible: false, marketplaceVisibilityReason: 'Not yet eligible for marketplace' };
+  if (
+    listing.marketplaceEligibleFrom &&
+    listing.marketplaceEligibleFrom > new Date()
+  ) {
+    return {
+      marketplaceVisible: false,
+      marketplaceVisibilityReason: 'Not yet eligible for marketplace',
+    };
   }
   const expiresAt =
     listing.marketplaceExpiresAt ??
     new Date(listing.createdAt.getTime() + LISTING_LIFETIME_MS);
   if (expiresAt <= new Date()) {
-    return { marketplaceVisible: false, marketplaceVisibilityReason: 'Listing expired after 14 days' };
+    return {
+      marketplaceVisible: false,
+      marketplaceVisibilityReason: 'Listing expired after 14 days',
+    };
   }
   return { marketplaceVisible: true, marketplaceVisibilityReason: null };
 }

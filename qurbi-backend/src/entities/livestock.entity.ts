@@ -78,7 +78,11 @@ export class Livestock extends BaseEntity {
   @Column({ type: 'json', nullable: true })
   videos: string[] | null;
 
-  @Column({ type: 'enum', enum: LivestockStatus, default: LivestockStatus.DRAFT })
+  @Column({
+    type: 'enum',
+    enum: LivestockStatus,
+    default: LivestockStatus.DRAFT,
+  })
   status: LivestockStatus;
 
   // marketplaceVisible/marketplaceVisibilityReason are NOT columns — they're

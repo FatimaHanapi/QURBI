@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
+import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 // Shared create/findAll/findOne/update/remove so entities with no special
 // workflow (species, breeds, categories, ...) don't each re-implement the
@@ -21,14 +22,16 @@ export abstract class BaseCrudService<T extends { id: string }> {
       where: { id } as FindOptionsWhere<T>,
     });
     if (!entity) {
-      throw new NotFoundException(`${this.repository.metadata.name} ${id} not found`);
+      throw new NotFoundException(
+        `${this.repository.metadata.name} ${id} not found`,
+      );
     }
     return entity;
   }
 
   async update(id: string, data: DeepPartial<T>): Promise<T> {
     await this.findOne(id);
-    await this.repository.update(id, data as any);
+    await this.repository.update(id, data as QueryDeepPartialEntity<T>);
     return this.findOne(id);
   }
 

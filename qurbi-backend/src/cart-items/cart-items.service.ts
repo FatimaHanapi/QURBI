@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { CartItem, OrderItemType } from '../entities';
@@ -17,7 +23,8 @@ type AddCartItemInput = {
 @Injectable()
 export class CartItemsService {
   constructor(
-    @InjectRepository(CartItem) private readonly repository: Repository<CartItem>,
+    @InjectRepository(CartItem)
+    private readonly repository: Repository<CartItem>,
     private readonly cartsService: CartsService,
     private readonly reservationsService: ReservationsService,
   ) {}
@@ -35,9 +42,14 @@ export class CartItemsService {
   async addItem(input: AddCartItemInput): Promise<CartItem> {
     this.assertValidTarget(input);
     if (input.livestockId) {
-      const availability = await this.reservationsService.availability(input.livestockId, input.userId);
+      const availability = await this.reservationsService.availability(
+        input.livestockId,
+        input.userId,
+      );
       if (!availability.available && availability.state === 'reserved') {
-        throw new ConflictException('This livestock is currently reserved by another buyer.');
+        throw new ConflictException(
+          'This livestock is currently reserved by another buyer.',
+        );
       }
       if (!availability.available) {
         throw new ConflictException('This livestock is no longer available.');
@@ -78,7 +90,11 @@ export class CartItemsService {
     );
   }
 
-  async updateQuantity(userId: string, itemId: string, quantity: number): Promise<CartItem> {
+  async updateQuantity(
+    userId: string,
+    itemId: string,
+    quantity: number,
+  ): Promise<CartItem> {
     const item = await this.findOwnedItem(userId, itemId);
     if (item.itemType === OrderItemType.BULK_LISTING && quantity !== 1) {
       throw new BadRequestException(
@@ -94,12 +110,17 @@ export class CartItemsService {
     await this.repository.remove(item);
   }
 
-  private async findOwnedItem(userId: string, itemId: string): Promise<CartItem> {
+  private async findOwnedItem(
+    userId: string,
+    itemId: string,
+  ): Promise<CartItem> {
     const cart = await this.cartsService.getOrCreateForUser(userId);
     const item = await this.repository.findOne({ where: { id: itemId } });
     if (!item) throw new NotFoundException(`CartItem ${itemId} not found`);
     if (item.cartId !== cart.id) {
-      throw new ForbiddenException(`CartItem ${itemId} does not belong to this user's cart`);
+      throw new ForbiddenException(
+        `CartItem ${itemId} does not belong to this user's cart`,
+      );
     }
     return item;
   }
@@ -117,7 +138,9 @@ export class CartItemsService {
     }
     if (input.itemType === OrderItemType.BULK_LISTING) {
       if (!hasBulkListing) {
-        throw new BadRequestException('itemType bulk_listing requires bulkListingId');
+        throw new BadRequestException(
+          'itemType bulk_listing requires bulkListingId',
+        );
       }
       // A lot is one unit, not a repeatable SKU — you can't buy "2 of" a
       // specific group of animals.

@@ -1,4 +1,14 @@
-import { IsArray, IsDateString, IsEnum, IsInt, IsNumberString, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 import { BulkListingStatus } from '../../entities';
 import type { BulkListingBreedGroup } from '../../entities';
 

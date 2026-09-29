@@ -44,7 +44,7 @@ export default function VideoUploader({ value = [], onChange, buttonLabel = "Add
           <button
             type="button"
             onClick={() => onChange(value.filter((_, itemIndex) => itemIndex !== index))}
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white"
+            className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white"
             aria-label={`Remove video ${index + 1}`}
           >
             <X className="h-4 w-4" />
@@ -57,17 +57,17 @@ export default function VideoUploader({ value = [], onChange, buttonLabel = "Add
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex min-h-24 w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border text-sm font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          className="flex min-h-20 w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border text-sm font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
         >
           {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
           {uploading ? "Uploading video..." : buttonLabel}
         </button>
       )}
 
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <PlaySquare className="h-3.5 w-3.5" /> Up to {MAX_VIDEOS} videos, 50 MB each.
       </p>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <input
         ref={inputRef}
         type="file"

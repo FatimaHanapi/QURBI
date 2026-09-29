@@ -28,12 +28,12 @@ export default function Login() {
       <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 py-6 sm:px-8 sm:py-8 lg:px-10">
         <header className="animate-fade-in flex items-center justify-between">
           <BrandLogo light />
-          <span className="hidden rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-white/75 ring-1 ring-white/15 backdrop-blur sm:inline-flex">Farmer portal</span>
+          <span className="hidden rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-white/75 ring-1 ring-white/15 backdrop-blur sm:inline-flex">Farmer portal</span>
         </header>
 
         <main className="grid flex-1 content-start items-center gap-6 pb-8 pt-10 sm:-translate-y-4 sm:content-center sm:py-8 lg:translate-y-0 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,.75fr)] lg:gap-16 lg:py-14">
           <section className="animate-fade-in max-w-xl text-white">
-            <span className="inline-flex items-center gap-2 rounded-full bg-secondary/95 px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-secondary-foreground shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-full bg-secondary/95 px-3.5 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-secondary-foreground shadow-sm">
               <ShieldCheck className="h-4 w-4" /> Verified livestock marketplace
             </span>
             <h1 className="mt-5 text-[2.25rem] font-extrabold leading-[1.08] tracking-[-0.035em] sm:text-5xl lg:text-[3.5rem]">
@@ -70,7 +70,7 @@ export default function Login() {
           </section>
         </main>
 
-        <footer className="text-center text-[10px] leading-relaxed text-white/60 sm:text-left">By continuing you agree to the QURBI Farmer Terms &amp; Privacy Policy.</footer>
+        <footer className="text-center text-sm leading-relaxed text-white/80 sm:text-left">By continuing you agree to the QURBI Farmer Terms &amp; Privacy Policy.</footer>
       </div>
     </div>
   );
@@ -80,7 +80,7 @@ function LoginBenefit({ value, label }) {
   return (
     <div className="rounded-2xl border border-white/15 bg-black/10 px-4 py-3 backdrop-blur-sm">
       <strong className="block text-sm font-extrabold text-white">{value}</strong>
-      <span className="mt-0.5 block text-[11px] text-white/60">{label}</span>
+      <span className="mt-0.5 block text-xs text-white/75">{label}</span>
     </div>
   );
 }

@@ -1,18 +1,26 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Boxes, Home, Leaf, ShoppingCart, Package } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useCart } from "@/lib/cart-context";
 import { CART_ARRIVAL_EVENT } from "@/lib/cart-animation";
 
 const TABS = [
-  { path: "/browse", icon: Leaf, label: "Browse" },
-  { path: "/bulk-buy", icon: Boxes, label: "Bulk Buy" },
-  { path: "/", icon: Home, label: "Home", center: true },
-  { path: "/cart", icon: ShoppingCart, label: "Cart", badge: true },
-  { path: "/orders", icon: Package, label: "Orders" },
+  { path: "/browse", icon: Leaf, labelKey: "bottomNav.browse" },
+  { path: "/bulk-buy", icon: Boxes, labelKey: "bottomNav.bulkBuy" },
+  { path: "/", icon: Home, labelKey: "bottomNav.home", center: true },
+  {
+    path: "/cart",
+    icon: ShoppingCart,
+    labelKey: "bottomNav.cart",
+    badge: true,
+  },
+  { path: "/orders", icon: Package, labelKey: "bottomNav.orders" },
 ];
 
 export default function BottomNav() {
+  const { t } = useTranslation("common");
+  const { t: tf } = useTranslation("shopflow");
   const location = useLocation();
   const { totalItems = 0 } = useCart() || {};
   const [cartBouncing, setCartBouncing] = useState(false);
@@ -39,8 +47,8 @@ export default function BottomNav() {
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
       <div className="pointer-events-auto relative mx-auto w-full">
         {/* Navbar */}
-        <nav className="qurbi-nav-background relative flex min-h-[76px] items-end justify-around bg-gradient-to-br from-[#41362D] to-[#6B594A] px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-8px_30px_rgba(65,54,45,0.25)]">
-          {TABS.map(({ path, icon: Icon, label, badge, center }) => {
+        <nav aria-label={tf("nav.label")} className="qurbi-nav-background relative flex min-h-[76px] items-end justify-around bg-gradient-to-br from-[#41362D] to-[#6B594A] px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-8px_30px_rgba(65,54,45,0.25)]">
+          {TABS.map(({ path, icon: Icon, labelKey, badge, center }) => {
             const isActive =
               path === "/bulk-buy"
                 ? location.pathname.startsWith(path)
@@ -52,7 +60,8 @@ export default function BottomNav() {
                 <Link
                   key={path}
                   to={path}
-                  className="relative -mt-10 flex flex-1 flex-col items-center"
+                  aria-current={isActive ? "page" : undefined}
+                  className="relative -mt-10 flex min-w-0 flex-1 flex-col items-center"
                 >
                   <div
                     className={`
@@ -71,8 +80,8 @@ export default function BottomNav() {
                     <span className="absolute inset-0 rounded-full ring-1 ring-white/30" />
                   </div>
 
-                  <span className="mt-1 text-[9px] font-semibold text-white">
-                    {label}
+                  <span className="mt-1 text-[11px] font-semibold leading-tight text-white">
+                    {t(labelKey)}
                   </span>
                 </Link>
               );
@@ -82,7 +91,9 @@ export default function BottomNav() {
               <Link
                 key={path}
                 to={path}
-                className="relative flex flex-1 flex-col items-center justify-end gap-1 py-1 active:scale-90 transition-transform"
+                aria-current={isActive ? "page" : undefined}
+                aria-label={badge && totalItems > 0 ? tf("nav.cartWithCount", { count: totalItems }) : undefined}
+                className="relative flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-end gap-1 py-1 active:scale-90 transition-transform"
               >
                 <div
                   data-cart-nav-icon={path === "/cart" ? "true" : undefined}
@@ -98,12 +109,12 @@ export default function BottomNav() {
                   />
                 </div>
 
-                <span className="text-[9px] font-semibold text-white">
-                  {label}
+                <span className={`max-w-full text-center text-[11px] leading-tight text-white ${isActive ? "font-bold" : "font-semibold"}`}>
+                  {t(labelKey)}
                 </span>
 
                 {badge && totalItems > 0 && (
-                  <span className="absolute right-4 top-0 flex h-4 min-w-4 items-center justify-center rounded-full border border-white/70 bg-[#F7EDE2]0 px-1 text-[9px] font-bold text-white shadow-sm"> 
+                  <span aria-hidden="true" className="absolute left-1/2 top-0 ml-2 flex h-5 min-w-5 items-center justify-center rounded-full border border-[#41362D] bg-[#E3C19F] px-1 text-[11px] font-bold text-[#41362D] shadow-sm">
                     {totalItems}
                   </span>
                 )}

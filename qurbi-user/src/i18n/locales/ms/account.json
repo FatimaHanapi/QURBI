@@ -1,0 +1,275 @@
+{
+  "status": {
+    "awaitingPayment": {
+      "label": "Menunggu bayaran",
+      "hint": "Selesaikan bayaran untuk mengesahkan pesanan anda. Haiwan ini ditempah untuk anda sehingga masa yang ditunjukkan."
+    },
+    "paymentFailed": {
+      "label": "Bayaran gagal",
+      "hint": "Bayaran terakhir anda tidak berjaya. Anda boleh cuba lagi sebelum tempahan tamat."
+    },
+    "paid": {
+      "label": "Telah dibayar",
+      "hint": "Bayaran diterima. Penternak akan mula menyediakan haiwan anda."
+    },
+    "preparing": {
+      "label": "Sedang disediakan",
+      "hint": "Penternak sedang menyediakan haiwan anda dan akan memuat naik gambar sepanjang proses."
+    },
+    "onTheWay": {
+      "label": "Dalam perjalanan",
+      "hint": "Haiwan anda sedang dihantar. Sahkan penerimaan sebaik sahaja ia tiba."
+    },
+    "delivered": {
+      "label": "Telah dihantar",
+      "hint": "Penternak telah menandakan pesanan ini sebagai dihantar. Sila sahkan anda telah menerimanya."
+    },
+    "completed": {
+      "label": "Selesai",
+      "hint": "Anda telah mengesahkan penerimaan. Terima kasih kerana membuat pesanan dengan QURBI."
+    },
+    "cancelled": {
+      "label": "Dibatalkan",
+      "hint": "Pesanan ini telah dibatalkan. Tiada bayaran perlu dibuat."
+    },
+    "outOfStock": {
+      "label": "Kehabisan stok",
+      "hint": "Haiwan ini tidak lagi tersedia, jadi pesanan tidak dapat diteruskan."
+    },
+    "refundRequested": {
+      "label": "Bayaran balik dimohon",
+      "hint": "Kami telah menerima permohonan pemulangan / bayaran balik anda. Pasukan kami akan menyemaknya."
+    },
+    "refundApproved": {
+      "label": "Bayaran balik diluluskan",
+      "hint": "Bayaran balik anda telah diluluskan dan sedang diproses."
+    },
+    "refundRejected": {
+      "label": "Bayaran balik ditolak",
+      "hint": "Permohonan bayaran balik anda tidak diluluskan. Lihat nota di bawah atau hubungi sokongan."
+    },
+    "refunded": {
+      "label": "Telah dibayar balik",
+      "hint": "Bayaran balik anda telah selesai."
+    },
+    "unknown": {
+      "label": "Sedang diproses",
+      "hint": "Kami sedang memproses pesanan ini."
+    }
+  },
+  "dates": {
+    "today": "Hari ini",
+    "yesterday": "Semalam",
+    "unavailable": "Tarikh tidak tersedia"
+  },
+  "orders": {
+    "titleMore": "{{name}} + {{count}} lagi",
+    "fromFarmer": "Daripada {{name}}",
+    "orderNumber": "Pesanan {{number}}",
+    "total": "Jumlah",
+    "guestTitle": "Pesanan anda",
+    "viewToggle": "Pilih cara pesanan dipaparkan",
+    "historyHint": "Anda boleh membuang pesanan yang dibatalkan daripada sejarah.",
+    "selectHint": "Ketik pesanan yang dibatalkan untuk memilihnya.",
+    "browseLivestock": "Lihat ternakan",
+    "actions": {
+      "track": "Jejak pesanan",
+      "confirm": "Sahkan penerimaan",
+      "receipt": "Lihat resit",
+      "refund": "Lihat bayaran balik"
+    },
+    "empty": {
+      "to-pay": "Pesanan yang menunggu bayaran akan dipaparkan di sini.",
+      "to-ship": "Pesanan berbayar yang sedang disediakan oleh penternak akan dipaparkan di sini.",
+      "to-receive": "Pesanan yang sedang dihantar kepada anda akan dipaparkan di sini.",
+      "completed": "Pesanan yang telah anda terima akan dipaparkan di sini.",
+      "return-refund": "Permohonan pemulangan dan bayaran balik akan dipaparkan di sini."
+    }
+  },
+  "orderDetail": {
+    "reservedUntil": "Ditempah untuk anda sehingga {{time}}",
+    "proof": {
+      "subtitle": "Penternak menambah gambar Sebelum, Semasa dan Selepas penghantaran. Anda menambah gambar Diterima.",
+      "done": "Dimuat naik",
+      "open": "Buka gambar {{stage}} dalam saiz penuh",
+      "emptyHint": "Gambar akan dipaparkan di sini apabila penternak memuat naiknya."
+    },
+    "timeline": {
+      "title": "Kemajuan pesanan",
+      "next": "Seterusnya",
+      "steps": {
+        "placed": "Pesanan dibuat",
+        "paid": "Bayaran diterima",
+        "preparing": "Penternak sedang menyediakan",
+        "onTheWay": "Dalam perjalanan",
+        "delivered": "Telah dihantar",
+        "received": "Diterima oleh anda"
+      }
+    },
+    "receive": {
+      "title": "Sudah terima haiwan anda?",
+      "confirmButton": "Sahkan penerimaan",
+      "steps": {
+        "farmerPhotos": {
+          "title": "Penternak memuat naik gambar penghantaran",
+          "body": "Kami akan memaklumkan anda apabila gambar Sebelum, Semasa dan Selepas sudah sedia."
+        },
+        "yourPhoto": {
+          "title": "Tambah gambar haiwan yang anda terima",
+          "body": "Ambil atau pilih gambar haiwan yang jelas, kemudian simpan."
+        },
+        "confirm": {
+          "title": "Sahkan penerimaan",
+          "body": "Semuanya betul? Ketik Sahkan penerimaan untuk melengkapkan pesanan anda."
+        }
+      }
+    },
+    "refund": {
+      "problemPrompt": "Ada masalah dengan pesanan anda? Anda boleh memohon pemulangan atau bayaran balik.",
+      "reasonLabel": "Sebab permohonan",
+      "reasonRequired": "Sila beritahu kami apa masalahnya."
+    },
+    "delivery": {
+      "title": "Butiran penghantaran",
+      "pickupTitle": "Ambil sendiri",
+      "recipient": "Penerima",
+      "address": "Alamat",
+      "scheduled": "Tarikh pilihan",
+      "notes": "Nota anda"
+    },
+    "summary": {
+      "subtotal": "Jumlah kecil",
+      "delivery": "Caj penghantaran",
+      "discount": "Diskaun"
+    }
+  },
+  "receipt": {
+    "signInTitle": "Log masuk untuk melihat resit anda",
+    "errorTitle": "Resit tidak tersedia",
+    "notFoundHelp": "Buka resit daripada salah satu pesanan berbayar anda di Pesanan Saya.",
+    "dateLabel": "Tarikh",
+    "itemLine": "{{quantity}} ekor × {{price}}",
+    "viewOrder": "Lihat butiran pesanan"
+  },
+  "profile": {
+    "groups": {
+      "account": "Akaun",
+      "ordersDelivery": "Pesanan & penghantaran",
+      "helpLegal": "Bantuan & perundangan"
+    },
+    "notSet": "Belum ditambah",
+    "editDetails": "Kemas kini butiran saya",
+    "closeEdit": "Tutup",
+    "emailLocked": "E-mel anda datang daripada akaun Google anda dan tidak boleh diubah di sini.",
+    "nameRequired": "Sila masukkan nama anda.",
+    "phoneInvalid": "Sila masukkan nombor telefon yang sah, cth. 012-345 6789."
+  },
+  "address": {
+    "optional": "(pilihan)",
+    "labelField": "Nama alamat",
+    "labelPlaceholder": "Rumah",
+    "contactHeading": "Siapa yang akan menerima?",
+    "nameField": "Nama penuh",
+    "namePlaceholder": "Nama orang yang menerima",
+    "phoneField": "Telefon / WhatsApp",
+    "emailField": "E-mel",
+    "emailHelp": "Kami menghantar makluman pesanan ke e-mel akaun anda.",
+    "addressHeading": "Alamat penghantaran",
+    "streetField": "Jalan, unit atau bangunan",
+    "streetPlaceholder": "No. 12, Jalan Setia 3/5",
+    "postcodeField": "Poskod",
+    "postcodeInvalid": "Poskod mestilah 5 digit.",
+    "cityField": "Bandar",
+    "cityPlaceholder": "Johor Bahru",
+    "stateField": "Negeri",
+    "statePlaceholder": "Pilih atau taip negeri",
+    "countryField": "Negara",
+    "defaultBadge": "Utama",
+    "selectedBadge": "Dipilih",
+    "makeDefault": "Jadikan utama",
+    "editAria": "Sunting alamat {{name}}",
+    "deleteAria": "Padam alamat {{name}}",
+    "savedNotice": "Alamat disimpan.",
+    "defaultNotice": "Alamat utama dikemas kini.",
+    "deletedNotice": "Alamat dipadam."
+  },
+  "notifications": {
+    "unreadPrefix": "Belum dibaca: ",
+    "new": "Baru",
+    "viewOrder": "Lihat pesanan",
+    "unreadCount_one": "{{count}} pemberitahuan belum dibaca",
+    "unreadCount_other": "{{count}} pemberitahuan belum dibaca",
+    "allRead": "Semua pemberitahuan telah dibaca",
+    "retry": "Cuba lagi",
+    "goToOrders": "Pergi ke Pesanan Saya"
+  },
+  "auth": {
+    "signingIn": "Sedang log masuk…",
+    "signingUp": "Sedang mendaftar…",
+    "signInFailed": "Kami tidak dapat melog masuk anda.",
+    "trustNote": "Kami hanya menggunakan nama dan e-mel Google anda untuk menyediakan akaun QURBI. Kami tidak akan menyiarkan apa-apa bagi pihak anda.",
+    "privacyLink": "Dasar Privasi",
+    "guestNote": "Anda boleh melihat ternakan tanpa akaun."
+  },
+  "onboarding": {
+    "progressLabel": "Kemajuan pendaftaran",
+    "stepOf": "Langkah {{step}} daripada {{total}}",
+    "steps": {
+      "agreement": "Terma",
+      "details": "Butiran anda",
+      "address": "Alamat"
+    },
+    "phoneHelp": "Penternak menggunakan nombor ini untuk mengatur penghantaran, cth. 012-345 6789."
+  },
+  "agreement": {
+    "title": "Sebelum anda teruskan",
+    "subtitle": "Sila baca dan terima terma serta dasar privasi Pengguna QURBI",
+    "acceptedTitle": "Terma QURBI",
+    "acceptedSubtitle": "Terma dan dasar privasi yang telah anda terima",
+    "acceptedOn": "Anda telah menerima terma ini pada {{date}}.",
+    "intro": "Persetujuan anda disimpan dengan selamat bersama akaun QURBI anda. Versi dasar: 20 September 2026.",
+    "read": "Baca",
+    "hide": "Sembunyi",
+    "confirmHeading": "Sila sahkan",
+    "tickAll": "Sila tandakan ketiga-tiga kotak untuk meneruskan.",
+    "saveError": "Persetujuan anda tidak dapat disimpan. Sila cuba lagi.",
+    "saving": "Menyimpan persetujuan…",
+    "acceptAll": "Terima semua & teruskan",
+    "continue": "Teruskan",
+    "confirm": {
+      "agreement": "Saya telah membaca dan bersetuju dengan Perjanjian Pengguna QURBI.",
+      "privacy": "Saya telah membaca dan bersetuju dengan Dasar Privasi Pengguna QURBI.",
+      "adult": "Saya mengesahkan bahawa saya berumur 18 tahun atau lebih."
+    },
+    "sections": {
+      "agreement": {
+        "title": "Perjanjian Pengguna QURBI",
+        "summary": "Peraturan penggunaan akaun pembeli dan perkhidmatan pasaran anda.",
+        "points": [
+          "Berikan maklumat akaun, hubungan dan penghantaran yang tepat.",
+          "Gunakan QURBI hanya untuk aktiviti pasaran yang sah dan pastikan akaun anda selamat.",
+          "Pesanan, bayaran, penghantaran, pembatalan dan bayaran balik dikendalikan melalui perkhidmatan QURBI dan proses yang dinyatakan.",
+          "QURBI boleh menyekat akaun apabila perlu atas sebab keselamatan, pencegahan penipuan, pertikaian atau pematuhan undang-undang."
+        ]
+      },
+      "privacy": {
+        "title": "Dasar Privasi Pengguna QURBI",
+        "summary": "Bagaimana data peribadi anda digunakan untuk menyediakan aplikasi Pengguna.",
+        "points": [
+          "Kami mengumpul butiran akaun, alamat yang disimpan, aktiviti troli, pesanan, rujukan bayaran, maklumat penghantaran dan rekod teknikal yang diperlukan.",
+          "Log Masuk Google mungkin memberikan ID Google, nama, e-mel dan gambar profil anda mengikut tetapan Google anda.",
+          "Hanya maklumat yang diperlukan untuk memenuhi pesanan dikongsi dengan penternak berkenaan dan penyedia perkhidmatan yang diberi kuasa.",
+          "Kami tidak menjual data peribadi. Anda boleh memohon akses, pembetulan, penarikan balik persetujuan, kemudahalihan atau pemadaman akaun, tertakluk kepada penyimpanan yang sah.",
+          "Data dilindungi dengan kawalan akses, penghantaran selamat dan had penyimpanan yang sesuai dengan perkhidmatan."
+        ]
+      }
+    }
+  },
+  "notFound": {
+    "browse": "Lihat ternakan"
+  },
+  "authRequired": {
+    "title": "Perlu log masuk",
+    "message": "Log masuk untuk meneruskan."
+  }
+}

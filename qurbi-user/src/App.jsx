@@ -24,6 +24,9 @@ import Orders from "@/pages/Orders";
 import OrderDetail from "@/pages/OrderDetail";
 import Profile from "@/pages/Profile";
 import AddressBook from "@/pages/AddressBook";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsConditions from "@/pages/TermsConditions";
+import CustomerSupport from "@/pages/CustomerSupport";
 import AdminBreeds from "@/pages/AdminBreeds";
 import HeaderTransitionProvider from "@/components/HeaderTransitionProvider";
 import { NotificationProvider } from "@/lib/notification-context";
@@ -84,6 +87,9 @@ function App() {
                       <Route path="/signup-details" element={<SignupDetails />} />
                       <Route path="/user-agreement" element={<UserAgreement />} />
                       <Route path="/address-book" element={<AddressBook />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/terms-conditions" element={<TermsConditions />} />
+                      <Route path="/support" element={<CustomerSupport />} />
                       <Route path="/admin/breeds" element={<AdminBreeds />} />
                       <Route path="/admin/test" element={<AdminTest />} />
                       <Route path="/receipt" element={<Receipt />} />

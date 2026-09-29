@@ -46,6 +46,11 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   const accessToken = getAccessToken();
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+  // Let the browser add the multipart boundary for file uploads. The
+  // instance's JSON default would otherwise send an invalid multipart body.
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  }
   return config;
 });
 
@@ -107,6 +112,20 @@ export const authApi = {
   me: () => unwrap(apiClient.get("/auth/me")),
   refresh: (refreshToken) => unwrap(apiClient.post("/auth/refresh", { refreshToken })),
   logout: (refreshToken) => unwrap(apiClient.post("/auth/logout", { refreshToken })),
+};
+
+export const uploadApi = {
+  /**
+   * @param {File} file
+   * @param {"public" | "private"} [visibility]
+   * @returns {Promise<{ fileUrl: string }>}
+   */
+  upload: (file, visibility = "private") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("visibility", visibility);
+    return unwrap(apiClient.post("/uploads", formData));
+  },
 };
 
 export default apiClient;

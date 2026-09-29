@@ -6,6 +6,7 @@ import BrandLogo from "@/components/agri/BrandLogo";
 import AdminBottomNav from "@/components/agri/AdminBottomNav";
 import { LogOut, LayoutDashboard, UserCheck, Users, ShoppingBag, Tags } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isPendingRefund } from "@/components/admin/adminFormat";
 import CowSilhouetteIcon from "@/components/agri/CowSilhouetteIcon";
 
 const TABS = [
@@ -27,7 +28,7 @@ export default function AdminLayout() {
       .then((response) => {
         if (!active) return;
         const orders = response.data?.orders || [];
-        setPendingRefunds(orders.filter((order) => order.status === "refund_requested" && order.refund_status === "pending_admin_approval").length);
+        setPendingRefunds(orders.filter(isPendingRefund).length);
       })
       .catch(() => { if (active) setPendingRefunds(0); });
     loadPendingRefunds();
@@ -68,13 +69,13 @@ export default function AdminLayout() {
               }
             >
               <Icon className="w-5 h-5" /> <span className="flex-1">{label}</span>
-              {to === "/admin/orders" && pendingRefunds > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-extrabold text-destructive-foreground">{pendingRefunds > 99 ? "99+" : pendingRefunds}</span>}
+              {to === "/admin/orders" && pendingRefunds > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-extrabold text-destructive-foreground">{pendingRefunds > 99 ? "99+" : pendingRefunds}</span>}
             </NavLink>
           ))}
         </nav>
         <div className="px-3 py-4 border-t border-border space-y-2">
           <div className="px-3">
-            <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+            <span className="block truncate text-xs text-muted-foreground">{user?.email}</span>
           </div>
           <button
             onClick={() => logout()}
@@ -89,15 +90,18 @@ export default function AdminLayout() {
       <div className="lg:pl-[260px]">
         {/* Mobile header */}
         <header className="lg:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
-          <BrandLogo compact />
+          <div className="flex min-w-0 items-center gap-2.5">
+            <BrandLogo compact />
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">Super Admin</span>
+          </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => logout()} className="w-10 h-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
+            <button type="button" onClick={() => logout()} aria-label="Log out" title="Log out" className="w-11 h-11 rounded-full bg-destructive/10 text-destructive flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <LogOut className="w-5 h-5" />
             </button>
           </div>
         </header>
 
-        <main className="px-4 pb-32 pt-3 lg:px-10 lg:pb-12 lg:pt-8">
+        <main className="px-4 pb-[calc(8.5rem+env(safe-area-inset-bottom))] pt-4 lg:px-10 lg:pb-12 lg:pt-8">
           <div className="max-w-6xl mx-auto">
             <Outlet />
           </div>

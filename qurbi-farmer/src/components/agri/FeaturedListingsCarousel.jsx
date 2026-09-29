@@ -1,14 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Image } from "@/components/ui/image";
 import StatusBadge from "@/components/agri/StatusBadge";
-import { formatMYR } from "@/lib/agri";
-
-const STATUS_TONE = {
-  Available: "success",
-  Reserved: "warning",
-  Sold: "muted",
-  Sick: "danger",
-};
+import { formatMYR, livestockTitle } from "@/lib/agri";
 
 export default function FeaturedListingsCarousel({ items, onView }) {
   const viewportRef = useRef(null);
@@ -63,18 +56,18 @@ export default function FeaturedListingsCarousel({ items, onView }) {
                   onView(livestock);
                 }
               }}
-              aria-label={`View ${livestock.species || "livestock"} listing`}
-              className="soft-card min-w-full cursor-pointer snap-start overflow-hidden transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-w-[calc(50%-0.375rem)] lg:min-w-[calc(33.333%-0.5rem)]"
+              aria-label={`View ${livestockTitle(livestock)} listing`}
+              className="soft-card min-w-[86%] cursor-pointer snap-start overflow-hidden transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-w-[calc(50%-0.375rem)] lg:min-w-[calc(33.333%-0.5rem)]"
             >
-              <div className="relative aspect-[16/10] bg-muted">
+              <div className="relative aspect-[16/9] bg-muted">
                 <Image src={cover} fittingType="fill" alt={`${livestock.species || "Livestock"} listing`} className="h-full w-full" />
               </div>
               <div className="p-4">
-                <h3 className="truncate text-xl font-extrabold leading-tight text-primary">{livestock.species || "Livestock"}</h3>
-                <p className="mt-1 truncate text-sm font-medium text-muted-foreground">{livestock.breed || "Unspecified"}</p>
-                <div className="mt-4 flex items-end justify-between gap-3">
+                <h3 className="truncate text-lg font-extrabold leading-tight text-primary">{livestockTitle(livestock)}</h3>
+                <p className="mt-1 truncate text-sm font-medium text-muted-foreground">{[livestock.species, livestock.breed !== "Unspecified" ? livestock.breed : ""].filter(Boolean).join(" · ") || "Livestock"}</p>
+                <div className="mt-3 flex items-end justify-between gap-3">
                   <p className="truncate text-xl font-extrabold tracking-tight text-foreground">{formatMYR(livestock.price)}</p>
-                  <StatusBadge className="shrink-0" tone={STATUS_TONE[livestock.status] || "muted"} dot>{livestock.status || "Listing"}</StatusBadge>
+                  <StatusBadge className="shrink-0" kind="livestock" status={livestock.status} item={livestock} dot />
                 </div>
               </div>
             </article>
@@ -82,7 +75,7 @@ export default function FeaturedListingsCarousel({ items, onView }) {
         })}
       </div>
       {items.length > 1 && (
-        <div className="mt-2 flex justify-center gap-1.5" aria-label={`Slide ${activeIndex + 1} of ${items.length}`}>
+        <div className="mt-1 flex justify-center" aria-label={`Slide ${activeIndex + 1} of ${items.length}`}>
           {items.map((item, index) => (
             <button
               key={item.id}
@@ -91,9 +84,12 @@ export default function FeaturedListingsCarousel({ items, onView }) {
                 scrollToSlide(index);
                 setActiveIndex(index);
               }}
-              className={`h-2 rounded-full transition-all ${index === activeIndex ? "w-6 bg-primary" : "w-2 bg-primary/20"}`}
+              className="flex h-8 min-w-6 items-center justify-center px-1"
               aria-label={`Show listing ${index + 1}`}
-            />
+              aria-current={index === activeIndex ? "true" : undefined}
+            >
+              <span className={`block h-2 rounded-full transition-all ${index === activeIndex ? "w-6 bg-primary" : "w-2 bg-primary/25"}`} />
+            </button>
           ))}
         </div>
       )}

@@ -25,7 +25,10 @@ export interface ResolvedPage {
 
 export function resolvePage(query: PageQuery): ResolvedPage {
   const page = query.page && query.page > 0 ? query.page : 1;
-  const limit = query.limit && query.limit > 0 ? Math.min(query.limit, MAX_PAGE_SIZE) : DEFAULT_PAGE_SIZE;
+  const limit =
+    query.limit && query.limit > 0
+      ? Math.min(query.limit, MAX_PAGE_SIZE)
+      : DEFAULT_PAGE_SIZE;
   return { page, limit, skip: (page - 1) * limit, take: limit };
 }
 

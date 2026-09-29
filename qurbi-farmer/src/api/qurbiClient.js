@@ -2,6 +2,13 @@
 // calls. Every operation is backed by QURBI NestJS/MySQL; no Base44 request.
 import apiClient, { resolveApiAssetUrl, uploadApi } from "@/api/apiClient";
 
+// Screens still call these with the former entity API's optional sort/limit
+// arguments (e.g. `list("-created_date", 100)`). The backend handles ordering
+// and paging, so those arguments are accepted but ignored.
+/** @typedef {(sort?: string, limit?: number) => Promise<any[]>} ListFn */
+/** @typedef {(where?: Record<string, any>, sort?: string, limit?: number) => Promise<any[]>} FilterFn */
+/** @typedef {(callback?: (event?: any) => void) => () => void} SubscribeFn */
+
 const data = async (request) => {
   try {
     const response = await request;
@@ -121,13 +128,17 @@ async function bulkPayload(input, partial = false) {
   return Object.fromEntries(Object.entries({ speciesId, breedId: breakdown.length === 1 ? breakdown[0].breedId : input.breedId, title: input.title || input.name, description: input.description, maleCount: input.maleCount != null ? Number(input.maleCount) : undefined, femaleCount: input.femaleCount != null ? Number(input.femaleCount) : undefined, breedBreakdown: groups.length ? breakdown : undefined, price: input.price != null || input.totalPrice != null ? String(input.price ?? input.totalPrice) : undefined, currency: input.currency || (partial ? undefined : "MYR"), images: input.images, videos: input.videos, state: input.state, status: input.status ? BULK_STATUS_TO_API[input.status] || input.status : undefined }).filter(([, value]) => value !== undefined && value !== ""));
 }
 
-const FarmerProfile = { list: async () => (await data(apiClient.get("/farmer-profiles"))).map(normalizeProfile), filter: async ({ userId } = {}) => userId ? ((row) => row ? [normalizeProfile(row)] : [])(await data(apiClient.get(`/farmer-profiles/by-user/${userId}`))) : FarmerProfile.list(), update: async (id, input) => normalizeProfile(await data(apiClient.patch(`/farmer-profiles/${id}`, Object.fromEntries(Object.entries({ farmName: input.farmName, farmAddressLine: input.farmAddressLine ?? input.address, farmCity: input.farmCity ?? input.city, farmState: input.farmState ?? input.state, farmPostcode: input.farmPostcode ?? input.postcode, farmDescription: input.farmDescription, businessRegNo: input.businessRegNo, logoUrl: input.logoUrl, deliveryPreference: input.deliveryPreference }).filter(([, value]) => value !== undefined))))) };
+const FarmerProfile = {
+  /** @type {ListFn} */ list: async () => (await data(apiClient.get("/farmer-profiles"))).map(normalizeProfile),
+  /** @type {FilterFn} */ filter: async ({ userId } = {}) => userId ? ((row) => row ? [normalizeProfile(row)] : [])(await data(apiClient.get(`/farmer-profiles/by-user/${userId}`))) : FarmerProfile.list(), update: async (id, input) => normalizeProfile(await data(apiClient.patch(`/farmer-profiles/${id}`, Object.fromEntries(Object.entries({ farmName: input.farmName, farmAddressLine: input.farmAddressLine ?? input.address, farmCity: input.farmCity ?? input.city, farmState: input.farmState ?? input.state, farmPostcode: input.farmPostcode ?? input.postcode, farmDescription: input.farmDescription, businessRegNo: input.businessRegNo, logoUrl: input.logoUrl, deliveryPreference: input.deliveryPreference }).filter(([, value]) => value !== undefined))))) };
 const Livestock = {
+  /** @type {ListFn} */
   list: async () => {
     const viewer = await currentUser();
     const params = { page: 1, limit: 100, ...(viewer.role === "farmer" ? { farmerId: viewer.id } : {}) };
     return (await data(apiClient.get("/livestock", { params }))).data.map(normalizeLivestock);
   },
+  /** @type {FilterFn} */
   filter: async (where = {}) => {
     const page = await data(apiClient.get("/livestock", { params: { farmerId: where.ownerId || where.farmerId, status: STATUS_TO_API[where.status] || where.status, page: 1, limit: 100 } }));
     return page.data.map(normalizeLivestock).filter((row) => Object.entries(where).every(([key, value]) => key === "ownerId" ? row.ownerId === value : key === "farmerId" ? row.farmerId === value : key === "status" ? String(row.status).toLowerCase() === String(titleCase(value)).toLowerCase() : row[key] === value));
@@ -168,11 +179,13 @@ const Livestock = {
 };
 
 const BulkListing = {
+  /** @type {ListFn} */
   list: async () => {
     const [viewer, breeds] = await Promise.all([currentUser(), allBreeds()]);
     const params = viewer.role === "farmer" ? { farmerId: viewer.id } : {};
     return (await data(apiClient.get("/bulk-listings", { params }))).map((item) => normalizeBulk(item, breeds));
   },
+  /** @type {FilterFn} */
   filter: async (where = {}) => {
     const [items, breeds] = await Promise.all([
       data(apiClient.get("/bulk-listings", { params: { farmerId: where.ownerId || where.farmerId, status: BULK_STATUS_TO_API[where.status] || where.status } })),
@@ -188,12 +201,17 @@ const BulkListing = {
   update: async (id, input) => normalizeBulk(await data(apiClient.patch(`/bulk-listings/${id}`, await bulkPayload(input, true))), await allBreeds()),
   delete: (id) => data(apiClient.delete(`/bulk-listings/${id}`)),
 };
-const Species = { list: allSpecies, get: async (id) => normalizeSpecies(await data(apiClient.get(`/species/${id}`))), create: async (input) => normalizeSpecies(await data(apiClient.post("/species", { name: input.name, slug: input.slug || slugify(input.name), description: input.description || undefined, imageUrl: input.imageUrl || input.image || undefined, maxShares: Number(input.maxShares || 1), isActive: input.status ? input.status === "Active" : true }))), update: async (id, input) => normalizeSpecies(await data(apiClient.patch(`/species/${id}`, Object.fromEntries(Object.entries({ name: input.name, slug: input.name ? input.slug || slugify(input.name) : undefined, description: input.description, imageUrl: input.imageUrl ?? input.image, isActive: input.status != null ? input.status === "Active" : undefined }).filter(([, value]) => value !== undefined))))) };
-const Breed = { list: allBreeds, filter: async (where = {}) => (await allBreeds()).filter((row) => Object.entries(where).every(([key, value]) => String(row[key] || "").toLowerCase() === String(value || "").toLowerCase())), get: async (id) => normalizeBreed(await data(apiClient.get(`/breeds/${id}`))), create: async (input) => { const speciesId = input.speciesId || await resolveSpeciesId(input.species); return normalizeBreed(await data(apiClient.post("/breeds", { speciesId, name: input.name, slug: input.slug || slugify(input.name), description: input.description || undefined, imageUrl: input.imageUrl || input.image || undefined, isActive: input.status ? input.status === "Active" : true }))); }, update: async (id, input) => normalizeBreed(await data(apiClient.patch(`/breeds/${id}`, Object.fromEntries(Object.entries({ name: input.name, slug: input.name ? input.slug || slugify(input.name) : undefined, description: input.description, imageUrl: input.imageUrl ?? input.image, isActive: input.status != null ? input.status === "Active" : undefined }).filter(([, value]) => value !== undefined))))) };
+const Species = {
+  /** @type {ListFn} */ list: allSpecies, get: async (id) => normalizeSpecies(await data(apiClient.get(`/species/${id}`))), create: async (input) => normalizeSpecies(await data(apiClient.post("/species", { name: input.name, slug: input.slug || slugify(input.name), description: input.description || undefined, imageUrl: input.imageUrl || input.image || undefined, maxShares: Number(input.maxShares || 1), isActive: input.status ? input.status === "Active" : true }))), update: async (id, input) => normalizeSpecies(await data(apiClient.patch(`/species/${id}`, Object.fromEntries(Object.entries({ name: input.name, slug: input.name ? input.slug || slugify(input.name) : undefined, description: input.description, imageUrl: input.imageUrl ?? input.image, isActive: input.status != null ? input.status === "Active" : undefined }).filter(([, value]) => value !== undefined))))) };
+const Breed = {
+  /** @type {ListFn} */ list: allBreeds,
+  /** @type {FilterFn} */ filter: async (where = {}) => (await allBreeds()).filter((row) => Object.entries(where).every(([key, value]) => String(row[key] || "").toLowerCase() === String(value || "").toLowerCase())), get: async (id) => normalizeBreed(await data(apiClient.get(`/breeds/${id}`))), create: async (input) => { const speciesId = input.speciesId || await resolveSpeciesId(input.species); return normalizeBreed(await data(apiClient.post("/breeds", { speciesId, name: input.name, slug: input.slug || slugify(input.name), description: input.description || undefined, imageUrl: input.imageUrl || input.image || undefined, isActive: input.status ? input.status === "Active" : true }))); }, update: async (id, input) => normalizeBreed(await data(apiClient.patch(`/breeds/${id}`, Object.fromEntries(Object.entries({ name: input.name, slug: input.name ? input.slug || slugify(input.name) : undefined, description: input.description, imageUrl: input.imageUrl ?? input.image, isActive: input.status != null ? input.status === "Active" : undefined }).filter(([, value]) => value !== undefined))))) };
 
 function requestEntity(path, isBreed) {
   return {
+    /** @type {ListFn} */
     list: async () => (await data(apiClient.get(path, { params: { page: 1, limit: 100 } }))).data.map(normalizeRequest),
+    /** @type {FilterFn} */
     filter: async (where = {}) => (await data(apiClient.get(path, { params: { requestedByUserId: where.userId || where.requestedByUserId, status: REQUEST_TO_API[where.status] || where.status, page: 1, limit: 100 } }))).data.map(normalizeRequest),
     get: async (id) => normalizeRequest(await data(apiClient.get(`${path}/${id}`))),
     create: async (input) => {
@@ -210,9 +228,14 @@ function requestEntity(path, isBreed) {
   };
 }
 
-const FarmerNotification = { list: async () => (await data(apiClient.get("/notifications", { params: { audience: "farmer" } }))).map(normalizeNotification), update: async (id, input) => input.isRead ? normalizeNotification(await data(apiClient.patch(`/notifications/${id}/read`))) : null, create: async (input) => normalizeNotification(await data(apiClient.post("/notifications", { userId: input.userId || input.farmerId, audience: "farmer", type: "request_update", title: input.title || "QURBI update", body: input.message || input.body || "", linkUrl: input.linkUrl || undefined, relatedType: input.orderId ? "order" : input.livestockId ? "livestock" : undefined, relatedId: input.orderId || input.livestockId || undefined }))), subscribe: () => () => {} };
-const User = { list: async () => (await data(apiClient.get("/users", { params: { page: 1, limit: 100 } }))).data.map(normalizeUser), filter: async (where = {}) => (await data(apiClient.get("/users", { params: { role: where.role, status: where.status, page: 1, limit: 100 } }))).data.map(normalizeUser), get: async (id) => normalizeUser(await data(apiClient.get(`/users/${id}`))), update: async (id, input) => normalizeUser(await data(apiClient.patch(`/users/${id}`, input))) };
-const FarmVerification = { filter: async ({ userId } = {}) => { const profile = userId ? await data(apiClient.get(`/farmer-profiles/by-user/${userId}`)) : null; if (userId && !profile) return []; const page = await data(apiClient.get("/farm-verifications", { params: { farmerProfileId: profile?.id, page: 1, limit: 100 } })); return page.data.map((row) => ({ ...row.documents, ...row, policySignature: row.signatureUrl, created_date: row.createdAt, status: titleCase(row.status === "verified" ? "approved" : row.status) })); } };
+const FarmerNotification = {
+  /** @type {ListFn} */ list: async () => (await data(apiClient.get("/notifications", { params: { audience: "farmer" } }))).map(normalizeNotification), update: async (id, input) => input.isRead ? normalizeNotification(await data(apiClient.patch(`/notifications/${id}/read`))) : null, create: async (input) => normalizeNotification(await data(apiClient.post("/notifications", { userId: input.userId || input.farmerId, audience: "farmer", type: "request_update", title: input.title || "QURBI update", body: input.message || input.body || "", linkUrl: input.linkUrl || undefined, relatedType: input.orderId ? "order" : input.livestockId ? "livestock" : undefined, relatedId: input.orderId || input.livestockId || undefined }))),
+  /** @type {SubscribeFn} */ subscribe: () => () => {} };
+const User = {
+  /** @type {ListFn} */ list: async () => (await data(apiClient.get("/users", { params: { page: 1, limit: 100 } }))).data.map(normalizeUser),
+  /** @type {FilterFn} */ filter: async (where = {}) => (await data(apiClient.get("/users", { params: { role: where.role, status: where.status, page: 1, limit: 100 } }))).data.map(normalizeUser), get: async (id) => normalizeUser(await data(apiClient.get(`/users/${id}`))), update: async (id, input) => normalizeUser(await data(apiClient.patch(`/users/${id}`, input))) };
+const FarmVerification = {
+  /** @type {FilterFn} */ filter: async ({ userId } = {}) => { const profile = userId ? await data(apiClient.get(`/farmer-profiles/by-user/${userId}`)) : null; if (userId && !profile) return []; const page = await data(apiClient.get("/farm-verifications", { params: { farmerProfileId: profile?.id, page: 1, limit: 100 } })); return page.data.map((row) => ({ ...row.documents, ...row, policySignature: row.signatureUrl, created_date: row.createdAt, status: titleCase(row.status === "verified" ? "approved" : row.status) })); } };
 
 async function fetchOrders(orderId, admin = false) { if (orderId) return normalizeOrder(await data(apiClient.get(`/orders/${orderId}`))); const response = await data(apiClient.get(admin ? "/orders/admin" : "/orders", admin ? { params: { page: 1, limit: 100 } } : undefined)); return (Array.isArray(response) ? response : response.data || []).map(normalizeOrder); }
 const functions = { invoke: async (name, input = {}) => {

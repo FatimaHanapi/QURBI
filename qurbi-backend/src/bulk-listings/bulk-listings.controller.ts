@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { BulkListing, UserRole } from '../entities';
 import { stripUndefined } from '../common/strip-undefined';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -18,7 +28,10 @@ export class BulkListingsController {
   @Roles(UserRole.FARMER)
   @UseGuards(RolesGuard)
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateBulkListingDto) {
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: CreateBulkListingDto,
+  ) {
     return this.bulkListingsService.createForFarmer(user.id, body);
   }
 
@@ -29,17 +42,27 @@ export class BulkListingsController {
     @Query('farmerId') farmerId?: string,
     @Query('status') status?: BulkListing['status'],
   ) {
-    return this.bulkListingsService.findAllForViewer(stripUndefined({ farmerId, status }), user);
+    return this.bulkListingsService.findAllForViewer(
+      stripUndefined({ farmerId, status }),
+      user,
+    );
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser | undefined) {
+  findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser | undefined,
+  ) {
     return this.bulkListingsService.findOneForViewer(id, user);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser, @Body() body: UpdateBulkListingDto) {
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: UpdateBulkListingDto,
+  ) {
     return this.bulkListingsService.updateOwned(id, user, body);
   }
 

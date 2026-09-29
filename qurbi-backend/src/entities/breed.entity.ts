@@ -11,7 +11,9 @@ export class Breed extends BaseEntity {
   @Column({ type: 'varchar', length: 36 })
   speciesId: string;
 
-  @ManyToOne(() => Species, (species) => species.breeds, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Species, (species) => species.breeds, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'speciesId' })
   species: Species;
 

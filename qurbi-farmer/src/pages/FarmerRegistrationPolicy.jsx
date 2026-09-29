@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import SignaturePad from "@/components/agri/SignaturePad";
 import StepIndicator from "@/components/agri/StepIndicator";
+import StickyActionBar from "@/components/agri/StickyActionBar";
+import { cn } from "@/lib/utils";
 import { FARMER_POLICY_VERSION, userVal } from "@/lib/agri";
 import { clearFarmerVerificationDraft, getFarmerVerificationDraft } from "@/lib/farmerVerificationDraft";
 
@@ -34,6 +36,7 @@ export default function FarmerRegistrationPolicy() {
   const [signatureUrl, setSignatureUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [attempted, setAttempted] = useState(false);
   const signatureRef = useRef(null);
   const submittingRef = useRef(false);
   const status = userVal(user, "verificationStatus");
@@ -50,7 +53,8 @@ export default function FarmerRegistrationPolicy() {
 
   if (status === "Approved") return <Navigate to="/" replace />;
   if (status === "Pending") return <Navigate to="/pending" replace />;
-  if (status === "Rejected") return <Navigate to="/rejected" replace />;
+  // A rejected farmer who filled the form again (draft saved) may resubmit.
+  if (status === "Rejected" && !draftReady) return <Navigate to="/rejected" replace />;
   if (!draftReady) return null;
 
   const allAccepted = POLICY_POINTS.every((point) => accepted.includes(point.id));
@@ -119,47 +123,80 @@ export default function FarmerRegistrationPolicy() {
     }
   };
 
+  const acceptedCount = POLICY_POINTS.filter((point) => accepted.includes(point.id)).length;
+  const missing = [
+    !allAccepted && `tick all ${POLICY_POINTS.length} points (${acceptedCount} done)`,
+    !name.trim() && "your name",
+    !date && "the date",
+    !hasSignature && "your signature",
+  ].filter(Boolean);
+  const trySubmit = () => {
+    if (!valid) { setAttempted(true); return; }
+    submit();
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-md mx-auto px-4 py-5">
+      <div className="mx-auto max-w-md px-4 pb-6 pt-5">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate("/verify")} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"><ArrowLeft className="w-5 h-5" /></button>
-          <h1 className="text-xl font-extrabold tracking-tight">Policy &amp; Terms</h1>
-        </div>
-        <StepIndicator current={2} steps={STEPS} className="mt-4" />
-
-        <div className="mt-6 rounded-2xl bg-accent border border-accent-foreground/20 p-3 flex items-start gap-2">
-          <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs text-accent-foreground leading-relaxed">Please read and accept each policy point before signing your farmer registration.</p>
-            <p className="mt-1 text-[11px] font-semibold text-muted-foreground">Policy version: {FARMER_POLICY_VERSION}</p>
+          <button type="button" onClick={() => navigate("/verify")} aria-label="Back to farm details" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted"><ArrowLeft className="h-5 w-5" /></button>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-extrabold tracking-tight">Policy &amp; terms</h1>
+            <p className="text-sm text-muted-foreground">Last step before we review your account.</p>
           </div>
         </div>
+        <StepIndicator current={2} steps={STEPS} className="mt-5" />
 
-        <div className="mt-4 space-y-3">
-          {POLICY_POINTS.map((point, index) => (
-            <label key={point.id} className="flex items-start gap-3 rounded-2xl bg-card border border-border p-4 cursor-pointer">
-              <Checkbox checked={accepted.includes(point.id)} onCheckedChange={(checked) => toggle(point.id, checked === true)} className="mt-0.5" />
-              <span className="text-sm leading-relaxed"><strong>{index + 1}. {point.title}</strong><span className="block text-xs text-muted-foreground mt-1">{point.text}</span></span>
-            </label>
-          ))}
+        <section className="mt-5">
+          <div className="flex items-end justify-between gap-3">
+            <h2 className="text-lg font-extrabold">1. Read and tick each point</h2>
+            <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-xs font-bold", allAccepted ? "bg-emerald-100 text-emerald-800" : "bg-muted text-muted-foreground")}>{acceptedCount} of {POLICY_POINTS.length}</span>
+          </div>
+          <div className="mt-3 space-y-3">
+            {POLICY_POINTS.map((point, index) => {
+              const checked = accepted.includes(point.id);
+              return (
+                <label key={point.id} className={cn("flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors", checked ? "border-primary/40 bg-primary/5" : attempted ? "border-destructive/40 bg-card" : "border-border bg-card")}>
+                  <Checkbox checked={checked} onCheckedChange={(value) => toggle(point.id, value === true)} className="mt-0.5 h-5 w-5" />
+                  <span className="text-base leading-relaxed"><strong>{index + 1}. {point.title}</strong><span className="mt-1 block text-sm text-muted-foreground">{point.text}</span></span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" />Policy version: {FARMER_POLICY_VERSION}</p>
+        </section>
+
+        <section className="mt-5 space-y-4 rounded-2xl border border-border bg-card p-5">
+          <h2 className="text-lg font-extrabold">2. Sign</h2>
+          <div className="space-y-1.5">
+            <Label htmlFor="policy-name">Full name <span className="text-destructive" aria-hidden="true">*</span></Label>
+            <Input id="policy-name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" className="h-12 text-base" />
+            {attempted && !name.trim() && <p role="alert" className="text-sm font-medium text-destructive">Enter your full name.</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="policy-date">Date <span className="text-destructive" aria-hidden="true">*</span></Label>
+            <Input id="policy-date" type="date" value={date} max={today} onChange={(event) => setDate(event.target.value)} className="h-12" />
+          </div>
+          <div className="space-y-1.5"><Label>Signature <span className="text-destructive" aria-hidden="true">*</span></Label><SignaturePad ref={signatureRef} onInk={setHasSignature} showError={attempted && !hasSignature} /></div>
+        </section>
+
+        <div className="mt-5 rounded-2xl bg-muted/60 p-4 text-sm leading-relaxed text-muted-foreground">
+          <p className="font-bold text-foreground">What happens next?</p>
+          <p className="mt-1">A QURBI admin checks your IC, selfie and farm details — usually within 1–2 working days. You&apos;ll be able to list livestock once approved.</p>
         </div>
 
-        <div className="mt-4 rounded-2xl bg-card border border-border p-5 space-y-4">
-          <h2 className="text-sm font-extrabold">Digital acknowledgement</h2>
-          <div className="space-y-1.5"><Label>Full Name</Label><Input value={name} onChange={(event) => setName(event.target.value)} className="h-12" /></div>
-          <div className="space-y-1.5"><Label>Date</Label><Input type="date" value={date} max={today} onChange={(event) => setDate(event.target.value)} className="h-12" /></div>
-          <div className="space-y-1.5"><Label>Signature</Label><SignaturePad ref={signatureRef} onInk={setHasSignature} /></div>
-        </div>
+        {error && <p role="alert" className="mt-4 rounded-xl bg-destructive/10 p-3 text-sm font-medium text-destructive">{error}</p>}
 
-        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-        <div className="flex gap-3 mt-5 pb-6">
-          <Button variant="outline" onClick={() => navigate("/verify")} disabled={submitting} className="h-12 rounded-2xl flex-1">Back</Button>
-          <Button onClick={submit} disabled={!valid || submitting} className="h-12 rounded-2xl flex-1">
-            {submitting && <Loader2 className="w-5 h-5 animate-spin mr-2" />} Submit Request
+        <StickyActionBar
+          standalone
+          hint={valid ? "Ready to send for review." : `To submit: ${missing.join(", ")}.`}
+          hintTone={valid ? "success" : attempted ? "danger" : "muted"}
+        >
+          <Button variant="outline" onClick={() => navigate("/verify")} disabled={submitting} className="h-12 w-[34%] shrink-0 rounded-2xl">Back</Button>
+          <Button onClick={trySubmit} disabled={submitting} className="h-12 flex-1 rounded-2xl text-base font-semibold">
+            {submitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />} {submitting ? "Sending..." : "Submit for review"}
           </Button>
-        </div>
-        {!valid && <p className="-mt-3 pb-6 text-center text-xs text-muted-foreground">Accept every policy point, enter your name and date, then sign to submit.</p>}
+        </StickyActionBar>
       </div>
     </div>
   );

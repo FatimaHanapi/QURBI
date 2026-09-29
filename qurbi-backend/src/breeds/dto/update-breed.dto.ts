@@ -1,4 +1,11 @@
-import { IsBoolean, IsInt, IsNumberString, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 export class UpdateBreedDto {
   @IsOptional()

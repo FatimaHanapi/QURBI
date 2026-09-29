@@ -7,7 +7,9 @@ import { Payment } from './payment.entity';
 import { User } from './user.entity';
 
 @Entity('reservations')
-@Index('uq_reservations_active_livestock', ['activeLivestockId'], { unique: true })
+@Index('uq_reservations_active_livestock', ['activeLivestockId'], {
+  unique: true,
+})
 export class Reservation extends BaseEntity {
   @Index()
   @Column({ type: 'varchar', length: 36 })
@@ -41,7 +43,11 @@ export class Reservation extends BaseEntity {
   payment: Payment | null;
 
   @Index()
-  @Column({ type: 'enum', enum: ReservationStatus, default: ReservationStatus.ACTIVE })
+  @Column({
+    type: 'enum',
+    enum: ReservationStatus,
+    default: ReservationStatus.ACTIVE,
+  })
   status: ReservationStatus;
 
   @Column({ type: 'datetime', precision: 6 })

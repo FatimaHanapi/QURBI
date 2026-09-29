@@ -1,4 +1,8 @@
-import { PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 // Shared columns for every entity. datetime(6) keeps sub-second precision so
 // createdAt ordering stays stable even when rows are inserted in the same batch.

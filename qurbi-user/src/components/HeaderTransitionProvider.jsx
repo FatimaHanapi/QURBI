@@ -283,12 +283,12 @@ export default function HeaderTransitionProvider({ children }) {
       {productTransition && (
         <div
           className={`qurbi-product-transition-layer qurbi-product-transition-${productTransition.stage}`}
-          style={{
+          style={/** @type {React.CSSProperties} */ ({
             "--product-left": `${productTransition.left}px`,
             "--product-top": `${productTransition.top}px`,
             "--product-width": `${productTransition.width}px`,
             "--product-height": `${productTransition.height}px`,
-          }}
+          })}
           role="status"
           aria-live="polite"
           aria-label={`Loading ${productTransition.label}`}

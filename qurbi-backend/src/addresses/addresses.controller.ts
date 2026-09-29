@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { AddressesService } from './addresses.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
@@ -11,7 +19,10 @@ export class AddressesController {
   constructor(private readonly addressesService: AddressesService) {}
 
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateAddressDto) {
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: CreateAddressDto,
+  ) {
     return this.addressesService.create({ ...body, userId: user.id });
   }
 
@@ -26,7 +37,11 @@ export class AddressesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser, @Body() body: UpdateAddressDto) {
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: UpdateAddressDto,
+  ) {
     return this.addressesService.updateOwned(id, user, body);
   }
 

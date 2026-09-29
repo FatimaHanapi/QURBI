@@ -7,9 +7,10 @@ import { UsersService } from './users.service';
 // config can't load directly — mock it so the test never touches the real
 // package, only the decorator/token shapes UsersService actually needs.
 jest.mock('@nestjs/typeorm', () => {
-  const { Inject } = require('@nestjs/common');
+  const { Inject } =
+    jest.requireActual<typeof import('@nestjs/common')>('@nestjs/common');
   return {
-    InjectRepository: (entity: unknown) => Inject(entity as string),
+    InjectRepository: (entity: Parameters<typeof Inject>[0]) => Inject(entity),
     getRepositoryToken: (entity: unknown) => entity,
   };
 });

@@ -1,14 +1,18 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   User,
   MapPin,
   Package,
-  ChevronRight,
   Check,
   Pencil,
   X,
   Mail,
   Phone,
+  ShieldCheck,
+  FileText,
+  LifeBuoy,
+  Languages,
 } from "lucide-react";
 import { useUserProfile } from "@/lib/user-profile-context";
 import { useReveal } from "@/hooks/useReveal";
@@ -19,6 +23,8 @@ import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useAuth } from "@/lib/AuthContext";
 import AuthRequiredState from "@/components/AuthRequiredState";
+import { SettingsGroup, SettingsRow } from "@/components/account/SettingsGroup";
+import { primaryBtn } from "@/components/account/buttons";
 
 export default function Profile() {
   const { navigateFromIconPage } = useHeaderTransition();
@@ -26,18 +32,31 @@ export default function Profile() {
   const { authChecked, isAuthenticated } = useAuth();
   const { profile, profileLoading, updateProfile } = useUserProfile();
   const { reveal } = useReveal();
+  const { t, i18n } = useTranslation("profile");
+  const { t: ta } = useTranslation("account");
   const [form, setForm] = useState(profile);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({ name: "", phone: "" });
   const [showEdit, setShowEdit] = useState(false);
 
   const inputCls =
-    "w-full rounded-xl border border-[#E3C19F] bg-[#F7EDE2] px-4 py-3 text-sm text-black placeholder-black/70 outline-none focus:border-[#6B594A] focus:ring-1 focus:ring-[#6B594A]";
-  const cardGradientCls =
-    "rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] shadow-xl shadow-[#41362D]/25";
+    "mt-1.5 w-full min-h-12 rounded-xl border-2 border-[#E3C19F] bg-[#FFFFFF] px-4 py-3 text-base text-[#41362D] placeholder:text-[#6B594A]/60 outline-none focus:border-[#6B594A]";
+  const labelCls = "block text-sm font-bold text-[#41362D]";
+  const errorCls = "mt-1 text-sm font-semibold text-[#9A2E0C]";
 
   const handleSave = async () => {
+    if (saving) return;
+    const errors = {
+      name: form.name?.trim() ? "" : ta("profile.nameRequired"),
+      phone:
+        form.phone && form.phone.replace(/\D/g, "").length < 7
+          ? ta("profile.phoneInvalid")
+          : "",
+    };
+    setFieldErrors(errors);
+    if (errors.name || errors.phone) return;
     setSaving(true);
     setSaveError("");
     try {
@@ -48,7 +67,7 @@ export default function Profile() {
         setShowEdit(false);
       }, 1200);
     } catch (error) {
-      setSaveError(error.message || "Could not save your details.");
+      setSaveError(error.message || t("profile.editModal.saveError"));
     } finally {
       setSaving(false);
     }
@@ -57,6 +76,8 @@ export default function Profile() {
   const openEdit = () => {
     requireAuth(() => {
       setForm(profile);
+      setFieldErrors({ name: "", phone: "" });
+      setSaveError("");
       setShowEdit(true);
     });
   };
@@ -64,15 +85,34 @@ export default function Profile() {
   if (!authChecked || profileLoading) {
     return (
       <div className="aisyah-page">
-        <AppHeader title="Profile" subtitle="Manage your details" />
-        <PageLoading contentOnly message="Loading your profile..." />
+        <AppHeader
+          title={t("profile.pageTitle")}
+          subtitle={t("profile.pageSubtitle")}
+        />
+        <PageLoading contentOnly message={t("profile.loading")} />
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return <AuthRequiredState title="Profile" message="Sign in to view and manage your profile." returnTo="/profile" />;
+    return (
+      <AuthRequiredState
+        title={t("profile.pageTitle")}
+        message={t("profile.authRequiredMessage")}
+        returnTo="/profile"
+      />
+    );
   }
+
+  const infoRows = [
+    { icon: User, label: t("profile.accountInfo.name"), value: profile.name },
+    { icon: Mail, label: t("profile.accountInfo.email"), value: profile.email },
+    { icon: Phone, label: t("profile.accountInfo.phone"), value: profile.phone },
+  ];
+  const languages = [
+    { code: "en", label: t("language.english") },
+    { code: "ms", label: t("language.malay") },
+  ];
 
   return (
     <div className="aisyah-page">
@@ -91,174 +131,258 @@ export default function Profile() {
           .profile-backdrop, .profile-modal { animation: none; }
         }
       `}</style>
-      <AppHeader title="Profile" subtitle="Manage your details" />
+      <AppHeader
+        title={t("profile.pageTitle")}
+        subtitle={t("profile.pageSubtitle")}
+      />
 
-      <div className="aisyah-content">
-        {/* Avatar */}
-        <div
-          className={`${cardGradientCls} p-5 flex items-center gap-4 ${reveal()}`}
+      <div className="aisyah-content mx-auto max-w-2xl space-y-6">
+        {/* Account */}
+        <section
+          className={reveal()}
           style={{ animationDelay: "80ms" }}
+          aria-labelledby="account-group-title"
         >
-          <div className="w-16 h-16 bg-white/15 rounded-full flex items-center justify-center">
-            <User className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <p className="text-white font-bold text-lg">
-              {profile.name || "Guest Buyer"}
-            </p>
-            <p className="text-[#F7EDE2]/75 text-sm">
-              {profile.email || "No email set"}
-            </p>
-          </div>
-        </div>
-
-        {/* Account Info — read-only card with edit button */}
-        <div
-          className={`${cardGradientCls} p-4 ${reveal()}`}
-          style={{ animationDelay: "140ms" }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-white font-bold">Account Info</h3>
-            <button
-              onClick={openEdit}
-              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-3 py-2 text-xs font-semibold text-black transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Pencil className="w-3.5 h-3.5" /> Edit
-            </button>
-          </div>
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-3">
-              <User className="w-4 h-4 text-[#F7EDE2] flex-shrink-0" />
-              <p className="text-[#F7EDE2]/75 text-xs w-16">Name</p>
-              <p className="text-white text-sm font-medium break-words">
-                {profile.name || "—"}
-              </p>
+          <h2 id="account-group-title" className="mb-2 px-1 text-sm font-bold text-[#41362D]/80">
+            {ta("profile.groups.account")}
+          </h2>
+          <div className="aisyah-card overflow-hidden rounded-2xl">
+            <div className="flex items-center gap-4 p-4">
+              <div className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-white/15">
+                <User className="h-7 w-7 text-white" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-lg font-bold text-white">
+                  {profile.name || t("profile.guestBuyer")}
+                </p>
+                <p className="break-all text-sm text-white/80">
+                  {profile.email || t("profile.noEmailSet")}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Mail className="w-4 h-4 text-[#F7EDE2] flex-shrink-0" />
-              <p className="text-[#F7EDE2]/75 text-xs w-16">Email</p>
-              <p className="text-white text-sm font-medium break-words">
-                {profile.email || "—"}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone className="w-4 h-4 text-[#F7EDE2] flex-shrink-0" />
-              <p className="text-[#F7EDE2]/75 text-xs w-16">Phone</p>
-              <p className="text-white text-sm font-medium break-words">
-                {profile.phone || "—"}
-              </p>
+            <dl className="divide-y divide-white/15 border-t border-white/15">
+              {infoRows.map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-center gap-3 px-4 py-3">
+                  <Icon className="h-5 w-5 flex-none text-[#E3C19F]" aria-hidden="true" />
+                  <dt className="w-16 flex-none text-sm text-white/75">{label}</dt>
+                  <dd className="min-w-0 flex-1 break-words text-[15px] font-medium text-white [overflow-wrap:anywhere]">
+                    {value || ta("profile.notSet")}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <div className="border-t border-white/15 p-3">
+              <button
+                type="button"
+                onClick={openEdit}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-4 text-[15px] font-bold text-[#41362D]"
+              >
+                <Pencil className="h-4 w-4" aria-hidden="true" /> {ta("profile.editDetails")}
+              </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Edit popup */}
         {showEdit && (
           <>
             <div
               className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm profile-backdrop"
-              onClick={() => setShowEdit(false)}
+              onClick={() => !saving && setShowEdit(false)}
             />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-5 pointer-events-none">
-              <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl pointer-events-auto profile-modal">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                  <h3 className="text-gray-900 font-bold text-lg">
-                    Edit Personal Info
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="edit-profile-title"
+                className="w-full max-w-sm rounded-3xl border border-[#E3C19F] bg-[#FFFDF9] shadow-2xl pointer-events-auto profile-modal"
+              >
+                <div className="flex items-center justify-between border-b border-[#E3C19F] px-5 py-3">
+                  <h3 id="edit-profile-title" className="text-lg font-bold text-[#41362D]">
+                    {t("profile.editModal.title")}
                   </h3>
                   <button
+                    type="button"
                     onClick={() => setShowEdit(false)}
-                    className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                    aria-label={ta("profile.closeEdit")}
+                    className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-[#41362D] hover:bg-[#F7EDE2]"
                   >
-                    <X className="w-4 h-4 text-gray-500" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
-                <div className="p-5 space-y-3">
-                  <input
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, name: e.target.value }))
-                    }
-                    placeholder="Full Name"
-                    className={inputCls}
-                  />
-                  <input
-                    value={profile.email}
-                    placeholder="Email Address"
-                    type="email"
-                    readOnly
-                    aria-readonly="true"
-                    className="w-full rounded-xl border border-[#E3C19F] bg-[#E3C19F] px-4 py-3 text-sm text-black/70 cursor-not-allowed"
-                  />
-                  <input
-                    value={form.phone}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, phone: e.target.value }))
-                    }
-                    placeholder="Phone Number"
-                    type="tel"
-                    className={inputCls}
-                  />
+                <form
+                  className="space-y-4 p-5"
+                  noValidate
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    handleSave();
+                  }}
+                >
+                  <div>
+                    <label htmlFor="profile-name" className={labelCls}>
+                      {t("profile.accountInfo.name")} <span className="text-[#9A2E0C]">*</span>
+                    </label>
+                    <input
+                      id="profile-name"
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, name: e.target.value }))
+                      }
+                      placeholder={t("profile.editModal.fullNamePlaceholder")}
+                      autoComplete="name"
+                      aria-invalid={Boolean(fieldErrors.name)}
+                      className={inputCls}
+                    />
+                    {fieldErrors.name && <p className={errorCls}>{fieldErrors.name}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="profile-email" className={labelCls}>
+                      {t("profile.accountInfo.email")}
+                    </label>
+                    <input
+                      id="profile-email"
+                      value={profile.email}
+                      placeholder={t("profile.editModal.emailPlaceholder")}
+                      type="email"
+                      readOnly
+                      aria-readonly="true"
+                      aria-describedby="profile-email-help"
+                      className="mt-1.5 w-full min-h-12 cursor-not-allowed rounded-xl border-2 border-[#E3C19F] bg-[#F7EDE2] px-4 py-3 text-base text-[#41362D]/80"
+                    />
+                    <p id="profile-email-help" className="mt-1 text-[13px] text-[#5A493C]">
+                      {ta("profile.emailLocked")}
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor="profile-phone" className={labelCls}>
+                      {t("profile.accountInfo.phone")}
+                    </label>
+                    <input
+                      id="profile-phone"
+                      value={form.phone}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, phone: e.target.value }))
+                      }
+                      placeholder={t("profile.editModal.phonePlaceholder")}
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      aria-invalid={Boolean(fieldErrors.phone)}
+                      className={inputCls}
+                    />
+                    {fieldErrors.phone && <p className={errorCls}>{fieldErrors.phone}</p>}
+                  </div>
                   {saveError && (
-                    <p className="text-red-500 text-xs text-center">
+                    <p role="alert" className="rounded-xl bg-[#FBE4E1] px-3 py-2 text-center text-sm font-semibold text-[#8A1C12]">
                       {saveError}
                     </p>
                   )}
                   <button
-                    onClick={handleSave}
+                    type="submit"
                     disabled={saving}
-                    className={`w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 ${saved ? "bg-[#E3C19F] text-[#41362D]" : "bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white"}`}
+                    className={`${primaryBtn} w-full`}
                   >
                     {saving ? (
-                      "Saving..."
+                      t("profile.editModal.saving")
                     ) : saved ? (
                       <>
-                        <Check className="w-4 h-4" /> Saved!
+                        <Check className="w-4 h-4" /> {t("profile.editModal.saved")}
                       </>
                     ) : (
-                      "Save Changes"
+                      t("profile.editModal.saveChanges")
                     )}
                   </button>
-                </div>
+                </form>
               </div>
             </div>
           </>
         )}
 
-        {/* Address Book */}
-        <button
-          onClick={() => requireAuth(() => navigateFromIconPage("/address-book"))}
-          className={`w-full ${cardGradientCls} p-4 flex items-center gap-4 active:bg-white/10 transition ${reveal()}`}
-          style={{ animationDelay: "200ms" }}
+        {/* Orders & delivery */}
+        <SettingsGroup
+          title={ta("profile.groups.ordersDelivery")}
+          className={reveal()}
+          style={{ animationDelay: "140ms" }}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2]">
-            <MapPin className="h-5 w-5 text-black" />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="text-white font-semibold text-sm">Address Book</p>
-            <p className="text-[#F7EDE2]/75 text-xs">
-              Manage delivery addresses
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[#F7EDE2]" />
-        </button>
+          <SettingsRow
+            icon={MapPin}
+            title={t("profile.addressBookCard.title")}
+            subtitle={t("profile.addressBookCard.subtitle")}
+            onClick={() => requireAuth(() => navigateFromIconPage("/address-book"))}
+          />
+          <SettingsRow
+            icon={Package}
+            title={t("profile.orderHistoryCard.title")}
+            subtitle={t("profile.orderHistoryCard.subtitle")}
+            onClick={() => requireAuth(() => navigateFromIconPage("/history"))}
+          />
+        </SettingsGroup>
 
-        {/* Order History */}
-        <button
-          onClick={() => requireAuth(() => navigateFromIconPage("/history"))}
-          className={`w-full ${cardGradientCls} p-4 flex items-center gap-4 active:bg-white/10 transition ${reveal()}`}
+        {/* Language */}
+        <section
+          className={reveal()}
+          style={{ animationDelay: "200ms" }}
+          aria-labelledby="language-title"
+        >
+          <h2 id="language-title" className="mb-2 px-1 text-sm font-bold text-[#41362D]/80">
+            {t("language.title")}
+          </h2>
+          <div className="aisyah-card rounded-2xl p-4">
+            <div className="mb-3 flex items-center gap-3">
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2]">
+                <Languages className="h-5 w-5 text-[#41362D]" aria-hidden="true" />
+              </span>
+              <p className="text-sm text-white/85">{t("language.subtitle")}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-labelledby="language-title">
+              {languages.map(({ code, label }) => {
+                const selected = i18n.resolvedLanguage === code;
+                return (
+                  <button
+                    key={code}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => i18n.changeLanguage(code)}
+                    className={`flex min-h-12 items-center justify-center gap-1.5 rounded-xl border-2 px-2 text-[15px] font-bold transition-colors ${selected ? "border-[#E3C19F] bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] text-[#41362D]" : "border-white/25 bg-white/10 text-white"}`}
+                  >
+                    {selected && <Check className="h-4 w-4 flex-none" aria-hidden="true" />}
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Help & legal */}
+        <SettingsGroup
+          title={ta("profile.groups.helpLegal")}
+          className={reveal()}
           style={{ animationDelay: "260ms" }}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2]">
-            <Package className="h-5 w-5 text-[#41362D]" />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="text-white font-semibold text-sm">Order History</p>
-            <p className="text-[#F7EDE2]/75 text-xs">View all past orders</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-[#F7EDE2]" />
-        </button>
+          <SettingsRow
+            icon={LifeBuoy}
+            title={t("profile.customerSupportCard.title")}
+            subtitle={t("profile.customerSupportCard.subtitle")}
+            onClick={() => navigateFromIconPage("/support")}
+          />
+          <SettingsRow
+            icon={ShieldCheck}
+            title={t("profile.privacyPolicyCard.title")}
+            subtitle={t("profile.privacyPolicyCard.subtitle")}
+            onClick={() => navigateFromIconPage("/privacy-policy")}
+          />
+          <SettingsRow
+            icon={FileText}
+            title={t("profile.termsConditionsCard.title")}
+            subtitle={t("profile.termsConditionsCard.subtitle")}
+            onClick={() => navigateFromIconPage("/terms-conditions")}
+          />
+        </SettingsGroup>
 
-        {/* Auth actions */}
-        <div className={reveal()} style={{ animationDelay: "380ms" }}>
+        {/* Sign out */}
+        <div className={reveal()} style={{ animationDelay: "320ms" }}>
           <AuthButtons />
         </div>
       </div>

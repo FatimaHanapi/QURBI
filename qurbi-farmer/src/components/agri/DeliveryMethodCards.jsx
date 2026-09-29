@@ -25,6 +25,9 @@ const OPTIONS = [
   },
 ];
 
+/**
+ * @param {{ value?: string, onChange: (value: string) => void, className?: string }} props
+ */
 export default function DeliveryMethodCards({ value, onChange, className }) {
   return (
     <RadioGroup value={value} onValueChange={onChange} className={cn("grid gap-3", className)}>
@@ -34,7 +37,7 @@ export default function DeliveryMethodCards({ value, onChange, className }) {
           <label
             key={optionValue}
             className={cn(
-              "flex items-start gap-3 rounded-2xl border p-3.5 cursor-pointer transition-colors",
+              "flex min-h-14 items-start gap-3 rounded-2xl border p-3.5 cursor-pointer transition-colors",
               selected
                 ? "border-primary bg-primary/5 ring-1 ring-primary/30"
                 : "border-border bg-card hover:bg-muted/50"
@@ -51,7 +54,7 @@ export default function DeliveryMethodCards({ value, onChange, className }) {
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-semibold">{label}</span>
-              <span className="block text-xs text-muted-foreground leading-snug mt-0.5">{description}</span>
+              <span className="block text-sm text-muted-foreground leading-snug mt-0.5">{description}</span>
             </span>
           </label>
         );

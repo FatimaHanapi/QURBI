@@ -6,7 +6,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, DeepPartial, EntityManager, FindOptionsWhere, Like, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  DeepPartial,
+  EntityManager,
+  FindOptionsWhere,
+  Like,
+  Repository,
+} from 'typeorm';
 import {
   BulkListing,
   CartItem,
@@ -67,7 +75,11 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.REFUNDED]: [],
 };
 
-const FULFILMENT_ADVANCE_TARGETS = [OrderStatus.PREPARING, OrderStatus.IN_TRANSIT, OrderStatus.DELIVERED];
+const FULFILMENT_ADVANCE_TARGETS = [
+  OrderStatus.PREPARING,
+  OrderStatus.IN_TRANSIT,
+  OrderStatus.DELIVERED,
+];
 
 @Injectable()
 export class OrdersService {
@@ -81,7 +93,9 @@ export class OrdersService {
   ) {}
 
   async findAllForBuyer(buyerId: string): Promise<Order[]> {
-    await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager));
+    await this.dataSource.transaction((manager) =>
+      this.reservationsService.expireDue(manager),
+    );
     return this.repository.find({
       where: { buyerId, hiddenFromBuyerHistory: false },
       relations: { items: true, reservations: true },
@@ -123,7 +137,9 @@ export class OrdersService {
   }
 
   async findOne(id: string, actor: Actor): Promise<Order> {
-    await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager));
+    await this.dataSource.transaction((manager) =>
+      this.reservationsService.expireDue(manager),
+    );
     const order = await this.repository.findOne({
       where: { id },
       relations: { items: true, trackingEvents: true, reservations: true },
@@ -163,7 +179,9 @@ export class OrdersService {
 
     const orders: Order[] = [];
     for (const [farmerId, items] of groups) {
-      orders.push(await this.createOrderForFarmer(buyerId, farmerId, items, input));
+      orders.push(
+        await this.createOrderForFarmer(buyerId, farmerId, items, input),
+      );
     }
     return orders;
   }
@@ -177,7 +195,10 @@ export class OrdersService {
     const checkoutKey = createHash('sha256')
       .update(
         `${buyerId}:${farmerId}:${items
-          .map((item) => `${item.itemType}:${item.livestockId ?? item.bulkListingId}`)
+          .map(
+            (item) =>
+              `${item.itemType}:${item.livestockId ?? item.bulkListingId}`,
+          )
           .sort()
           .join('|')}`,
       )
@@ -188,7 +209,11 @@ export class OrdersService {
         return await this.dataSource.transaction(async (manager) => {
           await this.reservationsService.expireDue(manager);
           const existingOrder = await manager.findOne(Order, {
-            where: { checkoutKey, buyerId, status: OrderStatus.PENDING_PAYMENT },
+            where: {
+              checkoutKey,
+              buyerId,
+              status: OrderStatus.PENDING_PAYMENT,
+            },
             relations: { items: true },
           });
           if (existingOrder) {
@@ -201,7 +226,10 @@ export class OrdersService {
               existingOrder.paymentStatus = PaymentStatus.UNPAID;
               await manager.save(existingOrder);
             }
-            await manager.delete(CartItem, items.map((item) => item.id));
+            await manager.delete(
+              CartItem,
+              items.map((item) => item.id),
+            );
             return existingOrder;
           }
 
@@ -238,7 +266,10 @@ export class OrdersService {
               // A lot is bought whole (quantity is enforced to 1 by
               // CartItemsService), so this is a flip to SOLD, not a
               // decrement — see BulkListingsService.markSold.
-              await this.bulkListingsService.markSold(item.bulkListingId as string, manager);
+              await this.bulkListingsService.markSold(
+                item.bulkListingId as string,
+                manager,
+              );
             }
           }
 
@@ -282,7 +313,9 @@ export class OrdersService {
           }
 
           for (const data of itemsToInsert) {
-            await manager.save(manager.create(OrderItem, { ...data, orderId: order.id }));
+            await manager.save(
+              manager.create(OrderItem, { ...data, orderId: order.id }),
+            );
           }
 
           await manager.save(
@@ -319,7 +352,9 @@ export class OrdersService {
   // as the real correctness guarantee under concurrent checkouts.
   private async generateOrderNumber(manager: EntityManager): Promise<string> {
     const prefix = `QRB-${new Date().getFullYear()}-`;
-    const count = await manager.count(Order, { where: { orderNumber: Like(`${prefix}%`) } });
+    const count = await manager.count(Order, {
+      where: { orderNumber: Like(`${prefix}%`) },
+    });
     return `${prefix}${String(count + 1).padStart(6, '0')}`;
   }
 
@@ -387,10 +422,23 @@ export class OrdersService {
   ): Promise<void> {
     const items = await manager.find(OrderItem, { where: { orderId } });
     for (const item of items) {
-      if (releaseLivestock && item.itemType === OrderItemType.LIVESTOCK && item.livestockId) {
-        await this.livestockService.releaseToAvailable(item.livestockId, manager);
-      } else if (item.itemType === OrderItemType.BULK_LISTING && item.bulkListingId) {
-        await this.bulkListingsService.releaseToOpen(item.bulkListingId, manager);
+      if (
+        releaseLivestock &&
+        item.itemType === OrderItemType.LIVESTOCK &&
+        item.livestockId
+      ) {
+        await this.livestockService.releaseToAvailable(
+          item.livestockId,
+          manager,
+        );
+      } else if (
+        item.itemType === OrderItemType.BULK_LISTING &&
+        item.bulkListingId
+      ) {
+        await this.bulkListingsService.releaseToOpen(
+          item.bulkListingId,
+          manager,
+        );
       }
     }
   }
@@ -399,12 +447,20 @@ export class OrdersService {
   // of `allowedParties`. Admins bypass this entirely. Anyone else who isn't
   // the order's buyer/farmer gets the exact same 404 a made-up id would
   // return — existence of someone else's order is never confirmed.
-  private assertParty(order: Order, actor: Actor, allowedParties: Party[]): void {
+  private assertParty(
+    order: Order,
+    actor: Actor,
+    allowedParties: Party[],
+  ): void {
     if (actor.role === UserRole.ADMIN) return;
     const isAllowedBuyer =
-      allowedParties.includes('buyer') && actor.role === UserRole.BUYER && order.buyerId === actor.id;
+      allowedParties.includes('buyer') &&
+      actor.role === UserRole.BUYER &&
+      order.buyerId === actor.id;
     const isAllowedFarmer =
-      allowedParties.includes('farmer') && actor.role === UserRole.FARMER && order.farmerId === actor.id;
+      allowedParties.includes('farmer') &&
+      actor.role === UserRole.FARMER &&
+      order.farmerId === actor.id;
     if (!isAllowedBuyer && !isAllowedFarmer) {
       throw new NotFoundException(`Order ${order.id} not found`);
     }
@@ -427,7 +483,10 @@ export class OrdersService {
   // permits for CANCELLED — applyStatusChange re-checks that regardless.
   async cancel(id: string, actor: Actor, reason: string): Promise<Order> {
     return this.dataSource.transaction(async (manager) => {
-      const order = await this.loadOwnedOrder(manager, id, actor, ['buyer', 'farmer']);
+      const order = await this.loadOwnedOrder(manager, id, actor, [
+        'buyer',
+        'farmer',
+      ]);
 
       const allowedFromStatuses =
         actor.role === UserRole.BUYER
@@ -456,20 +515,31 @@ export class OrdersService {
     opts: { note?: string; images?: string[]; location?: string } = {},
   ): Promise<Order> {
     if (actor.role === UserRole.BUYER) {
-      throw new ForbiddenException('Buyers cannot advance order fulfilment status');
+      throw new ForbiddenException(
+        'Buyers cannot advance order fulfilment status',
+      );
     }
     if (!FULFILMENT_ADVANCE_TARGETS.includes(toStatus)) {
-      throw new BadRequestException(`${toStatus} is not a valid fulfilment step`);
+      throw new BadRequestException(
+        `${toStatus} is not a valid fulfilment step`,
+      );
     }
 
     return this.dataSource.transaction(async (manager) => {
       const order = await this.loadOwnedOrder(manager, id, actor, ['farmer']);
-      return this.applyStatusChange(manager, order, toStatus, { ...opts, userId: actor.id });
+      return this.applyStatusChange(manager, order, toStatus, {
+        ...opts,
+        userId: actor.id,
+      });
     });
   }
 
   // Buyer (own order) or admin confirms delivery. Farmers never call this.
-  async markReceived(id: string, actor: Actor, proofImages: string[]): Promise<Order> {
+  async markReceived(
+    id: string,
+    actor: Actor,
+    proofImages: string[],
+  ): Promise<Order> {
     if (actor.role === UserRole.FARMER) {
       throw new ForbiddenException('Farmers cannot mark an order received');
     }
@@ -487,21 +557,33 @@ export class OrdersService {
   // this. Runs entirely on refundStatus — order.status (the fulfilment
   // track) is untouched, so there's nothing for ALLOWED_TRANSITIONS to check
   // here.
-  async requestRefund(id: string, actor: Actor, reason: string): Promise<Order> {
+  async requestRefund(
+    id: string,
+    actor: Actor,
+    reason: string,
+  ): Promise<Order> {
     if (actor.role === UserRole.FARMER) {
       throw new ForbiddenException('Farmers cannot request a refund');
     }
     return this.dataSource.transaction(async (manager) => {
       const order = await this.loadOwnedOrder(manager, id, actor, ['buyer']);
 
-      if (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REFUNDED) {
-        throw new ConflictException(`Order ${id} is already ${order.status} and cannot be refunded`);
+      if (
+        order.status === OrderStatus.CANCELLED ||
+        order.status === OrderStatus.REFUNDED
+      ) {
+        throw new ConflictException(
+          `Order ${id} is already ${order.status} and cannot be refunded`,
+        );
       }
       // NONE -> first request. REJECTED -> the buyer can ask again (a
       // rejection isn't a permanent lock, e.g. with new evidence). REQUESTED
       // (already pending) and APPROVED (already resolved into REFUNDED) are
       // the only refundStatus values that actually block a new request.
-      if (order.refundStatus === RefundStatus.REQUESTED || order.refundStatus === RefundStatus.APPROVED) {
+      if (
+        order.refundStatus === RefundStatus.REQUESTED ||
+        order.refundStatus === RefundStatus.APPROVED
+      ) {
         throw new ConflictException(
           `Order ${id} already has a refund request (refundStatus: ${order.refundStatus})`,
         );
@@ -572,9 +654,15 @@ export class OrdersService {
 
   // Buyer (own order) or admin. Farmers and admin-on-farmer's-behalf never
   // apply — this only ever hides an order from the buyer's own history view.
-  async hideFromBuyerHistory(id: string, actor: Actor, hidden: boolean): Promise<Order> {
+  async hideFromBuyerHistory(
+    id: string,
+    actor: Actor,
+    hidden: boolean,
+  ): Promise<Order> {
     if (actor.role === UserRole.FARMER) {
-      throw new ForbiddenException('Farmers cannot hide orders from buyer history');
+      throw new ForbiddenException(
+        'Farmers cannot hide orders from buyer history',
+      );
     }
     await this.loadOwnedOrder(this.repository.manager, id, actor, ['buyer']);
     await this.repository.update(id, { hiddenFromBuyerHistory: hidden });
@@ -588,7 +676,12 @@ export class OrdersService {
   async updateStatus(
     id: string,
     status: OrderStatus,
-    opts: { note?: string; images?: string[]; location?: string; userId?: string } = {},
+    opts: {
+      note?: string;
+      images?: string[];
+      location?: string;
+      userId?: string;
+    } = {},
   ): Promise<Order> {
     return this.dataSource.transaction(async (manager) => {
       const order = await manager.findOne(Order, { where: { id } });
@@ -597,7 +690,10 @@ export class OrdersService {
     });
   }
 
-  async completePaymentFromWebhook(id: string, providerReference?: string): Promise<Order> {
+  async completePaymentFromWebhook(
+    id: string,
+    providerReference?: string,
+  ): Promise<Order> {
     return this.dataSource.transaction(async (manager) => {
       const order = await manager
         .createQueryBuilder(Order, 'order')
@@ -605,16 +701,26 @@ export class OrdersService {
         .where('order.id = :id', { id })
         .getOne();
       if (!order) throw new NotFoundException(`Order ${id} not found`);
-      if (order.status === OrderStatus.PAID && order.paymentStatus === PaymentStatus.PAID) {
+      if (
+        order.status === OrderStatus.PAID &&
+        order.paymentStatus === PaymentStatus.PAID
+      ) {
         return order;
       }
       if (order.status !== OrderStatus.PENDING_PAYMENT) {
         throw new ConflictException(`Order ${id} is not awaiting payment`);
       }
 
-      await this.reservationsService.completeOrder(manager, order.id, order.buyerId);
-      const payment = await manager.findOne(Payment, { where: { orderId: order.id } });
-      if (!payment) throw new ConflictException(`Order ${id} has no payment record`);
+      await this.reservationsService.completeOrder(
+        manager,
+        order.id,
+        order.buyerId,
+      );
+      const payment = await manager.findOne(Payment, {
+        where: { orderId: order.id },
+      });
+      if (!payment)
+        throw new ConflictException(`Order ${id} has no payment record`);
       const paidAt = new Date();
       payment.status = PaymentStatus.PAID;
       payment.paidAt = paidAt;
@@ -626,12 +732,14 @@ export class OrdersService {
       order.paymentReference = providerReference ?? payment.id;
       order.paidAt = paidAt;
       await manager.save(order);
-      await manager.save(manager.create(OrderTrackingEvent, {
-        orderId: order.id,
-        status: OrderStatus.PAID,
-        note: 'Payment completed',
-        createdByUserId: null,
-      }));
+      await manager.save(
+        manager.create(OrderTrackingEvent, {
+          orderId: order.id,
+          status: OrderStatus.PAID,
+          note: 'Payment completed',
+          createdByUserId: null,
+        }),
+      );
       return order;
     });
   }
@@ -643,8 +751,11 @@ export class OrdersService {
       if (order.status !== OrderStatus.PENDING_PAYMENT) {
         throw new ConflictException(`Order ${id} is not awaiting payment`);
       }
-      const payment = await manager.findOne(Payment, { where: { orderId: order.id } });
-      if (!payment) throw new ConflictException(`Order ${id} has no payment record`);
+      const payment = await manager.findOne(Payment, {
+        where: { orderId: order.id },
+      });
+      if (!payment)
+        throw new ConflictException(`Order ${id} has no payment record`);
       payment.status = PaymentStatus.FAILED;
       await manager.save(payment);
       order.paymentStatus = PaymentStatus.FAILED;

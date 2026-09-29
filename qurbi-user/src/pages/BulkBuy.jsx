@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { MapPin, Package, Search, Users } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { loadBulkListings } from "@/lib/farmerClient";
@@ -12,10 +13,9 @@ import {
   animateProductToCart,
   captureCartAnimationSource,
 } from "@/lib/cart-animation";
-import {
-  compactBreedGenderLabel,
-  getBreedGenderBreakdown,
-} from "@/lib/bulk-listing";
+import { formatRM } from "@/lib/format";
+import { resolvedBreakdown, useBreedNames } from "@/lib/breed-names";
+import StatusChip from "@/components/shop/StatusChip";
 
 const lotTotal = (listing) =>
   listing.totalAnimals ??
@@ -38,6 +38,8 @@ const toCartItem = (listing) => ({
 });
 
 export default function BulkBuy() {
+  const { t } = useTranslation("listings");
+  const { t: tf } = useTranslation("shopflow");
   const [listings, setListings] = useState([]);
   const [query, setQuery] = useState("");
   const [state, setState] = useState("");
@@ -46,6 +48,14 @@ export default function BulkBuy() {
   const { addToCart, buyNow } = useCart();
   const requireAuth = useRequireAuth();
   const { navigateWithTransition } = useHeaderTransition();
+  const breedNames = useBreedNames(listings);
+
+  const breedRowLabel = (row) => {
+    if (!row.hasGenderSplit) {
+      return row.total == null ? row.breed : tf("bulk.breedTotal", { breed: row.breed, total: row.total });
+    }
+    return tf("bulk.breedSplit", { breed: row.breed, male: row.maleCount, female: row.femaleCount });
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,7 +64,7 @@ export default function BulkBuy() {
     try {
       setListings(await loadBulkListings());
     } catch (requestError) {
-      setError(requestError.message || "Unable to load bulk lots.");
+      setError(requestError.message || t("bulkBuy.loadError"));
     } finally {
       setLoading(false);
     }
@@ -77,10 +87,10 @@ export default function BulkBuy() {
       listings.filter((listing) => {
         if (state && listing.state !== state) return false;
         const text =
-          `${listing.name || ""} ${listing.farmer_name || ""} ${listing.state || ""} ${(listing.breedBreakdown || []).map((breed) => (typeof breed === "string" ? breed : breed.breed || breed.name || "")).join(" ")}`.toLowerCase();
-        return text.includes(query.toLowerCase());
+          `${listing.name || ""} ${listing.farmer_name || ""} ${listing.farm_name || ""} ${listing.state || ""} ${resolvedBreakdown(listing, breedNames).map((row) => row.breed).join(" ")}`.toLowerCase();
+        return text.includes(query.trim().toLowerCase());
       }),
-    [listings, query, state],
+    [breedNames, listings, query, state],
   );
 
   const addLot = (listing, goToCart = false, trigger) => {
@@ -92,7 +102,7 @@ export default function BulkBuy() {
       try {
         const result = await checkBulkListingAvailability([listing.id]);
         if (!result[listing.id]?.available) {
-          alert("This bulk lot is no longer available.");
+          alert(t("bulkBuy.lotUnavailable"));
           await load();
           return;
         }
@@ -102,13 +112,13 @@ export default function BulkBuy() {
           navigateWithTransition("/payment");
         } else {
           if (!addToCart(item)) {
-            alert("This bulk lot is already in your cart.");
+            alert(t("bulkBuy.alreadyInCart"));
             return;
           }
           animateProductToCart(animationSource);
         }
       } catch {
-        alert("We couldn't verify this bulk lot. Please try again.");
+        alert(t("bulkBuy.verifyError"));
       }
     });
   };
@@ -118,16 +128,19 @@ export default function BulkBuy() {
       <AppHeader
         sticky
         thresholdShrink
-        title="Bulk Buy"
-        subtitle="Purchase complete livestock lots from trusted farmers."
+        title={t("bulkBuy.title")}
+        subtitle={t("bulkBuy.subtitle")}
         search={
-          <label className="qurbi-search flex h-11 items-center gap-2 rounded-2xl border px-3 transition-all duration-200 ease-out focus-within:ring-2 focus-within:ring-[#E3C19F]">
-            <Search className="h-4 w-4 text-black" />
+          <label className="qurbi-search flex h-12 items-center gap-2 rounded-2xl border px-3 transition-all duration-200 ease-out focus-within:ring-2 focus-within:ring-[#E3C19F]">
+            <Search aria-hidden="true" className="h-5 w-5 flex-none text-black" />
+            <span className="sr-only">{tf("bulk.searchLabel")}</span>
             <input
+              type="search"
+              enterKeyHint="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search lots, farmer or location"
-              className="min-w-0 flex-1 bg-transparent text-sm text-black outline-none placeholder:text-black/70"
+              placeholder={t("bulkBuy.searchPlaceholder")}
+              className="min-w-0 flex-1 bg-transparent text-base text-black outline-none placeholder:text-black/70"
             />
           </label>
         }
@@ -136,16 +149,18 @@ export default function BulkBuy() {
           <button
             type="button"
             onClick={() => setState("")}
-            className={`rounded-full px-3 py-1.5 text-xs font-bold ${!state ? "bg-[#E3C19F] text-[#41362D]" : "bg-white/10 text-white/80"}`}
+            aria-pressed={!state}
+            className={`min-h-11 flex-none rounded-full px-4 text-sm font-bold ${!state ? "bg-[#E3C19F] text-[#41362D]" : "border border-white/25 bg-white/10 text-white"}`}
           >
-            All lots
+            {t("bulkBuy.allLots")}
           </button>
           {states.map((item) => (
             <button
               type="button"
               key={item}
               onClick={() => setState(item)}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold ${state === item ? "bg-[#E3C19F] text-[#41362D]" : "bg-white/10 text-white/80"}`}
+              aria-pressed={state === item}
+              className={`min-h-11 flex-none rounded-full px-4 text-sm font-bold ${state === item ? "bg-[#E3C19F] text-[#41362D]" : "border border-white/25 bg-white/10 text-white"}`}
             >
               {item}
             </button>
@@ -155,28 +170,45 @@ export default function BulkBuy() {
 
       <main className="aisyah-content grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {loading && !listings.length && (
-          <PageLoading contentOnly message="Loading bulk lots..." />
+          <PageLoading contentOnly message={t("bulkBuy.loading")} />
         )}
 
         {error && (
-          <div className="py-16 text-center">
-            <p className="text-sm text-[#6B594A]">{error}</p>
+          <div className="col-span-full py-16 text-center">
+            <p className="text-base font-bold text-[#41362D]">{t("bulkBuy.loadError")}</p>
+            <p className="mt-1 text-sm text-[#6B594A]">{error}</p>
             <button
               type="button"
               onClick={load}
-              className="mt-3 aisyah-primary-button"
+              className="mt-4 aisyah-primary-button min-h-12 px-6"
             >
-              Retry
+              {t("bulkBuy.retry")}
             </button>
           </div>
         )}
 
         {!loading && !error && visible.length === 0 && (
-          <div className="py-16 text-center">
-            <Package className="mx-auto h-10 w-10 text-black/70" />
-            <p className="mt-3 text-sm text-[#6B594A]">
-              No available bulk lots found.
+          <div className="col-span-full py-16 text-center">
+            <Package aria-hidden="true" className="mx-auto h-10 w-10 text-[#6B594A]" />
+            <p className="mt-3 text-base font-bold text-[#41362D]">
+              {t("bulkBuy.noLotsFound")}
             </p>
+            {query || state ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setState("");
+                }}
+                className="mt-4 aisyah-primary-button min-h-12 px-6"
+              >
+                {tf("bulk.clearSearch")}
+              </button>
+            ) : (
+              <Link to="/browse" className="mt-4 aisyah-primary-button inline-flex min-h-12 items-center px-6">
+                {tf("bulk.browseSingle")}
+              </Link>
+            )}
           </div>
         )}
 
@@ -185,7 +217,7 @@ export default function BulkBuy() {
           visible.map((listing) => {
             const image = listing.coverImage || listing.images?.[0];
             const total = lotTotal(listing);
-            const breedBreakdown = getBreedGenderBreakdown(listing);
+            const breedBreakdown = resolvedBreakdown(listing, breedNames);
             return (
               <article
                 data-cart-product
@@ -195,59 +227,62 @@ export default function BulkBuy() {
                 <Link
                   to={`/bulk-buy/${encodeURIComponent(listing.id)}`}
                   className="flex gap-3 p-3"
+                  aria-label={tf("bulk.openAria", { title: listing.name, price: formatRM(listing.totalPrice) })}
                 >
                   <div className="h-24 w-24 flex-none overflow-hidden rounded-xl bg-[#F7EDE2]">
                     {image ? (
                       <img
                         data-cart-product-image
                         src={image}
-                        alt={listing.name}
+                        alt="" 
                         className="h-full w-full object-cover"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-xs font-bold text-[#41362D]">
-                        Bulk lot
+                        {t("bulkBuy.bulkLotPlaceholder")}
                       </div>
                     )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <h2 className="truncate font-bold text-white">
-                        {listing.name}
-                      </h2>
+                    <h2 className="line-clamp-2 break-words text-base font-bold leading-snug text-white">
+                      {listing.name}
+                    </h2>
+                    <StatusChip status={listing.status || "open"} className="mt-1.5" />
 
-                      <span className="rounded-full bg-[#E3C19F] px-2 py-1 text-[10px] font-bold text-black">
-                        Available
-                      </span>
-                    </div>
-
-                    <p className="mt-1 flex items-center gap-1 text-xs text-white/70">
-                      <MapPin className="h-3 w-3" />
-                      {listing.state || "Location not specified"}
+                    <p className="mt-2 flex items-center gap-1.5 text-sm text-white/85">
+                      <MapPin aria-hidden="true" className="h-4 w-4 flex-none" />
+                      {listing.state || t("bulkBuy.locationNotSpecified")}
                     </p>
 
-                    <p className="mt-1 flex items-center gap-1 text-xs text-white/70">
-                      <Users className="h-3 w-3" />
-                      {total} animals · {listing.maleCount || 0} male ·{" "}
-                      {listing.femaleCount || 0} female
+                    <p className="mt-1 flex items-start gap-1.5 text-sm text-white/85">
+                      <Users aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none" />
+                      {t("bulkBuy.animalsSummary", {
+                        total,
+                        male: listing.maleCount || 0,
+                        female: listing.femaleCount || 0,
+                      })}
                     </p>
 
                     {breedBreakdown.length > 0 && (
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-2 space-y-0.5">
                         {breedBreakdown.slice(0, 2).map((row) => (
-                          <p key={row.key} className="truncate text-[11px] font-semibold text-[#F7EDE2]" title={compactBreedGenderLabel(row)}>
-                            {compactBreedGenderLabel(row)}
+                          <p key={row.key} className="break-words text-[13px] font-semibold text-[#F7EDE2]">
+                            {breedRowLabel(row)}
                           </p>
                         ))}
                         {breedBreakdown.length > 2 && (
-                          <p className="text-[10px] font-semibold text-white/60">+{breedBreakdown.length - 2} more breed group{breedBreakdown.length - 2 === 1 ? "" : "s"}</p>
+                          <p className="text-[13px] font-semibold text-white/75">
+                            {t("bulkBuy.moreBreedGroups", {
+                              count: breedBreakdown.length - 2,
+                            })}
+                          </p>
                         )}
                       </div>
                     )}
 
-                    <p className="mt-2 text-lg font-bold text-white">
-                      RM {Number(listing.totalPrice || 0).toLocaleString()}
+                    <p className="mt-2 text-xl font-extrabold text-white">
+                      {formatRM(listing.totalPrice)}
                     </p>
                   </div>
                 </Link>
@@ -255,9 +290,9 @@ export default function BulkBuy() {
                 <div className="grid grid-cols-2 gap-2 border-t border-[#E3C19F]/50 p-3">
                   <Link
                     to={`/bulk-buy/${encodeURIComponent(listing.id)}`}
-                    className="aisyah-secondary-button py-2.5 text-center"
+                    className="flex min-h-12 items-center justify-center rounded-xl border-2 border-[#E3C19F]/80 px-3 text-center text-sm font-bold text-white"
                   >
-                    View Details
+                    {t("bulkBuy.viewDetails")}
                   </Link>
 
                   <button
@@ -265,9 +300,9 @@ export default function BulkBuy() {
                     onClick={(event) =>
                       addLot(listing, true, event.currentTarget)
                     }
-                    className="aisyah-primary-button border border-[#F7EDE2]/60 py-2.5"
+                    className="aisyah-secondary-button min-h-12"
                   >
-                    Buy Now
+                    {t("bulkBuy.buyNow")}
                   </button>
                 </div>
               </article>

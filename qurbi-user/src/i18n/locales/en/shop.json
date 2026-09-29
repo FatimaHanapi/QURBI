@@ -1,0 +1,88 @@
+{
+  "home": {
+    "headerTitle": "Browse Livestock",
+    "headerSubtitle": "Browse livestock, manage your cart and track your orders.",
+    "quickActionsTitle": "Quick Actions",
+    "swipe": "Swipe",
+    "quickActions": {
+      "browse": "Browse",
+      "bulkBuy": "Bulk Buy",
+      "cart": "Cart",
+      "orders": "Orders",
+      "profile": "Profile"
+    },
+    "categoriesTitle": "Categories",
+    "species": {
+      "cow": "Cow",
+      "goat": "Goat"
+    },
+    "highlightsAriaLabel": "Highlights",
+    "highlightsTitle": "Highlights",
+    "highlights": {
+      "findLivestock": {
+        "title": "Find Your Qurban Livestock",
+        "description": "Explore available cattle and goats from trusted farmers.",
+        "action": "Browse Livestock"
+      },
+      "bulkBuy": {
+        "title": "Buy Complete Bulk Lots",
+        "description": "Secure a full livestock lot with one simple purchase.",
+        "action": "Explore Bulk Buy"
+      },
+      "trackOrders": {
+        "title": "Follow Every Order Stage",
+        "description": "Review progress updates and track your active purchases.",
+        "action": "Track Orders"
+      }
+    },
+    "showHighlight": "Show highlight {{number}}: {{title}}"
+  },
+  "browse": {
+    "headerTitle": "Browse Livestock",
+    "searchPlaceholder": "Search name, tag, breed, farmer...",
+    "clearSearch": "Clear search",
+    "openFilters": "Open filters",
+    "allSpecies": "All",
+    "loadingLivestock": "Loading livestock...",
+    "resultsCount_one": "{{count}} result",
+    "resultsCount_other": "{{count}} results",
+    "noLivestockFound": "No livestock found.",
+    "clearFilters": "Clear filters",
+    "statusUnknown": "N/A",
+    "detailsUnavailable": "Livestock details unavailable",
+    "noLocation": "No location",
+    "error": {
+      "title": "Failed to load livestock",
+      "defaultMessage": "Failed to load livestock",
+      "retry": "Retry"
+    },
+    "livestockFallback": "Livestock",
+    "locationUnavailable": "Location unavailable",
+    "gradeUnavailable": "Grade N/A",
+    "male": "Male",
+    "female": "Female"
+  },
+  "filterDropdown": {
+    "allOption": "All {{title}}"
+  },
+  "filterSidebar": {
+    "title": "Filters & Sort",
+    "clear": "Clear",
+    "priceRangeLabel": "Price Range (RM)",
+    "minPlaceholder": "Min",
+    "maxPlaceholder": "Max",
+    "sortOptions": {
+      "newest": "Newest",
+      "price-asc": "Price: Low → High",
+      "price-desc": "Price: High → Low"
+    },
+    "filterLabels": {
+      "sortBy": "Sort By",
+      "breed": "Breed",
+      "gender": "Gender",
+      "age": "Age",
+      "status": "Status",
+      "location": "Location"
+    }
+  }
+}

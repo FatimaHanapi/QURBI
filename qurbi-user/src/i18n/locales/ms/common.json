@@ -1,0 +1,37 @@
+{
+  "appHeader": {
+    "login": "Log Masuk",
+    "signUp": "Daftar",
+    "goBack": "Kembali",
+    "openProfile": "Buka profil",
+    "notifications": "Buka notifikasi",
+    "notificationsUnread": "Buka notifikasi, {{count}} belum dibaca"
+  },
+  "bottomNav": {
+    "browse": "Lihat",
+    "bulkBuy": "Beli Pukal",
+    "home": "Utama",
+    "cart": "Troli",
+    "orders": "Pesanan"
+  },
+  "pageLoading": {
+    "loading": "Memuatkan...",
+    "pleaseWait": "Sila tunggu..."
+  },
+  "qurbiLoading": {
+    "loading": "Memuatkan…",
+    "loadingContent": "Memuatkan kandungan",
+    "loadingProducts": "Memuatkan produk",
+    "loadingLivestockDetails": "Memuatkan butiran ternakan"
+  },
+  "splashScreen": {
+    "tagline": "Sembelih lembu anda"
+  },
+  "pageNotFound": {
+    "title": "Halaman Tidak Ditemui",
+    "description": "Halaman \"{{pageName}}\" tidak dapat ditemui dalam aplikasi ini.",
+    "adminNoteTitle": "Nota Admin",
+    "adminNoteBody": "Ini mungkin bermakna AI belum melaksanakan halaman ini lagi. Minta ia melaksanakannya dalam sembang.",
+    "goHome": "Kembali ke Utama"
+  }
+}

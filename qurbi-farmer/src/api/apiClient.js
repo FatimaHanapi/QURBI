@@ -33,6 +33,9 @@ function writeToken(key, token) {
 export const getAccessToken = () => readToken(ACCESS_TOKEN_KEY);
 export const getRefreshToken = () => readToken(REFRESH_TOKEN_KEY);
 
+/**
+ * @param {{ accessToken?: string | null, refreshToken?: string | null }} [tokens]
+ */
 export function setSessionTokens({ accessToken, refreshToken } = {}) {
   writeToken(ACCESS_TOKEN_KEY, accessToken);
   writeToken(REFRESH_TOKEN_KEY, refreshToken);

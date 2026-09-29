@@ -1,0 +1,250 @@
+{
+  "language": {
+    "title": "Bahasa",
+    "subtitle": "Pilih bahasa pilihan anda untuk aplikasi ini",
+    "english": "English",
+    "malay": "Bahasa Melayu"
+  },
+  "profile": {
+    "pageTitle": "Profil",
+    "pageSubtitle": "Urus butiran anda",
+    "loading": "Memuatkan profil anda...",
+    "guestBuyer": "Pembeli Tetamu",
+    "noEmailSet": "Tiada e-mel ditetapkan",
+    "accountInfo": {
+      "title": "Maklumat Akaun",
+      "edit": "Sunting",
+      "name": "Nama",
+      "email": "E-mel",
+      "phone": "Telefon"
+    },
+    "editModal": {
+      "title": "Sunting Maklumat Peribadi",
+      "fullNamePlaceholder": "Nama Penuh",
+      "emailPlaceholder": "Alamat E-mel",
+      "phonePlaceholder": "Nombor Telefon",
+      "saving": "Menyimpan...",
+      "saved": "Disimpan!",
+      "saveChanges": "Simpan Perubahan",
+      "saveError": "Tidak dapat menyimpan butiran anda."
+    },
+    "addressBookCard": {
+      "title": "Buku Alamat",
+      "subtitle": "Urus alamat penghantaran"
+    },
+    "orderHistoryCard": {
+      "title": "Sejarah Pesanan",
+      "subtitle": "Lihat semua pesanan lepas"
+    },
+    "privacyPolicyCard": {
+      "title": "Dasar Privasi",
+      "subtitle": "Cara kami mengumpul dan menggunakan data anda"
+    },
+    "termsConditionsCard": {
+      "title": "Terma & Syarat",
+      "subtitle": "Peraturan untuk membeli di QURBI"
+    },
+    "customerSupportCard": {
+      "title": "Sokongan Pelanggan",
+      "subtitle": "Soalan Lazim dan hello@mycesgroup.com"
+    },
+    "authRequiredMessage": "Log masuk untuk melihat dan mengurus profil anda."
+  },
+  "addressBook": {
+    "pageTitle": "Buku Alamat",
+    "pageSubtitle": "Urus alamat penghantaran anda",
+    "loading": "Memuatkan buku alamat anda...",
+    "savedCount_one": "{{count}} alamat disimpan",
+    "savedCount_other": "{{count}} alamat disimpan",
+    "emptyTitle": "Belum ada alamat",
+    "emptySubtitle": "Tambah alamat penghantaran untuk digunakan semasa checkout",
+    "addNewAddress": "Tambah Alamat Baharu",
+    "form": {
+      "editTitle": "Sunting Alamat",
+      "addTitle": "Tambah Alamat Baharu",
+      "subtitle": "Isikan hubungan penghantaran & lokasi",
+      "addressLabel": "LABEL ALAMAT",
+      "labelPlaceholder": "cth. \"Rumah\", \"Pejabat\", \"Ladang\"",
+      "contactInfo": "MAKLUMAT HUBUNGAN",
+      "fullNamePlaceholder": "Nama Penuh *",
+      "emailPlaceholder": "Alamat E-mel",
+      "phonePlaceholder": "Telefon / WhatsApp",
+      "deliveryAddress": "ALAMAT PENGHANTARAN *",
+      "streetPlaceholder": "Jalan / Unit / Bangunan *",
+      "cityPlaceholder": "Bandar *",
+      "statePlaceholder": "Negeri",
+      "postcodePlaceholder": "Poskod",
+      "countryPlaceholder": "Negara",
+      "setDefault": "Tetapkan sebagai alamat lalai",
+      "setDefaultHint": "Dipilih secara automatik semasa checkout troli",
+      "cancel": "Batal",
+      "saveAddress": "Simpan Alamat",
+      "streetRequired": "Alamat jalan diperlukan.",
+      "cityRequired": "Bandar diperlukan.",
+      "nameRequired": "Nama diperlukan.",
+      "saving": "Menyimpan..."
+    },
+    "card": {
+      "noLabel": "Tiada label",
+      "default": "LALAI",
+      "selected": "DIPILIH",
+      "setDefault": "Tetapkan Lalai",
+      "selectedButton": "Dipilih",
+      "useThisAddress": "Guna Alamat Ini"
+    },
+    "saveError": "Maklumat hubungan tidak dapat disimpan.",
+    "signInPrompt": "Log masuk untuk mengurus alamat penghantaran yang disimpan.",
+    "signInMessage": "Log masuk untuk mengurus alamat penghantaran anda.",
+    "signIn": "Log Masuk",
+    "onboardingSubtitle": "Tambah alamat penghantaran anda atau langkau buat masa ini",
+    "skipForNow": "Langkau buat masa ini",
+    "deleteModal": {
+      "title": "Padam alamat?",
+      "messageLabeled": "Ini akan memadam alamat {{label}} anda secara kekal.",
+      "messageGeneric": "Ini akan memadam alamat ini secara kekal.",
+      "cancel": "Batal",
+      "delete": "Padam"
+    }
+  },
+  "privacyPolicy": {
+    "pageTitle": "Dasar Privasi",
+    "pageSubtitle": "Cara QURBI mengumpul, menggunakan dan melindungi data anda",
+    "intro": "Dasar ini menerangkan data peribadi apa yang dikumpul oleh QURBI apabila anda menggunakan aplikasi ini dan sebabnya.",
+    "sections": [
+      {
+        "title": "1. Maklumat yang kami kumpul",
+        "body": [
+          "Butiran akaun: nama, alamat e-mel, nombor telefon dan foto profil anda, yang diberikan semasa anda log masuk dengan Google.",
+          "Maklumat penghantaran: nama dan nombor telefon penerima, alamat penghantaran, dan sebarang nota penghantaran yang anda simpan dalam buku alamat anda.",
+          "Maklumat pesanan: item yang anda beli, status pesanan, dan kemas kini penjejakan penghantaran.",
+          "Maklumat penggunaan: aktiviti log masuk seperti log masuk pertama dan terkini anda, yang dijana secara automatik oleh aplikasi."
+        ]
+      },
+      {
+        "title": "2. Cara kami menggunakan maklumat anda",
+        "body": [
+          "Untuk mencipta dan melindungi akaun QURBI anda serta mengesahkan bahawa memang anda yang log masuk.",
+          "Untuk memproses pesanan anda dan memastikannya dihantar ke alamat yang betul.",
+          "Untuk menunjukkan status pesanan, kemas kini penjejakan dan pemberitahuan kepada anda.",
+          "Untuk membalas permintaan sokongan dan menyiasat pertikaian atau penipuan."
+        ]
+      },
+      {
+        "title": "3. Dengan siapa kami berkongsi",
+        "body": [
+          "Peladang yang melaksanakan pesanan anda hanya melihat apa yang diperlukan untuk penghantaran: nama penerima, nombor telefon dan alamat.",
+          "Google digunakan hanya untuk log masuk anda — kami tidak akan menyiarkan apa-apa ke akaun Google anda.",
+          "Pentadbir QURBI mungkin mengakses data akaun dan pesanan untuk mengurus platform dan menyelesaikan isu sokongan.",
+          "Kami tidak menjual data peribadi anda kepada pihak ketiga."
+        ]
+      },
+      {
+        "title": "4. Penyimpanan data",
+        "body": [
+          "Kami menyimpan akaun dan sejarah pesanan anda selagi akaun anda aktif, dan selagi diperlukan untuk memenuhi kewajipan undang-undang, cukai dan penyelesaian pertikaian."
+        ]
+      },
+      {
+        "title": "5. Hak anda",
+        "body": [
+          "Di bawah Akta Perlindungan Data Peribadi 2010 Malaysia, anda boleh meminta akses, pembetulan atau pemadaman data peribadi anda dengan menghubungi pasukan sokongan kami, tertakluk kepada kewajipan undang-undang kami untuk menyimpan rekod pesanan."
+        ]
+      },
+      {
+        "title": "6. Perubahan kepada dasar ini",
+        "body": [
+          "Kami mungkin mengemas kini Dasar Privasi ini dari semasa ke semasa. Penggunaan berterusan QURBI selepas kemas kini bermaksud anda menerima dasar yang disemak."
+        ]
+      }
+    ],
+    "contactQuestion": "Ada soalan tentang data anda? E-mel"
+  },
+  "termsConditions": {
+    "pageTitle": "Terma & Syarat",
+    "pageSubtitle": "Peraturan untuk membeli di QURBI",
+    "intro": "Dengan menggunakan QURBI, anda bersetuju dengan terma di bawah.",
+    "sections": [
+      {
+        "title": "1. Apa itu QURBI",
+        "body": [
+          "QURBI ialah pasaran dalam talian yang menghubungkan peladang yang disahkan dengan pembeli di Malaysia untuk pembelian ternakan, merangkumi pelayaran, pemesanan, penjejakan penghantaran dan pembayaran."
+        ]
+      },
+      {
+        "title": "2. Akaun anda",
+        "body": [
+          "Anda log masuk menggunakan Google. Anda bertanggungjawab untuk memastikan butiran akaun anda tepat dan bagi semua aktiviti di bawah akaun anda.",
+          "QURBI boleh menggantung atau menamatkan akaun yang melanggar terma ini, memberikan maklumat palsu, atau digunakan untuk penipuan."
+        ]
+      },
+      {
+        "title": "3. Pesanan dan harga",
+        "body": [
+          "Harga yang dipaparkan kepada pembeli termasuk yuran platform QURBI di atas harga yang disenaraikan oleh peladang.",
+          "Membuat pesanan adalah tawaran untuk membeli; pesanan disahkan sebaik sahaja pembayaran diterima.",
+          "Peladang bertanggungjawab terhadap ketepatan butiran penyenaraian (spesies, baka, umur, kesihatan dan ketersediaan)."
+        ]
+      },
+      {
+        "title": "4. Penghantaran",
+        "body": [
+          "Penghantaran dilaksanakan terus oleh peladang atau diselaraskan melalui QURBI, bergantung kepada kaedah penghantaran penjual.",
+          "Anda bertanggungjawab untuk memberikan alamat penghantaran yang tepat dan boleh dihubungi untuk menerima pesanan anda."
+        ]
+      },
+      {
+        "title": "5. Pembatalan dan bayaran balik",
+        "body": [
+          "Permintaan bayaran balik dan pembatalan disemak mengikut kes, dengan mengambil kira status pesanan dan peringkat penghantaran. Hubungi Sokongan Pelanggan untuk membuat permintaan."
+        ]
+      },
+      {
+        "title": "6. Pematuhan undang-undang",
+        "body": [
+          "Semua ternakan yang dijual di QURBI mesti mematuhi peraturan ternakan, kesihatan dan pergerakan Malaysia yang berkenaan. Peladang, bukan QURBI, bertanggungjawab memenuhi keperluan ini."
+        ]
+      },
+      {
+        "title": "7. Perubahan kepada terma ini",
+        "body": [
+          "QURBI boleh mengemas kini Terma & Syarat ini dari semasa ke semasa. Penggunaan berterusan aplikasi ini selepas perubahan bermaksud anda menerima terma yang dikemas kini."
+        ]
+      }
+    ],
+    "contactQuestion": "Ada soalan tentang terma ini? E-mel"
+  },
+  "customerSupport": {
+    "pageTitle": "Sokongan Pelanggan",
+    "pageSubtitle": "Kami sedia membantu",
+    "needAHand": "Perlukan bantuan?",
+    "needAHandSubtitle": "Semak Soalan Lazim di bawah atau e-mel terus kepada pasukan kami.",
+    "emailSupport": "E-mel Sokongan",
+    "faqTitle": "Soalan Lazim",
+    "faqs": [
+      {
+        "q": "Bagaimana saya boleh jejak pesanan saya?",
+        "a": "Pergi ke Profil > Sejarah Pesanan, atau Pesanan dari tab utama, dan buka pesanan untuk melihat kemas kini penjejakan penghantaran secara langsung."
+      },
+      {
+        "q": "Bagaimana harga pada penyenaraian dikira?",
+        "a": "Harga yang dipaparkan termasuk harga yang disenaraikan oleh peladang ditambah yuran platform QURBI, jadi tiada caj mengejutkan semasa checkout."
+      },
+      {
+        "q": "Adakah peladang di QURBI disahkan?",
+        "a": "Ya. Setiap peladang menjalani semakan pengesahan identiti dan ladang sebelum boleh menyenaraikan ternakan untuk dijual."
+      },
+      {
+        "q": "Bolehkah saya membatalkan atau mendapat bayaran balik untuk pesanan?",
+        "a": "Permintaan bayaran balik dan pembatalan disemak mengikut kes bergantung kepada status pesanan dan penghantaran. Hubungi kami menggunakan e-mel di bawah dan sertakan nombor pesanan anda."
+      },
+      {
+        "q": "Bagaimana saya kemas kini alamat penghantaran saya?",
+        "a": "Pergi ke Profil > Buku Alamat untuk menambah, menyunting atau menetapkan alamat penghantaran lalai."
+      },
+      {
+        "q": "Saya tidak menerima pemberitahuan tentang pesanan saya. Apa yang perlu saya lakukan?",
+        "a": "Semak Pemberitahuan melalui ikon loceng di bahagian atas aplikasi. Jika sesuatu masih kelihatan tidak kena, hubungi Sokongan Pelanggan dengan nombor pesanan anda."
+      }
+    ]
+  }
+}

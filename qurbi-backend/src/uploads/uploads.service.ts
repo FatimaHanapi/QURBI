@@ -15,7 +15,10 @@ type UploadCategory = 'image' | 'video' | 'document';
 
 // Extension is derived from the validated mimetype, never from the client's
 // original filename — see LocalDiskStorageService for why that matters.
-const ALLOWED_MIME_TYPES: Record<string, { category: UploadCategory; extension: string }> = {
+const ALLOWED_MIME_TYPES: Record<
+  string,
+  { category: UploadCategory; extension: string }
+> = {
   'image/jpeg': { category: 'image', extension: '.jpg' },
   'image/png': { category: 'image', extension: '.png' },
   'image/webp': { category: 'image', extension: '.webp' },
@@ -42,7 +45,8 @@ export const MAX_UPLOAD_BYTES = MAX_BYTES_BY_CATEGORY.video;
 export class UploadsService {
   constructor(
     private readonly storage: StorageService,
-    @InjectRepository(UploadedFile) private readonly uploadedFileRepository: Repository<UploadedFile>,
+    @InjectRepository(UploadedFile)
+    private readonly uploadedFileRepository: Repository<UploadedFile>,
   ) {}
 
   async upload(
@@ -56,7 +60,9 @@ export class UploadsService {
 
     const allowed = ALLOWED_MIME_TYPES[file.mimetype];
     if (!allowed) {
-      throw new UnsupportedMediaTypeException(`Unsupported file type: ${file.mimetype}`);
+      throw new UnsupportedMediaTypeException(
+        `Unsupported file type: ${file.mimetype}`,
+      );
     }
 
     const maxBytes = MAX_BYTES_BY_CATEGORY[allowed.category];
@@ -68,9 +74,16 @@ export class UploadsService {
 
     // Fail closed: anything other than the exact literal "public" is private,
     // including a missing/malformed/unexpected value.
-    const visibility = visibilityInput === 'public' ? UploadVisibility.PUBLIC : UploadVisibility.PRIVATE;
+    const visibility =
+      visibilityInput === 'public'
+        ? UploadVisibility.PUBLIC
+        : UploadVisibility.PRIVATE;
 
-    const stored = await this.storage.save(file.buffer, allowed.extension, visibility);
+    const stored = await this.storage.save(
+      file.buffer,
+      allowed.extension,
+      visibility,
+    );
     const record = await this.uploadedFileRepository.save(
       this.uploadedFileRepository.create({
         uploaderId,
@@ -81,7 +94,10 @@ export class UploadsService {
     );
 
     return {
-      fileUrl: visibility === UploadVisibility.PUBLIC ? stored.url : `/uploads/private/${record.id}`,
+      fileUrl:
+        visibility === UploadVisibility.PUBLIC
+          ? stored.url
+          : `/uploads/private/${record.id}`,
     };
   }
 
@@ -89,10 +105,17 @@ export class UploadsService {
   // admin, nobody else. Same principle as order ownership — 404 either way a
   // non-owner asks, so a stranger can't tell a private verification document
   // exists at all, let alone that it belongs to someone specific.
-  async getPrivateFileForViewer(id: string, viewer: AuthenticatedUser): Promise<UploadedFile> {
+  async getPrivateFileForViewer(
+    id: string,
+    viewer: AuthenticatedUser,
+  ): Promise<UploadedFile> {
     const file = await this.uploadedFileRepository.findOne({ where: { id } });
     const isOwner = file?.uploaderId === viewer.id;
-    if (!file || file.visibility !== UploadVisibility.PRIVATE || (!isOwner && viewer.role !== UserRole.ADMIN)) {
+    if (
+      !file ||
+      file.visibility !== UploadVisibility.PRIVATE ||
+      (!isOwner && viewer.role !== UserRole.ADMIN)
+    ) {
       throw new NotFoundException('File not found');
     }
     return file;

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { uploadApi } from "@/api/apiClient";
 import { Image } from "@/components/ui/image";
-import { Upload, X, Loader2, FileCheck2 } from "lucide-react";
+import { Upload, X, Loader2, FileCheck2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MAX_DIMENSION = 1280;
@@ -33,6 +33,9 @@ async function compressFile(file) {
   }
 }
 
+/**
+ * @param {{ label: React.ReactNode, value?: string, onChange: (url: string) => void, hint?: React.ReactNode, required?: boolean, capture?: boolean | "user" | "environment", aspectClassName?: string, fittingType?: string, uploadLabel?: string, replaceLabel?: string, error?: React.ReactNode, id?: string }} props
+ */
 export default function DocUploader({
   label,
   value,
@@ -44,6 +47,8 @@ export default function DocUploader({
   fittingType = "fit",
   uploadLabel = "Tap to upload",
   replaceLabel = "Replace",
+  error: externalError,
+  id,
 }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -102,10 +107,11 @@ export default function DocUploader({
   };
 
   return (
-    <div>
-      <p className="text-sm font-semibold text-foreground mb-1.5">{label}{required && <span className="text-destructive" aria-hidden="true"> *</span>}</p>
-      {hint && <p className="text-xs text-muted-foreground mb-2">{hint}</p>}
-      {error && <p className="text-xs text-destructive mb-2">{error}</p>}
+    <div id={id ? `field-${id}` : undefined} className="scroll-mt-24">
+      <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">{label}{required && <span className="text-destructive" aria-hidden="true">*</span>}{value && <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-label="Uploaded" />}</p>
+      {hint && <p className="text-sm text-muted-foreground mb-2">{hint}</p>}
+      {error && <p role="alert" className="text-sm text-destructive mb-2">{error}</p>}
+      {!error && externalError && !value && <p role="alert" className="text-sm font-medium text-destructive mb-2">{externalError}</p>}
       <input
         ref={inputRef}
         type="file"
@@ -126,14 +132,15 @@ export default function DocUploader({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="absolute bottom-2 left-2 px-3 py-1.5 rounded-full bg-black/60 text-white text-xs font-semibold flex items-center gap-1.5"
+            className="absolute bottom-2 left-2 min-h-10 px-3.5 py-2 rounded-full bg-black/65 text-white text-sm font-semibold flex items-center gap-1.5"
           >
-            <FileCheck2 className="w-3.5 h-3.5" /> {replaceLabel}
+            <FileCheck2 className="w-4 h-4" /> {replaceLabel}
           </button>
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center"
+            aria-label="Remove this photo"
+            className="absolute top-2 right-2 w-10 h-10 rounded-full bg-black/65 text-white flex items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>
@@ -144,7 +151,8 @@ export default function DocUploader({
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
           className={cn(
-            "w-full rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors",
+            "w-full rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 bg-card text-muted-foreground hover:border-primary hover:text-primary transition-colors",
+            externalError ? "border-destructive/60" : "border-border",
             aspectClassName,
             uploading && "opacity-70"
           )}
@@ -154,7 +162,7 @@ export default function DocUploader({
           ) : (
             <Upload className="w-6 h-6" />
           )}
-          <span className="text-xs font-medium">{uploading ? "Uploading..." : uploadLabel}</span>
+          <span className="text-sm font-semibold">{uploading ? "Uploading..." : uploadLabel}</span>
         </button>
       )}
     </div>

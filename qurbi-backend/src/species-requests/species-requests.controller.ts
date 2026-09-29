@@ -1,24 +1,44 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { RequestStatus, UserRole } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
-import { SpeciesRequestsQuery, SpeciesRequestsService } from './species-requests.service';
+import {
+  SpeciesRequestsQuery,
+  SpeciesRequestsService,
+} from './species-requests.service';
 import { CreateSpeciesRequestDto } from './dto/create-species-request.dto';
 import { ReviewSpeciesRequestDto } from './dto/review-species-request.dto';
 import { toPageInt } from '../common/pagination';
 
 @Controller('species-requests')
 export class SpeciesRequestsController {
-  constructor(private readonly speciesRequestsService: SpeciesRequestsService) {}
+  constructor(
+    private readonly speciesRequestsService: SpeciesRequestsService,
+  ) {}
 
   // No requestedByUserId — the requester is always @CurrentUser().
   @Roles(UserRole.FARMER)
   @UseGuards(RolesGuard)
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateSpeciesRequestDto) {
-    return this.speciesRequestsService.create({ ...body, requestedByUserId: user.id });
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: CreateSpeciesRequestDto,
+  ) {
+    return this.speciesRequestsService.create({
+      ...body,
+      requestedByUserId: user.id,
+    });
   }
 
   @Get()
@@ -52,6 +72,9 @@ export class SpeciesRequestsController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: ReviewSpeciesRequestDto,
   ) {
-    return this.speciesRequestsService.review(id, { ...body, reviewerId: user.id });
+    return this.speciesRequestsService.review(id, {
+      ...body,
+      reviewerId: user.id,
+    });
   }
 }

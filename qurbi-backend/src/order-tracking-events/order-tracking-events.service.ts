@@ -14,12 +14,16 @@ export class OrderTrackingEventsService {
   ) {}
 
   findAllForOrder(orderId: string): Promise<OrderTrackingEvent[]> {
-    return this.repository.find({ where: { orderId }, order: { createdAt: 'ASC' } });
+    return this.repository.find({
+      where: { orderId },
+      order: { createdAt: 'ASC' },
+    });
   }
 
   async findOne(id: string): Promise<OrderTrackingEvent> {
     const event = await this.repository.findOne({ where: { id } });
-    if (!event) throw new NotFoundException(`OrderTrackingEvent ${id} not found`);
+    if (!event)
+      throw new NotFoundException(`OrderTrackingEvent ${id} not found`);
     return event;
   }
 }

@@ -1,0 +1,138 @@
+{
+  "labels": {
+    "gender": {
+      "male": "Jantan",
+      "female": "Betina"
+    },
+    "status": {
+      "available": "Tersedia",
+      "open": "Dibuka untuk jualan",
+      "reserved": "Ditempah",
+      "sold": "Terjual",
+      "closed": "Ditutup",
+      "draft": "Draf",
+      "expired": "Tamat tempoh",
+      "unavailable": "Tidak tersedia",
+      "pending": "Menunggu"
+    },
+    "ageMonths_one": "{{count}} bulan",
+    "ageMonths_other": "{{count}} bulan"
+  },
+  "common": {
+    "retry": "Cuba lagi"
+  },
+  "nav": {
+    "label": "Navigasi utama",
+    "cartWithCount_one": "Troli, {{count}} item",
+    "cartWithCount_other": "Troli, {{count}} item"
+  },
+  "card": {
+    "openAria": "{{title}}, {{price}}. Lihat butiran",
+    "featured": "Pilihan",
+    "grade": "Gred {{grade}}"
+  },
+  "home": {
+    "searchLabel": "Cari ternakan",
+    "searchPlaceholder": "Cari lembu, kambing, baka, penternak…",
+    "searchButton": "Cari",
+    "featuredTitle": "Ternakan pilihan & terbaharu",
+    "featuredSubtitle": "Pilihan kami dan yang baru disenaraikan oleh penternak",
+    "seeAll": "Lihat semua",
+    "featuredError": "Kami tidak dapat memuatkan ternakan sekarang.",
+    "featuredEmpty": "Tiada ternakan disenaraikan buat masa ini. Sila semak semula nanti, atau lihat lot pukal lengkap.",
+    "featuredEmptyAction": "Lihat lot pukal",
+    "addresses": "Alamat",
+    "hints": {
+      "browse": "Lembu & kambing",
+      "browseCount_one": "{{count}} ekor tersedia",
+      "browseCount_other": "{{count}} ekor tersedia",
+      "bulkBuy": "Lot lengkap",
+      "cart": "Troli anda kosong",
+      "cartCount_one": "{{count}} item menunggu",
+      "cartCount_other": "{{count}} item menunggu",
+      "orders": "Jejak & resit",
+      "profile": "Akaun & bahasa",
+      "addresses": "Alamat penghantaran"
+    }
+  },
+  "browse": {
+    "searchLabel": "Cari ternakan",
+    "emptyWithFilters": "Cuba carian lain atau buang beberapa penapis.",
+    "emptyNoListings": "Tiada ternakan disenaraikan buat masa ini. Lot pukal mungkin masih tersedia.",
+    "tryBulkBuy": "Lihat lot pukal"
+  },
+  "filters": {
+    "close": "Tutup penapis",
+    "minPrice": "Harga minimum (RM)",
+    "maxPrice": "Harga maksimum (RM)",
+    "showResults_one": "Tunjuk {{count}} hasil",
+    "showResults_other": "Tunjuk {{count}} hasil",
+    "done": "Selesai"
+  },
+  "bulk": {
+    "searchLabel": "Cari lot pukal",
+    "openAria": "{{title}}, {{price}}. Lihat butiran",
+    "breedTotal": "{{breed}}: {{total}} ekor",
+    "breedSplit": "{{breed}}: {{male}} jantan, {{female}} betina",
+    "clearSearch": "Kosongkan carian",
+    "browseSingle": "Layari ternakan satu per satu"
+  },
+  "detail": {
+    "grade": "Gred",
+    "price": "Harga",
+    "lotPrice": "Harga lot",
+    "add": "Tambah",
+    "listedIn": "Lokasi ternakan",
+    "lotLocation": "Lokasi lot",
+    "listedInState": "Berada di {{state}}",
+    "farm": "Ladang",
+    "farmer": "Penternak",
+    "farmAddress": "Alamat ladang",
+    "farmAndLocation": "Ladang & lokasi",
+    "enlargePhoto": "Besarkan gambar",
+    "showPhoto": "Tunjuk gambar {{number}} daripada {{total}}",
+    "actionsLabel": "Beli senarai ini",
+    "addToCartAria": "Tambah {{title}} ke troli",
+    "inCartViewAria": "Sudah ada dalam troli anda. Lihat troli",
+    "bulkEyebrow_one": "Lot pukal · {{count}} ekor",
+    "bulkEyebrow_other": "Lot pukal · {{count}} ekor",
+    "aboutLot": "Tentang lot ini"
+  },
+  "cart": {
+    "emptyHint": "Tambah ternakan atau lot pukal dan ia akan disimpan di sini sehingga anda bersedia untuk membayar.",
+    "browseBulk": "Layari lot pukal",
+    "removeSelected": "Buang item yang dipilih",
+    "removeShort": "Buang",
+    "selectItemAria": "Pilih {{name}} untuk bayaran",
+    "continueToPayment": "Bayar",
+    "checkoutBarLabel": "Bayaran"
+  },
+  "payment": {
+    "title": "Pembayaran",
+    "itemsSummary_one": "{{count}} item · {{amount}}",
+    "itemsSummary_other": "{{count}} item · {{amount}}",
+    "deliveryAddress": "Alamat penghantaran",
+    "chooseAddress": "Pilih",
+    "orderItemsCount_one": "Item pesanan ({{count}})",
+    "orderItemsCount_other": "Item pesanan ({{count}})",
+    "headCount_one": "{{count}} ekor",
+    "headCount_other": "{{count}} ekor",
+    "deliveryFee_one": "Caj penghantaran ({{count}} penternak × {{fee}})",
+    "deliveryFee_other": "Caj penghantaran ({{count}} penternak × {{fee}})",
+    "total": "Jumlah",
+    "payAmount": "Bayar {{amount}}",
+    "payBarLabel": "Bayar pesanan ini",
+    "emptyHint": "Pilih item yang ingin anda bayar dalam troli terlebih dahulu."
+  },
+  "address": {
+    "selected": "Dipilih"
+  },
+  "paymentError": {
+    "eyebrow": "Makluman bayaran",
+    "closeAria": "Tutup mesej bayaran",
+    "reservedNote": "Ternakan anda kekal ditempah sehingga 24 jam. Anda boleh cuba membayar semula daripada Pesanan Saya.",
+    "myOrders": "Pesanan Saya",
+    "tryAgain": "Cuba Lagi",
+    "okay": "Baik"
+  }
+}

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 
-export default function ImageLightbox({ image, alt = "Image preview", onClose }) {
+export default function ImageLightbox({ image, alt, onClose }) {
+  const { t } = useTranslation("listings");
+  const resolvedAlt = alt || t("imageLightbox.imagePreview");
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -31,7 +34,7 @@ export default function ImageLightbox({ image, alt = "Image preview", onClose })
       className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-label="Image preview"
+      aria-label={t("imageLightbox.imagePreview")}
       onClick={onClose}
     >
       <div
@@ -40,7 +43,7 @@ export default function ImageLightbox({ image, alt = "Image preview", onClose })
       >
         <button
           type="button"
-          aria-label="Close image preview"
+          aria-label={t("imageLightbox.closePreview")}
           onClick={onClose}
           className="absolute right-0 top-0 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-lg active:scale-95"
         >
@@ -48,12 +51,12 @@ export default function ImageLightbox({ image, alt = "Image preview", onClose })
         </button>
         {failed ? (
           <div className="rounded-2xl bg-white px-6 py-5 text-center text-sm font-medium text-gray-500">
-            This image could not be loaded.
+            {t("imageLightbox.loadError")}
           </div>
         ) : (
           <img
             src={image}
-            alt={alt}
+            alt={resolvedAlt}
             onError={() => setFailed(true)}
             className="max-h-[calc(100dvh-3rem)] max-w-full rounded-2xl object-contain shadow-2xl"
           />

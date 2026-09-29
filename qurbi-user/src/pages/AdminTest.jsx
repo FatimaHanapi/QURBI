@@ -1,12 +1,15 @@
+import { formatRM } from "@/lib/format";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FlaskConical, Package } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { qurbiApi } from "@/api/qurbiClient";
 import { useAuth } from "@/lib/AuthContext";
 import AppHeader from "@/components/AppHeader";
 import { QurbiPageLoader } from "@/components/QurbiLoading";
 
 export default function AdminTest() {
+  const { t } = useTranslation("admin");
   const { user, authChecked } = useAuth();
   const navigate = useNavigate();
   const [livestock, setLivestock] = useState([]);
@@ -28,7 +31,7 @@ export default function AdminTest() {
         if (active) setLivestock(response.data?.livestock || []);
       })
       .catch(() => {
-        if (active) setError("Unable to load available livestock.");
+        if (active) setError(t("adminTest.loadError"));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -48,13 +51,13 @@ export default function AdminTest() {
         livestockId: item.id,
       });
       const orderId = response.data?.order?.id;
-      if (!orderId) throw new Error("The test order was not created.");
+      if (!orderId) throw new Error(t("adminTest.orderNotCreated"));
       navigate(`/orders/${encodeURIComponent(orderId)}`);
     } catch (requestError) {
       setError(
         requestError.data?.error ||
           requestError.message ||
-          "Unable to create the test order.",
+          t("adminTest.createError"),
       );
     } finally {
       setCreatingId("");
@@ -62,42 +65,42 @@ export default function AdminTest() {
   };
 
   if (!authChecked || loading) {
-    return <QurbiPageLoader label="Preparing the shipping test…" />;
+    return <QurbiPageLoader label={t("adminTest.preparing")} />;
   }
 
   if (user?.role !== "admin") {
     return (
-      <main className="qurbi-page flex min-h-screen flex-col items-center justify-center gap-3 p-8 text-center">
+      <main className="aisyah-page flex min-h-screen flex-col items-center justify-center gap-3 p-8 text-center">
         <Package className="h-12 w-12 text-[#41362D]/25" />
         <p className="font-semibold text-[#41362D]/65">
-          Administrator access is required.
+          {t("adminTest.adminRequired")}
         </p>
         <Link to="/" className="font-bold text-[#6B594A]">
-          Back to Home
+          {t("adminTest.backToHome")}
         </Link>
       </main>
     );
   }
 
   return (
-    <div className="qurbi-page min-h-screen pb-12">
+    <div className="aisyah-page min-h-screen pb-12">
       <AppHeader
-        title="Shipping Flow Test"
-        subtitle="Create an admin-only To Ship order without opening Stripe."
+        title={t("adminTest.title")}
+        subtitle={t("adminTest.subtitle")}
         backTo="/"
       />
-      <main className="qurbi-content">
+      <main className="aisyah-content">
         <section className="rounded-3xl border border-[#41362D]/20 bg-white/55 p-4 shadow-sm">
           <div className="flex items-start gap-3">
             <span className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white">
               <FlaskConical className="h-5 w-5" />
             </span>
             <div>
-              <h2 className="font-bold text-[#41362D]">Payment bypass</h2>
+              <h2 className="font-bold text-[#41362D]">
+                {t("adminTest.paymentBypassTitle")}
+              </h2>
               <p className="mt-1 text-xs leading-5 text-[#41362D]/65">
-                Available only on this admin test page. The resulting order
-                starts in To Ship; normal cart, checkout and Stripe flows are
-                unchanged.
+                {t("adminTest.paymentBypassDescription")}
               </p>
             </div>
           </div>
@@ -111,7 +114,7 @@ export default function AdminTest() {
 
         {livestock.length === 0 ? (
           <p className="py-12 text-center text-sm text-[#41362D]/55">
-            No available livestock for a test order.
+            {t("adminTest.noLivestock")}
           </p>
         ) : (
           <div className="space-y-3">
@@ -133,13 +136,10 @@ export default function AdminTest() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-[#41362D]">
-                      {item.breed || item.animal || "Livestock"}
+                      {item.breed || item.animal || t("adminTest.livestockFallback")}
                     </p>
                     <p className="mt-1 text-xs text-[#41362D]/55">
-                      RM{" "}
-                      {Number(
-                        item.price_per_head || item.price || 0,
-                      ).toLocaleString("en-MY")}
+                      {formatRM(item.price_per_head || item.price || 0)}
                     </p>
                   </div>
                   <button
@@ -148,7 +148,9 @@ export default function AdminTest() {
                     disabled={Boolean(creatingId)}
                     className="min-h-11 rounded-xl bg-gradient-to-br from-[#41362D] to-[#6B594A] px-3 text-xs font-bold text-white disabled:opacity-50"
                   >
-                    {creatingId === item.id ? "Creating…" : "Test To Ship"}
+                    {creatingId === item.id
+                      ? t("adminTest.creating")
+                      : t("adminTest.testToShip")}
                   </button>
                 </article>
               );

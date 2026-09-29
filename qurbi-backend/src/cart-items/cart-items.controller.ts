@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CartItemsService } from './cart-items.service';
 import { UserRole } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -21,7 +30,10 @@ export class CartItemsController {
   }
 
   @Post()
-  addItem(@CurrentUser() user: AuthenticatedUser, @Body() body: AddCartItemDto) {
+  addItem(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: AddCartItemDto,
+  ) {
     return this.cartItemsService.addItem({ ...body, userId: user.id });
   }
 

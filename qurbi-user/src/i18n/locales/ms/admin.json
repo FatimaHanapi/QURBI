@@ -1,0 +1,69 @@
+{
+  "adminBreeds": {
+    "title": "Pengurusan Baka",
+    "subtitle": "{{count}} baka jumlah keseluruhan",
+    "manageSubtitle": "Urus baka pasaran",
+    "add": "Tambah",
+    "filterAll": "Semua",
+    "noBreedsFound": "Tiada baka dijumpai.",
+    "confirmDelete": "Padam \"{{name}}\"?",
+    "form": {
+      "editTitle": "Sunting Baka",
+      "addTitle": "Tambah Baka Baharu",
+      "nameLabel": "Nama *",
+      "namePlaceholder": "cth. Brahman",
+      "categoryLabel": "Kategori *",
+      "categoryPlaceholder": "Pilih kategori...",
+      "originLabel": "Asal",
+      "originPlaceholder": "cth. India",
+      "imageUrlLabel": "URL Imej",
+      "ageRangeLabel": "Julat Umur",
+      "ageRangePlaceholder": "cth. 2-3 tahun",
+      "genderLabel": "Jantina",
+      "genderMale": "Jantan",
+      "genderFemale": "Betina",
+      "genderMixed": "Campuran",
+      "priceByGradeLabel": "Harga Seekor mengikut Gred (RM)",
+      "gradeLabel": "Gred {{grade}}",
+      "activeLabel": "Aktif (kelihatan di pasaran)",
+      "saving": "Menyimpan...",
+      "save": "Simpan"
+    },
+    "row": {
+      "hidden": "TERSEMBUNYI"
+    },
+    "loading": "Memuatkan pengurusan baka…",
+    "adminRequired": "Akses pentadbir diperlukan.",
+    "backToHome": "Kembali ke Laman Utama"
+  },
+  "adminTest": {
+    "loadError": "Tidak dapat memuatkan ternakan yang tersedia.",
+    "orderNotCreated": "Pesanan ujian tidak berjaya dibuat.",
+    "createError": "Tidak dapat mencipta pesanan ujian.",
+    "preparing": "Menyediakan ujian penghantaran…",
+    "adminRequired": "Akses pentadbir diperlukan.",
+    "backToHome": "Kembali ke Utama",
+    "title": "Ujian Aliran Penghantaran",
+    "subtitle": "Cipta pesanan Untuk Dihantar khas admin tanpa membuka Stripe.",
+    "paymentBypassTitle": "Pintasan pembayaran",
+    "paymentBypassDescription": "Hanya tersedia pada halaman ujian admin ini. Pesanan yang terhasil bermula pada status Untuk Dihantar; troli, checkout dan aliran Stripe biasa tidak terjejas.",
+    "noLivestock": "Tiada ternakan tersedia untuk pesanan ujian.",
+    "livestockFallback": "Ternakan",
+    "creating": "Mencipta…",
+    "testToShip": "Uji Untuk Dihantar"
+  },
+  "adminTestOrders": {
+    "loadError": "Tidak dapat memuatkan ternakan yang tersedia.",
+    "createError": "Tidak dapat mencipta pesanan ujian.",
+    "preparing": "Menyediakan pesanan ujian…",
+    "adminRequired": "Akses pentadbir diperlukan.",
+    "backToHome": "Kembali ke Utama",
+    "title": "Cipta Pesanan Ujian",
+    "subtitle": "Tiada pembayaran — bermula pada status Untuk Dihantar",
+    "restrictedNotice": "Ini terhad kepada pentadbir dan hanya bertujuan untuk menguji penjejakan pesanan. Ia tidak mengenakan sebarang bayaran atau mengubah ketersediaan ternakan yang dipilih.",
+    "noLivestock": "Tiada ternakan tersedia.",
+    "livestockFallback": "Ternakan",
+    "creating": "Mencipta...",
+    "useForTest": "Guna untuk ujian"
+  }
+}

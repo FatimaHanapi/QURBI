@@ -7,7 +7,11 @@ import { CartItemsService } from './cart-items.service';
 import { ReservationsModule } from '../reservations/reservations.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CartItem]), CartsModule, ReservationsModule],
+  imports: [
+    TypeOrmModule.forFeature([CartItem]),
+    CartsModule,
+    ReservationsModule,
+  ],
   controllers: [CartItemsController],
   providers: [CartItemsService],
   exports: [CartItemsService],

@@ -1,0 +1,138 @@
+{
+  "labels": {
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "status": {
+      "available": "Available",
+      "open": "Open for sale",
+      "reserved": "Reserved",
+      "sold": "Sold",
+      "closed": "Closed",
+      "draft": "Draft",
+      "expired": "Expired",
+      "unavailable": "Unavailable",
+      "pending": "Pending"
+    },
+    "ageMonths_one": "{{count}} month",
+    "ageMonths_other": "{{count}} months"
+  },
+  "common": {
+    "retry": "Try again"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "cartWithCount_one": "Cart, {{count}} item",
+    "cartWithCount_other": "Cart, {{count}} items"
+  },
+  "card": {
+    "openAria": "{{title}}, {{price}}. View details",
+    "featured": "Featured",
+    "grade": "Grade {{grade}}"
+  },
+  "home": {
+    "searchLabel": "Search livestock",
+    "searchPlaceholder": "Search cattle, goats, breed, farmer…",
+    "searchButton": "Search",
+    "featuredTitle": "Featured & new livestock",
+    "featuredSubtitle": "Hand-picked and just listed by farmers",
+    "seeAll": "See all",
+    "featuredError": "We couldn't load livestock right now.",
+    "featuredEmpty": "No livestock is listed right now. Check back soon, or look at complete bulk lots.",
+    "featuredEmptyAction": "View bulk lots",
+    "addresses": "Addresses",
+    "hints": {
+      "browse": "Cattle & goats",
+      "browseCount_one": "{{count}} animal available",
+      "browseCount_other": "{{count}} animals available",
+      "bulkBuy": "Complete lots",
+      "cart": "Your cart is empty",
+      "cartCount_one": "{{count}} item waiting",
+      "cartCount_other": "{{count}} items waiting",
+      "orders": "Track & receipts",
+      "profile": "Account & language",
+      "addresses": "Delivery addresses"
+    }
+  },
+  "browse": {
+    "searchLabel": "Search livestock",
+    "emptyWithFilters": "Try a different search or remove some filters.",
+    "emptyNoListings": "No animals are listed at the moment. Bulk lots may still be available.",
+    "tryBulkBuy": "View bulk lots"
+  },
+  "filters": {
+    "close": "Close filters",
+    "minPrice": "Minimum price (RM)",
+    "maxPrice": "Maximum price (RM)",
+    "showResults_one": "Show {{count}} result",
+    "showResults_other": "Show {{count}} results",
+    "done": "Done"
+  },
+  "bulk": {
+    "searchLabel": "Search bulk lots",
+    "openAria": "{{title}}, {{price}}. View details",
+    "breedTotal": "{{breed}}: {{total}} total",
+    "breedSplit": "{{breed}}: {{male}} male, {{female}} female",
+    "clearSearch": "Clear search",
+    "browseSingle": "Browse single animals"
+  },
+  "detail": {
+    "grade": "Grade",
+    "price": "Price",
+    "lotPrice": "Lot price",
+    "add": "Add",
+    "listedIn": "Livestock location",
+    "lotLocation": "Lot location",
+    "listedInState": "Located in {{state}}",
+    "farm": "Farm",
+    "farmer": "Farmer",
+    "farmAddress": "Farm address",
+    "farmAndLocation": "Farm & location",
+    "enlargePhoto": "Enlarge photo",
+    "showPhoto": "Show photo {{number}} of {{total}}",
+    "actionsLabel": "Buy this listing",
+    "addToCartAria": "Add {{title}} to cart",
+    "inCartViewAria": "Already in your cart. View cart",
+    "bulkEyebrow_one": "Bulk lot · {{count}} animal",
+    "bulkEyebrow_other": "Bulk lot · {{count}} animals",
+    "aboutLot": "About this lot"
+  },
+  "cart": {
+    "emptyHint": "Add an animal or a bulk lot and it will wait here until you are ready to pay.",
+    "browseBulk": "Browse bulk lots",
+    "removeSelected": "Remove selected items",
+    "removeShort": "Remove",
+    "selectItemAria": "Select {{name}} for payment",
+    "continueToPayment": "Checkout",
+    "checkoutBarLabel": "Checkout"
+  },
+  "payment": {
+    "title": "Checkout",
+    "itemsSummary_one": "{{count}} item · {{amount}}",
+    "itemsSummary_other": "{{count}} items · {{amount}}",
+    "deliveryAddress": "Delivery address",
+    "chooseAddress": "Choose",
+    "orderItemsCount_one": "Order items ({{count}})",
+    "orderItemsCount_other": "Order items ({{count}})",
+    "headCount_one": "{{count}} head",
+    "headCount_other": "{{count}} head",
+    "deliveryFee_one": "Delivery fee ({{count}} farmer × {{fee}})",
+    "deliveryFee_other": "Delivery fee ({{count}} farmers × {{fee}})",
+    "total": "Total",
+    "payAmount": "Pay {{amount}}",
+    "payBarLabel": "Pay for this order",
+    "emptyHint": "Choose the items you want to pay for in your cart first."
+  },
+  "address": {
+    "selected": "Selected"
+  },
+  "paymentError": {
+    "eyebrow": "Payment update",
+    "closeAria": "Close payment message",
+    "reservedNote": "Your livestock remains reserved for up to 24 hours. You can try payment again from My Orders.",
+    "myOrders": "My Orders",
+    "tryAgain": "Try Again",
+    "okay": "Okay"
+  }
+}

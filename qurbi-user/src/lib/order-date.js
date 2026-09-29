@@ -15,11 +15,18 @@ const validDate = (value) => {
   const date = parseBase44Timestamp(value);
   return Number.isNaN(date.getTime()) ? null : date;
 };
+/** @typedef {{ year: string, month: string, day: string }} DateParts */
+
+/**
+ * @param {unknown} value
+ * @returns {DateParts | null}
+ */
 const parts = (value) => {
   const date = validDate(value);
   if (!date) return null;
-  return new Intl.DateTimeFormat("en-CA", { timeZone: ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date).reduce((out, part) => ({ ...out, [part.type]: part.value }), {});
+  return new Intl.DateTimeFormat("en-CA", { timeZone: ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date).reduce((out, part) => ({ ...out, [part.type]: part.value }), /** @type {DateParts} */ ({}));
 };
+/** @param {DateParts} dateParts */
 const dateKey = ({ year, month, day }) => `${year}-${month}-${day}`;
 
 export const orderDateKey = (createdDate) => {

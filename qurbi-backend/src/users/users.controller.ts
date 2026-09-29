@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { UserRole, UserStatus } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -36,7 +46,12 @@ export class UsersController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const query: AdminUsersQuery = { role, status, page: toPageInt(page), limit: toPageInt(limit) };
+    const query: AdminUsersQuery = {
+      role,
+      status,
+      page: toPageInt(page),
+      limit: toPageInt(limit),
+    };
     return this.usersService.findAllForAdmin(query);
   }
 
@@ -56,7 +71,11 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser, @Body() body: UpdateUserDto) {
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: UpdateUserDto,
+  ) {
     return this.usersService.updateOwned(id, user, body);
   }
 

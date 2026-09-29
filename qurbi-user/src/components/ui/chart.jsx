@@ -22,7 +22,12 @@ function useChart() {
   return context
 }
 
-const ChartContainer = React.forwardRef(({ id, className, children, config, ...props }, ref) => {
+const ChartContainer = React.forwardRef(
+  /**
+   * @param {React.ComponentPropsWithoutRef<typeof ChartContext.Provider> & { config?: any }} props
+   * @param {React.ForwardedRef<React.ElementRef<typeof ChartContext.Provider>>} ref
+   */
+  ({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
 
@@ -79,7 +84,12 @@ return color ? `  --color-${key}: ${color};` : null
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
-const ChartTooltipContent = React.forwardRef((
+const ChartTooltipContent = React.forwardRef(
+  /**
+   * @param {React.ComponentPropsWithoutRef<"div"> & { active?: any, payload?: any, indicator?: any, hideLabel?: any, hideIndicator?: any, label?: any, labelFormatter?: any, labelClassName?: any, formatter?: any, color?: any, nameKey?: any, labelKey?: any }} props
+   * @param {React.ForwardedRef<React.ElementRef<"div">>} ref
+   */
+  (
   {
     active,
     payload,
@@ -216,7 +226,12 @@ ChartTooltipContent.displayName = "ChartTooltip"
 
 const ChartLegend = RechartsPrimitive.Legend
 
-const ChartLegendContent = React.forwardRef((
+const ChartLegendContent = React.forwardRef(
+  /**
+   * @param {React.ComponentPropsWithoutRef<"div"> & { hideIcon?: any, payload?: any, verticalAlign?: any, nameKey?: any }} props
+   * @param {React.ForwardedRef<React.ElementRef<"div">>} ref
+   */
+  (
   { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
   ref
 ) => {

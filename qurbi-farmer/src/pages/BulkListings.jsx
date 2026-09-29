@@ -6,12 +6,12 @@ import { Loader2, PackageOpen, Pencil, Plus, Trash2, Users } from "lucide-react"
 import ConfirmDialog from "@/components/agri/ConfirmDialog";
 import EmptyState from "@/components/agri/EmptyState";
 import StatusBadge from "@/components/agri/StatusBadge";
+import { useToast } from "@/components/ui/use-toast";
 import { formatMYR } from "@/lib/agri";
-
-const STATUS_TONE = { Available: "success", Paused: "warning", Sold: "muted" };
 
 export default function BulkListings() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toDelete, setToDelete] = useState(null);
@@ -29,9 +29,10 @@ export default function BulkListings() {
     try {
       await qurbi.entities.BulkListing.delete(toDelete.id);
       setItems((current) => current.filter((item) => item.id !== toDelete.id));
+      toast({ title: "Bulk listing deleted" });
       setToDelete(null);
     } catch (error) {
-      alert(error.message || "Bulk listing could not be deleted.");
+      toast({ title: "Couldn't delete the bulk listing", description: error.message || "Please try again.", variant: "destructive" });
     } finally {
       setDeleting(false);
     }
@@ -40,8 +41,8 @@ export default function BulkListings() {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center justify-between gap-4">
-        <div><h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">Bulk Sell</h1><p className="mt-1 text-sm text-muted-foreground">Manage grouped livestock listings and total prices.</p></div>
-        <button onClick={() => navigate("/bulk/add")} aria-label="Create bulk listing" className="brand-gradient flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-primary-foreground shadow-[0_4px_12px_rgba(65,54,45,0.18)]"><Plus className="h-6 w-6" /></button>
+        <div className="min-w-0"><h1 className="text-2xl font-extrabold tracking-tight lg:text-3xl">Bulk Sell</h1><p className="mt-1 text-sm text-muted-foreground">Sell a group of animals for one total price.</p></div>
+        <button type="button" onClick={() => navigate("/bulk/add")} aria-label="Create bulk listing" className="brand-gradient flex h-12 shrink-0 items-center gap-1.5 rounded-2xl px-4 text-sm font-bold text-primary-foreground shadow-[0_4px_12px_rgba(65,54,45,0.18)]"><Plus className="h-5 w-5" /> Add</button>
       </div>
 
       <div className="mt-5">
@@ -61,25 +62,23 @@ export default function BulkListings() {
                       />
                     </div>
                     <div className="p-4">
-                      <StatusBadge tone={STATUS_TONE[item.status] || "muted"} dot>
-                        {item.status}
-                      </StatusBadge>
-                      <div className="mt-3 flex items-end justify-between gap-4"><div className="min-w-0"><h2 className="truncate text-xl font-extrabold text-primary">{item.name}</h2><p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground"><Users className="h-4 w-4" />{total} animals</p></div><p className="shrink-0 text-lg font-extrabold text-foreground">{formatMYR(item.totalPrice)}</p></div>
+                      <StatusBadge kind="bulk" status={item.status} dot />
+                      <div className="mt-3 flex items-end justify-between gap-4"><div className="min-w-0"><h2 className="line-clamp-2 text-lg font-extrabold leading-snug text-primary">{item.name}</h2><p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground"><Users className="h-4 w-4" />{total} animals{item.maleCount != null || item.femaleCount != null ? ` · ${Number(item.maleCount || 0)} male, ${Number(item.femaleCount || 0)} female` : ""}</p></div><p className="shrink-0 text-lg font-extrabold text-foreground">{formatMYR(item.totalPrice)}</p></div>
                     </div>
                   </button>
                   <div className="flex gap-2 border-t border-border/65 bg-muted/20 p-3">
                     <button type="button" onClick={() => navigate(`/bulk/${item.id}`)} className="brand-gradient min-h-11 flex-1 rounded-2xl px-4 text-sm font-bold text-white">View details</button>
                     <button type="button" onClick={() => navigate(`/bulk/${item.id}/edit`)} aria-label={`Edit ${item.name}`} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary/65 text-primary"><Pencil className="h-[18px] w-[18px]" /></button>
-                    <button type="button" onClick={() => setToDelete(item)} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-destructive/10 text-destructive transition-colors hover:bg-destructive/20" aria-label={`Delete ${item.name}`}><Trash2 className="h-[18px] w-[18px]" /></button>
+                    <button type="button" onClick={() => setToDelete(item)} className="flex h-11 w-11 items-center justify-center rounded-2xl bg-card text-destructive ring-1 ring-destructive/25 transition-colors hover:bg-destructive/10" aria-label={`Delete ${item.name}`}><Trash2 className="h-[18px] w-[18px]" /></button>
                   </div>
                 </article>
               );
             })}
           </div>
-        ) : <EmptyState icon={PackageOpen} title="No bulk listings yet" description="Create a listing for a group of animals with one total price." action={<button onClick={() => navigate("/bulk/add")} className="px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold">Create Bulk Listing</button>} />}
+        ) : <EmptyState icon={PackageOpen} title="No bulk listings yet" description="Selling a group — for example 5 cows for a mosque korban? Create one listing with a single total price." action={<button type="button" onClick={() => navigate("/bulk/add")} className="brand-gradient min-h-11 rounded-2xl px-5 text-sm font-bold text-primary-foreground">Create bulk listing</button>} />}
       </div>
 
-      <ConfirmDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)} title="Delete this bulk listing?" description="This action cannot be undone." confirmText="Delete" destructive loading={deleting} onConfirm={remove} />
+      <ConfirmDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)} title="Delete this bulk listing?" description={toDelete ? `${toDelete.name} will be removed for good. This can't be undone.` : "This action cannot be undone."} confirmText="Delete" destructive loading={deleting} onConfirm={remove} />
     </div>
   );
 }

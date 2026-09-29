@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
@@ -9,6 +10,7 @@ import {
   Check,
   Trash2,
   Clock3,
+  ShoppingBag,
 } from "lucide-react";
 import { qurbiApi } from "@/api/qurbiClient";
 import { useAuth } from "@/lib/AuthContext";
@@ -16,86 +18,39 @@ import { useAuthPrompt } from "@/lib/auth-prompt-context";
 import { useReveal } from "@/hooks/useReveal";
 import CancelOrderModal from "@/components/CancelOrderModal";
 import AppHeader from "@/components/AppHeader";
-import {
-  formatOrderDate,
-  formatOrderTime,
-  orderDateKey,
-  orderDayHeading,
-  orderTimestamp,
-} from "@/lib/order-date";
+import { orderDateKey, orderTimestamp } from "@/lib/order-date";
+import { formatRM } from "@/lib/format";
 import PageLoading from "@/components/PageLoading";
+import StatusChip from "@/components/account/StatusChip";
+import { ORDER_TABS, orderStatusInfo } from "@/components/account/orderStatus";
+import { accountMediaUrl } from "@/components/account/media";
+import { dayHeading, shortDateTime } from "@/components/account/dates";
+import {
+  dangerBtn,
+  dangerOutlineBtn,
+  ghostOnDarkBtn,
+  lightBtn,
+  primaryBtn,
+  secondaryBtn,
+} from "@/components/account/buttons";
 
-const TABS = [
-  {
-    key: "to-pay",
-    label: "To Pay",
-    statuses: ["pending", "pending_payment", "to_pay", "cancelled", "out_of_stock"],
-  },
-  {
-    key: "to-ship",
-    label: "To Ship",
-    statuses: ["paid", "preparing", "to_ship", "processing"],
-  },
-  {
-    key: "to-receive",
-    label: "To Receive",
-    statuses: ["in_transit", "shipped", "to_receive", "delivering"],
-  },
-  {
-    key: "completed",
-    label: "Completed",
-    statuses: ["completed", "delivered", "received"],
-  },
-  {
-    key: "return-refund",
-    label: "Return / Refunded",
-    statuses: [
-      "return_requested",
-      "refund_requested",
-      "return_refund",
-      "refunded",
-    ],
-  },
-];
+const HISTORY_STATUSES = ["cancelled", "out_of_stock"];
 
-const STATUS_LABELS = {
-  pending: "To Pay",
-  pending_payment: "To Pay",
-  to_pay: "To Pay",
-  paid: "To Ship",
-  preparing: "To Ship",
-  to_ship: "To Ship",
-  processing: "To Ship",
-  in_transit: "To Receive",
-  shipped: "To Receive",
-  to_receive: "To Receive",
-  delivering: "To Receive",
-  completed: "Completed",
-  delivered: "Completed",
-  received: "Completed",
-  return_requested: "Return Requested",
-  refund_requested: "Refund Requested",
-  return_refund: "Return / Refund",
-  refunded: "Refund Complete",
-  cancelled: "Cancelled",
-  out_of_stock: "Out of Stock",
-};
-
-function reservationLabel(order) {
+function reservationLabel(order, t) {
   if (!order.reservation_expires_at || order.reservation_status !== "active")
     return "";
   const expiresAt = new Date(order.reservation_expires_at);
-  if (Number.isNaN(expiresAt.getTime())) return "Reserved for 24 hours";
+  if (Number.isNaN(expiresAt.getTime())) return t("orders.reservation.reservedFor24h");
   const formatted = new Intl.DateTimeFormat("en-MY", {
     day: "numeric",
     month: "short",
     hour: "numeric",
     minute: "2-digit",
   }).format(expiresAt);
-  return `${order.payment_status === "failed" ? "Payment failed · " : ""}Reserved until ${formatted}`;
+  return `${order.payment_status === "failed" ? t("orders.reservation.paymentFailedPrefix") : ""}${t("orders.reservation.reservedUntil", { time: formatted })}`;
 }
 
-function groupOrdersByDay(orders) {
+function groupOrdersByDay(orders, ta) {
   const sorted = [...orders].sort(
     (a, b) => orderTimestamp(b.created_date) - orderTimestamp(a.created_date),
   );
@@ -106,25 +61,58 @@ function groupOrdersByDay(orders) {
     else
       groups.push({
         key,
-        label: orderDayHeading(order.created_date),
+        label: dayHeading(order.created_date, ta),
         orders: [order],
       });
     return groups;
   }, []);
 }
 
-function GuardedOrderLink({ selecting, to, children, ...props }) {
-  if (selecting) {
-    return (
-      <div {...props}>
-        {children}
-      </div>
-    );
-  }
+/** Title shown for an order: listing title of the first item (+N more). */
+function orderTitle(order, t, ta) {
+  const first = order.items?.[0] || {};
+  const name = first.breed || first.listing_name || t("orders.fallbackItemName");
+  const extra = (order.items?.length || 0) - 1;
+  return extra > 0 ? ta("orders.titleMore", { name, count: extra }) : name;
+}
+
+function farmerName(order) {
   return (
-    <Link to={to} {...props} onClick={(event) => event.stopPropagation()}>
-      {children}
-    </Link>
+    order.farmer?.fullName ||
+    order.farmer_name ||
+    order.items?.[0]?.farmer_name ||
+    ""
+  );
+}
+
+function SelectBox({ selected }) {
+  return (
+    <span
+      className={`flex h-6 w-6 flex-none items-center justify-center rounded-md border-2 ${selected ? "border-[#E3C19F] bg-[#E3C19F]" : "border-white/70 bg-transparent"}`}
+    >
+      {selected && <Check className="h-4 w-4 text-[#41362D]" strokeWidth={3} />}
+    </span>
+  );
+}
+
+function OrderThumb({ item, size = "h-16 w-16" }) {
+  const [failed, setFailed] = useState(false);
+  const src = accountMediaUrl(item?.image);
+  return (
+    <div
+      className={`flex ${size} flex-none items-center justify-center overflow-hidden rounded-xl bg-[#F7EDE2] text-[#6B594A]`}
+    >
+      {src && !failed ? (
+        <img
+          src={src}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <ShoppingBag className="h-6 w-6" aria-hidden="true" />
+      )}
+    </div>
   );
 }
 
@@ -136,129 +124,80 @@ function OrderCard({
   selecting,
   selected,
   onSelect,
-  fromTab = "",
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation("orders");
+  const { t: ta } = useTranslation("account");
+  const status = orderStatusInfo(order);
   const totalItems =
     order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-  const isPending = ["pending", "pending_payment", "to_pay"].includes(order.status);
-  const reservedUntil = isPending ? reservationLabel(order) : "";
-  const isHistory = ["cancelled", "out_of_stock"].includes(order.status);
-  const originTab =
-    fromTab || sessionStorage.getItem("gh_orders_active_tab") || "";
+  const isPending = status.next === "pay";
+  const reservedUntil = isPending ? reservationLabel(order, t) : "";
+  const isHistory = HISTORY_STATUSES.includes(order.status);
+  const originTab = sessionStorage.getItem("gh_orders_active_tab") || "";
   const detailsPath = `/orders/${encodeURIComponent(order.id)}${originTab ? `?fromTab=${encodeURIComponent(originTab)}` : ""}`;
-  const cardDestination = isPending
-    ? `/payment?order_id=${encodeURIComponent(order.id)}`
-    : detailsPath;
-  const compact = view === "list";
-  const handleCardInteraction = (event) => {
+  const paymentPath = `/payment?order_id=${encodeURIComponent(order.id)}`;
+  const receiptPath = `/receipt?order_id=${encodeURIComponent(order.id)}`;
+  const cardDestination = isPending ? paymentPath : detailsPath;
+  const title = orderTitle(order, t, ta);
+  const farmer = farmerName(order);
+  const selectable = selecting && isHistory;
+
+  const primary =
+    status.next === "pay"
+      ? { to: paymentPath, label: t("orders.completePayment") }
+      : status.next === "track"
+        ? { to: detailsPath, label: ta("orders.actions.track") }
+        : status.next === "confirm"
+          ? { to: detailsPath, label: ta("orders.actions.confirm") }
+          : status.next === "receipt"
+            ? { to: receiptPath, label: ta("orders.actions.receipt") }
+            : status.next === "refund"
+              ? { to: detailsPath, label: ta("orders.actions.refund") }
+              : { to: detailsPath, label: t("orders.viewOrderLink") };
+
+  const handleCardClick = (event) => {
     if (selecting) {
       event.preventDefault();
-      event.stopPropagation();
       if (isHistory) onSelect(order.id);
       return;
     }
-
     if (event.target.closest("a, button")) return;
     navigate(cardDestination);
   };
 
-  if (compact) {
-    const item = order.items?.[0] || {};
+  if (view === "list") {
     return (
       <div
-        onClick={handleCardInteraction}
-        className={`qurbi-dark-surface flex min-w-0 flex-col gap-2 overflow-hidden rounded-xl border px-2.5 py-2 shadow-sm sm:flex-row sm:items-center sm:gap-2.5 ${isHistory ? "border-orange-100" : "border-gray-50"}`}
+        onClick={handleCardClick}
+        className={`qurbi-dark-surface flex min-h-[72px] min-w-0 cursor-pointer items-center gap-3 rounded-2xl border px-3 py-2.5 shadow-sm ${selected ? "ring-2 ring-[#E3C19F]" : ""}`}
       >
-        <div className="flex min-w-0 w-full flex-1 items-center gap-2.5">
-          {selecting && isHistory && (
-            <button
-              onClick={(event) => {
-                event.stopPropagation();
-                onSelect(order.id);
-              }}
-              aria-label={selected ? "Deselect order" : "Select order"}
-              aria-pressed={selected}
-              className={`flex h-5 w-5 flex-none items-center justify-center rounded-md border-2 ${selected ? "border-[#14532D] bg-gradient-to-br from-[#22C55E] to-[#15803D] shadow-sm" : "border-gray-300"}`}
-            >
-              {selected && (
-                <Check
-                  className="h-3.5 w-3.5 text-[#FFFFFF]"
-                  strokeWidth={3}
-                  style={{ color: "#FFFFFF", stroke: "#FFFFFF" }}
-                />
-              )}
-            </button>
-          )}
-          <GuardedOrderLink
-            selecting={selecting}
-            to={cardDestination}
-            className="flex min-w-0 flex-1 items-center gap-2.5"
-            aria-label={`View order ${order.order_number}`}
-          >
-            <div className="flex h-9 w-9 flex-none items-center justify-center overflow-hidden rounded-lg bg-[#F7EDE2] text-base">
-              {item.image ? (
-                <img src={item.image} alt="" className="h-full w-full object-cover" />
-              ) : (
-                "🐄"
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="whitespace-normal break-words [overflow-wrap:anywhere] text-sm font-semibold text-gray-800">
-                {item.breed || item.listing_name || "Order items"}
-              </p>
-              <p className="truncate text-[11px] text-gray-400">
-                {formatOrderDate(order.created_date, {
-                  month: "short",
-                  year: undefined,
-                })}{" "}
-                ·{" "}
-                <span className="background-grey font-bold text-white">
-                  {STATUS_LABELS[order.status] || order.status}
-                </span>
-              </p>
-            </div>
-            <p className="flex-none whitespace-nowrap text-xs font-bold text-gray-900">
-              RM {order.total?.toLocaleString()}
-            </p>
-          </GuardedOrderLink>
-        </div>
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          {reservedUntil && (
-            <span className="flex items-center gap-1 rounded-full border border-[#E3C19F] bg-[#F7EDE2] px-2 py-1 text-[10px] font-bold text-[#41362D]">
-              <Clock3 className="h-3 w-3" />
-              {reservedUntil}
+        {selectable && <SelectBox selected={selected} />}
+        <OrderThumb item={order.items?.[0]} size="h-12 w-12" />
+        <div className="min-w-0 flex-1">
+          <p className="break-words text-[15px] font-bold leading-snug text-white [overflow-wrap:anywhere]">
+            {title}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <StatusChip order={order} />
+            <span className="text-xs text-white/75">
+              {shortDateTime(order.created_date, ta)}
             </span>
-          )}
-          {isPending && (
-            <button
-              onClick={(event) => {
-                if (selecting) return handleCardInteraction(event);
-                event.stopPropagation();
-                onCancel(order);
-              }}
-              disabled={cancelling}
-              className="rounded-lg border border-[#41362D] bg-gradient-to-br from-[#EF4444] to-[#B91C1C] px-2 py-1.5 text-[11px] font-bold text-white shadow-sm shadow-red-950/25 disabled:opacity-50"
+          </div>
+        </div>
+        <div className="flex flex-none flex-col items-end gap-1">
+          <p className="whitespace-nowrap text-[15px] font-bold text-white">
+            {formatRM(order.total)}
+          </p>
+          {!selecting && (
+            <Link
+              to={primary.to}
+              aria-label={`${primary.label} · ${order.order_number}`}
+              className="-mr-1 flex h-11 min-w-11 items-center justify-center gap-1 rounded-xl px-1 text-xs font-bold text-[#E3C19F]"
             >
-              {cancelling ? "..." : "Cancel"}
-            </button>
-          )}
-          {isPending ? (
-            <GuardedOrderLink
-              selecting={selecting}
-              to={`/payment?order_id=${encodeURIComponent(order.id)}`}
-              className="flex-inline justify-center item-center rounded-lg border border-[#41362D] bg-gradient-to-br from-green-700 via-green-500 to-green-300 px-2 py-1.5 text-[11px] font-bold text-white"
-            >
-              Complete Payment
-            </GuardedOrderLink>
-          ) : (
-            <GuardedOrderLink
-              selecting={selecting}
-              to={detailsPath}
-              className="text-[#5A493C]"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </GuardedOrderLink>
+              {isPending ? primary.label : null}
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </Link>
           )}
         </div>
       </div>
@@ -266,173 +205,141 @@ function OrderCard({
   }
 
   return (
-    <div
-      onClick={handleCardInteraction}
-      className={`qurbi-dark-surface shadow-sm border ${isHistory ? "border-orange-100" : "border-gray-50"} ${compact ? "rounded-xl px-3 py-2.5" : "rounded-2xl p-4"}`}
+    <article
+      onClick={handleCardClick}
+      aria-label={t("orders.aria.viewOrder", { orderNumber: order.order_number })}
+      className={`qurbi-dark-surface cursor-pointer overflow-hidden rounded-2xl border shadow-md ${selected ? "ring-2 ring-[#E3C19F]" : ""}`}
     >
-      {selecting && isHistory && (
+      {selectable && (
         <button
+          type="button"
           onClick={(event) => {
             event.stopPropagation();
             onSelect(order.id);
           }}
           aria-pressed={selected}
-          className="mb-3 flex items-center gap-2 rounded-xl border border-[#41362D]/60 bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-3 py-2 text-xs font-semibold text-[#41362D] shadow-sm transition-transform active:scale-[0.98]"
+          className="flex min-h-12 w-full items-center gap-3 border-b border-white/15 px-4 text-sm font-bold text-white"
         >
-          <span
-            className={`flex h-5 w-5 items-center justify-center rounded-md border-2 ${selected ? "border-[#14532D] bg-gradient-to-br from-[#22C55E] to-[#15803D] shadow-sm" : "border-gray-300"}`}
-          >
-            {selected && (
-              <Check
-                className="h-3.5 w-3.5 text-[#FFFFFF]"
-                strokeWidth={3}
-                style={{ color: "#FFFFFF", stroke: "#FFFFFF" }}
-              />
-            )}
-          </span>
-          Select order
+          <SelectBox selected={selected} />
+          {selected ? t("orders.aria.deselectOrder") : t("orders.selectOrderLabel")}
         </button>
       )}
-      <GuardedOrderLink
-        selecting={selecting}
-        to={cardDestination}
-        className="block"
-        aria-label={`View order ${order.order_number}`}
-      >
-        <div
-          className={`flex items-start justify-between gap-3 ${compact ? "" : "border-b border-gray-50 pb-3"}`}
-        >
-          <div className="min-w-0">
-            <p className="break-words whitespace-normal [overflow-wrap:anywhere] font-bold text-gray-900">
-              {order.order_number}
+      <div className="flex gap-3 p-4">
+        <OrderThumb item={order.items?.[0]} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0 break-words text-base font-bold leading-snug text-white [overflow-wrap:anywhere]">
+              {title}
             </p>
-            {!compact && (
-              <p className="text-gray-400 text-xs mt-0.5">
-                {formatOrderTime(order.created_date)}
-              </p>
-            )}
+            <StatusChip order={order} className="flex-none" />
           </div>
-          <span
-            className={`rounded-full px-2.5 py-1 text-[15px] font-bold whitespace-nowrap ${
-              order.refund_status?.toLowerCase() == "rejected"
-                ? "bg-red-50 text-red-700"
-                : [
-                      "to_pay",
-                      "paid",
-                      "completed",
-                      "delivered",
-                      "refunded",
-                    ].includes(order.status?.toLowerCase())
-                  ? "bg-[#F7EDE2] text-[#41362D]"
-                  : [
-                        "pending",
-                        "to_ship",
-                        "processing",
-                        "to_received",
-                        "delivering",
-                        "return_requested",
-                        "refund_requested",
-                        "to_receive",
-                      ].includes(order.status?.toLowerCase())
-                    ? "bg-yellow-50 text-yellow-700"
-                    : "bg-red-50 text-red-700"
-            }`}
-          >
-            {order.refund_status?.toLowerCase() === "rejected"
-              ? "Rejected"
-              : STATUS_LABELS[order.status] || order.status}
-          </span>
-        </div>
-        {reservedUntil && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#E3C19F] bg-[#F7EDE2] px-3 py-2 text-xs font-bold text-[#41362D]">
-            <Clock3 className="h-4 w-4 flex-none" />
-            <span>{reservedUntil}. You can retry payment from this order.</span>
-          </div>
-        )}
-        <div
-          className={`flex items-center justify-between gap-3 ${compact ? "pt-1" : "py-3"}`}
-        >
-          <div className="min-w-0">
-            <p className="break-words whitespace-normal [overflow-wrap:anywhere] text-sm font-semibold text-gray-800">
-              {order.items?.[0]?.breed || order.items?.[0]?.listing_name || "Order items"}
+          <p className="mt-1 text-[13px] text-white/80">
+            {t("orders.headCount", { count: totalItems })} · {shortDateTime(order.created_date, ta)}
+          </p>
+          {farmer && (
+            <p className="mt-0.5 truncate text-[13px] text-white/80">
+              {ta("orders.fromFarmer", { name: farmer })}
             </p>
-            <p className="text-gray-400 text-xs mt-0.5">
-              {totalItems} head · {order.items?.length || 0} item
-              {order.items?.length === 1 ? "" : "s"}
-            </p>
-          </div>
-          <p className="text-gray-900 text-sm font-bold whitespace-nowrap">
-            RM {order.total?.toLocaleString()}
+          )}
+          <p className="mt-0.5 break-all text-xs text-white/60">
+            {ta("orders.orderNumber", { number: order.order_number })}
           </p>
         </div>
-      </GuardedOrderLink>
-      <div
-        className={`flex flex-wrap items-center justify-end gap-2 ${compact ? "pt-2" : "pt-2 border-t border-gray-50"}`}
-      >
-        {isPending && (
-          <button
-            onClick={(event) => {
-              if (selecting) return handleCardInteraction(event);
-              event.stopPropagation();
-              onCancel(order);
-            }}
-            disabled={cancelling}
-            className="rounded-lg border border-[#41362D] bg-gradient-to-br from-[#EF4444] to-[#B91C1C] px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-red-950/25 disabled:opacity-50"
-          >
-            {cancelling ? "Cancelling..." : "Cancel Order"}
-          </button>
-        )}
-        <GuardedOrderLink
-          selecting={selecting}
-          to={
-            isPending
-              ? `/payment?order_id=${encodeURIComponent(order.id)}`
-              : detailsPath
-          }
-          className="flex items-center gap-1 text-[#5A493C] text-xs font-semibold"
-        >
-          {isPending ? "Complete Payment" : "View order"}{" "}
-          <ChevronRight className="w-4 h-4" />
-        </GuardedOrderLink>
       </div>
-    </div>
+
+      {reservedUntil && (
+        <div className="mx-4 mb-3 flex items-start gap-2 rounded-xl bg-[#FDF0D5] px-3 py-2.5 text-[13px] font-semibold leading-snug text-[#7A4B00]">
+          <Clock3 className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+          <span>
+            {reservedUntil}. {t("orders.reservation.retryHint")}
+          </span>
+        </div>
+      )}
+
+      <div className="border-t border-white/15 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="mr-auto">
+            <p className="text-xs text-white/70">{ta("orders.total")}</p>
+            <p className="text-lg font-bold leading-tight text-white">
+              {formatRM(order.total)}
+            </p>
+          </div>
+          {!selecting && !isPending && (
+            <Link
+              to={primary.to}
+              onClick={(event) => event.stopPropagation()}
+              className={`${lightBtn} min-h-11 px-4 text-sm`}
+            >
+              {primary.label}
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          )}
+        </div>
+        {!selecting && isPending && (
+          <div className="mt-3 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onCancel(order);
+              }}
+              disabled={cancelling}
+              className={`${ghostOnDarkBtn} min-h-11 px-2 text-sm`}
+            >
+              {cancelling ? t("orders.cancelling") : t("orders.cancelOrder")}
+            </button>
+            <Link
+              to={primary.to}
+              onClick={(event) => event.stopPropagation()}
+              className={`${lightBtn} min-h-11 px-3 text-sm`}
+            >
+              {primary.label}
+              <ChevronRight className="h-4 w-4 flex-none" aria-hidden="true" />
+            </Link>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 
 function DeleteHistoryModal({ count, loading, onClose, onConfirm }) {
+  const { t } = useTranslation("orders");
   if (!count) return null;
   return (
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-5 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="delete-history-title"
       onClick={() => !loading && onClose()}
     >
       <div
-        className="w-full max-w-sm rounded-3xl bg-gradient-to-br from-[#41362D] to-[#6B594A] p-5 shadow-xl"
+        className="w-full max-w-sm rounded-3xl border border-[#E3C19F] bg-[#FFFDF9] p-5 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 className="text-lg font-bold text-white">
-          Delete selected orders?
+        <h2 id="delete-history-title" className="text-lg font-bold text-[#41362D]">
+          {t("orders.deleteModal.title")}
         </h2>
-        <p className="mt-2 text-sm text-white">
-          {count} order{count === 1 ? "" : "s"} will be removed from your order
-          history.
+        <p className="mt-2 text-[15px] leading-relaxed text-[#5A493C]">
+          {t("orders.deleteModal.body", { count })}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <button
+            type="button"
             onClick={onClose}
             disabled={loading}
-            className="min-h-11 rounded-xl border border-white text-sm font-bold text-white disabled:opacity-50"
+            className={secondaryBtn}
           >
-            Keep Orders
+            {t("orders.deleteModal.keep")}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="min-h-11 rounded-xl bg-gradient-to-br from-[#EF4444] to-[#B91C1C] text-sm font-bold text-white disabled:opacity-50"
+            className={dangerBtn}
           >
-            {loading ? "Deleting..." : "Delete"}
+            {loading ? t("orders.deleteModal.deleting") : t("orders.deleteModal.confirm")}
           </button>
         </div>
       </div>
@@ -442,14 +349,16 @@ function DeleteHistoryModal({ count, loading, onClose, onConfirm }) {
 
 export default function Orders() {
   const { requestSignIn } = useAuthPrompt();
+  const { t } = useTranslation("orders");
+  const { t: ta } = useTranslation("account");
   const { user, isAuthenticated, authChecked } = useAuth();
   const navigate = useNavigate();
   const { reveal } = useReveal();
   const [activeTab, setActiveTab] = useState(() => {
     const queryTab = new URLSearchParams(window.location.search).get("tab");
     const savedTab = sessionStorage.getItem("gh_orders_active_tab");
-    if (TABS.some((tab) => tab.key === queryTab)) return queryTab;
-    return TABS.some((tab) => tab.key === savedTab) ? savedTab : "to-pay";
+    if (ORDER_TABS.some((tab) => tab.key === queryTab)) return queryTab;
+    return ORDER_TABS.some((tab) => tab.key === savedTab) ? savedTab : "to-pay";
   });
   const [view, setView] = useState(
     () => sessionStorage.getItem("gh_orders_view") || "current",
@@ -479,7 +388,7 @@ export default function Orders() {
       const response = await qurbiApi.functions.invoke("fetchMyOrders", {});
       setOrders(response.data?.orders || []);
     } catch {
-      setError("We couldn't load your orders. Please try again.");
+      setError(t("orders.loadError"));
     } finally {
       setLoading(false);
     }
@@ -490,7 +399,7 @@ export default function Orders() {
   }, [loadOrders]);
   useEffect(() => {
     const queryTab = new URLSearchParams(window.location.search).get("tab");
-    if (TABS.some((tab) => tab.key === queryTab))
+    if (ORDER_TABS.some((tab) => tab.key === queryTab))
       navigate("/orders", { replace: true });
   }, [navigate]);
   useEffect(() => {
@@ -518,14 +427,14 @@ export default function Orders() {
         ),
       );
       setCancelCandidate(null);
-      setSuccessMessage("Order cancelled successfully.");
+      setSuccessMessage(t("orders.cancelSuccess"));
       setTimeout(() => setSuccessMessage(""), 3000);
       await loadOrders();
     } catch (error) {
       setCancelError(
         error.data?.error ||
           error.message ||
-          "We couldn't cancel this order. Please try again.",
+          t("orders.cancelErrorFallback"),
       );
       // The server may have detected a stock change while cancellation was open.
       await loadOrders();
@@ -552,22 +461,30 @@ export default function Orders() {
       setShowDeleteHistory(false);
     } catch (error) {
       setError(
-        error.data?.error || "We couldn't remove those orders from history.",
+        error.data?.error || t("orders.deleteHistoryError"),
       );
     } finally {
       setDeletingHistory(false);
     }
   };
 
-  const active = TABS.find((tab) => tab.key === activeTab);
+  const tabCounts = useMemo(() => {
+    const counts = {};
+    for (const order of orders) {
+      const tab = orderStatusInfo(order).tab;
+      counts[tab] = (counts[tab] || 0) + 1;
+    }
+    return counts;
+  }, [orders]);
+  const active = ORDER_TABS.find((tab) => tab.key === activeTab) || ORDER_TABS[0];
   const visibleOrders = useMemo(
-    () => orders.filter((order) => active.statuses.includes(order.status)),
+    () => orders.filter((order) => orderStatusInfo(order).tab === active.key),
     [active, orders],
   );
   const selectableHistoryIds = useMemo(
     () =>
       visibleOrders
-        .filter((order) => ["cancelled", "out_of_stock"].includes(order.status))
+        .filter((order) => HISTORY_STATUSES.includes(order.status))
         .map((order) => order.id),
     [visibleOrders],
   );
@@ -577,187 +494,207 @@ export default function Orders() {
   const toggleAllHistory = () =>
     setHistoryIds(allHistorySelected ? [] : selectableHistoryIds);
   const groupedOrders = useMemo(
-    () => groupOrdersByDay(visibleOrders),
-    [visibleOrders],
+    () => groupOrdersByDay(visibleOrders, ta),
+    [visibleOrders, ta],
   );
 
   if (!authChecked) {
     return (
-      <div className="qurbi-page">
-        <AppHeader title="My Orders" subtitle="Track and manage your purchases" />
-        <PageLoading contentOnly message="Loading orders..." />
+      <div className="aisyah-page">
+        <AppHeader title={t("orders.title")} subtitle={t("orders.subtitle")} />
+        <PageLoading contentOnly message={t("orders.loadingOrders")} />
       </div>
     );
   }
 
   if (authChecked && !isAuthenticated)
     return (
-      <div className="aisyah-page min-h-screen pb-28">
-        <AppHeader title="My Orders" subtitle="Track and manage your purchases" />
-        <div className="aisyah-content flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <ReceiptText className="h-12 w-12 text-[#41362D]/35" />
-          <p className="text-sm text-[#41362D]/65">Sign in to view your orders.</p>
+      <div className="aisyah-page min-h-screen">
+        <AppHeader title={t("orders.title")} subtitle={t("orders.subtitle")} />
+        <div className="aisyah-content flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <ReceiptText className="h-12 w-12 text-[#41362D]/40" aria-hidden="true" />
+          <h2 className="text-lg font-bold text-[#41362D]">{ta("orders.guestTitle")}</h2>
+          <p className="max-w-xs text-[15px] leading-relaxed text-[#41362D]/75">{t("orders.signInPrompt")}</p>
           <button
             type="button"
-            onClick={() => requestSignIn({ returnTo: "/orders", message: "Sign in to view and manage your orders." })}
-            className="mt-2 rounded-xl bg-gradient-to-br from-[#41362D] to-[#6B594A] px-6 py-3 text-sm font-bold text-white"
+            onClick={() => requestSignIn({ returnTo: "/orders", message: t("orders.signInMessage") })}
+            className={`${primaryBtn} mt-2 px-8`}
           >
-            Sign In
+            {t("orders.signIn")}
           </button>
         </div>
       </div>
     );
 
   return (
-    <div className="qurbi-page">
+    <div className="aisyah-page">
       <AppHeader
         sticky
-        title="My Orders"
-        subtitle="Track and manage your purchases"
+        title={t("orders.title")}
+        subtitle={t("orders.subtitle")}
       >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex rounded-xl bg-white/10 p-1">
+        <div className="flex w-full min-w-0 items-center gap-2">
+          <div
+            className="flex flex-none rounded-xl bg-white/10 p-0.5"
+            role="group"
+            aria-label={ta("orders.viewToggle")}
+          >
             <button
+              type="button"
               onClick={() => setView("current")}
-              aria-label="Current order view"
-              className={`flex h-8 w-8 items-center justify-center rounded-lg ${view === "current" ? "bg-[#E3C19F] text-[#41362D] shadow-sm" : "text-white/70"}`}
+              aria-label={t("orders.aria.currentView")}
+              aria-pressed={view === "current"}
+              className={`flex h-11 w-11 items-center justify-center rounded-lg ${view === "current" ? "bg-[#E3C19F] text-[#41362D] shadow-sm" : "text-white/80"}`}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="h-5 w-5" />
             </button>
             <button
+              type="button"
               onClick={() => setView("list")}
-              aria-label="List order view"
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border-white ${view === "list" ? "bg-[#E3C19F] text-[#41362D] shadow-sm" : "text-white/70"}`}
+              aria-label={t("orders.aria.listView")}
+              aria-pressed={view === "list"}
+              className={`flex h-11 w-11 items-center justify-center rounded-lg ${view === "list" ? "bg-[#E3C19F] text-[#41362D] shadow-sm" : "text-white/80"}`}
             >
-              <List className="w-4 h-4" />
+              <List className="h-5 w-5" />
             </button>
           </div>
-          <div className="horizontal-filter-scroll no-scrollbar max-w-full overflow-x-auto">
-            <div className="flex min-w-max gap-1">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => {
-                    setActiveTab(tab.key);
-                    setSelectingHistory(false);
-                    setHistoryIds([]);
-                  }}
-                  className={`relative rounded-full px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === tab.key ? "bg-[#E3C19F] text-[#41362D]" : "bg-white/10 text-white/80"}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          <div className="horizontal-filter-scroll no-scrollbar min-w-0 flex-1 overflow-x-auto">
+            <div className="flex min-w-max gap-1.5 pr-2" role="tablist" aria-label={t("orders.title")}>
+              {ORDER_TABS.map((tab) => {
+                const count = tabCounts[tab.key] || 0;
+                const selected = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => {
+                      setActiveTab(tab.key);
+                      setSelectingHistory(false);
+                      setHistoryIds([]);
+                    }}
+                    className={`flex h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-sm font-bold transition-colors ${selected ? "bg-[#E3C19F] text-[#41362D]" : "bg-white/10 text-white"}`}
+                  >
+                    {t(tab.labelKey)}
+                    {count > 0 && (
+                      <span
+                        className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold ${selected ? "bg-[#41362D] text-white" : "bg-white/20 text-white"}`}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
       </AppHeader>
       {successMessage && (
-        <div className="fixed top-5 left-4 right-4 z-40 bg-[#5A493C] text-white rounded-xl px-4 py-3 text-sm font-semibold shadow-lg">
+        <div
+          role="status"
+          className="fixed left-4 right-4 top-5 z-40 rounded-xl bg-[#41362D] px-4 py-3 text-[15px] font-semibold text-white shadow-lg"
+        >
           {successMessage}
         </div>
       )}
-      <main className="qurbi-content space-y-5">
+      <main className="aisyah-content mx-auto max-w-3xl space-y-5">
         {loading && !orders.length ? (
-          <PageLoading contentOnly message="Loading orders..." />
+          <PageLoading contentOnly message={t("orders.loadingOrders")} />
         ) : (
           <>
-            {activeTab === "to-pay" && (
-          <div className="flex justify-end">
-            <button
-              onClick={() => {
-                setSelectingHistory(!selectingHistory);
-                setHistoryIds([]);
-              }}
-              className={`rounded-xl border px-4 py-2 text-sm font-bold shadow-sm transition-transform active:scale-[0.98] ${selectingHistory ? "border-[#41362D] bg-gradient-to-br from-[#EF4444] to-[#B91C1C] text-white shadow-red-950/25" : "border-[#F7EDE2]/60 bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white shadow-black/20"}`}
-            >
-              {selectingHistory ? "Cancel" : "Select"}
-            </button>
-          </div>
-        )}
-            {selectingHistory && (
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              disabled={!selectableHistoryIds.length || deletingHistory}
-              onClick={toggleAllHistory}
-              aria-pressed={allHistorySelected}
-              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#41362D]/60 bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-3 py-2 text-sm font-bold text-[#41362D] shadow-sm transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span
-                className={`flex h-5 w-5 flex-none items-center justify-center rounded-md border-2 ${allHistorySelected ? "border-[#14532D] bg-gradient-to-br from-[#22C55E] to-[#15803D] shadow-sm" : "border-[#41362D]/60 bg-white"}`}
-              >
-                {allHistorySelected && (
-                  <Check
-                    className="h-3.5 w-3.5 text-[#FFFFFF]"
-                    strokeWidth={3}
-                    style={{ color: "#FFFFFF", stroke: "#FFFFFF" }}
-                  />
-                )}
-              </span>
-              {allHistorySelected ? "Deselect All" : "Select All"}
-            </button>
-            <button
-              disabled={!historyIds.length || deletingHistory}
-              onClick={() => setShowDeleteHistory(true)}
-              className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-red-400 to-red-600 px-3 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              {deletingHistory
-                ? "Deleting..."
-                : `Delete (${historyIds.length})`}
-            </button>
-          </div>
-        )}
-            {error ? (
-          <div className="text-center py-16">
-            <p className="text-gray-400">{error}</p>
-            <button
-              onClick={loadOrders}
-              className="text-[#5A493C] text-sm font-semibold mt-3"
-            >
-              Retry
-            </button>
-          </div>
-        ) : groupedOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-20">
-            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-              <Package className="w-10 h-10 text-black" />
-            </div>
-            <p className="text-gray-600 font-semibold">No orders to show</p>
-            <p className="text-gray-400 text-sm text-center">
-              Orders in {active.label.toLowerCase()} will appear here.
-            </p>
-          </div>
-        ) : (
-          groupedOrders.map((group) => (
-            <section key={group.key} className="space-y-2">
-              <h2 className="text-gray-500 text-xs font-bold uppercase tracking-wide px-1">
-                {group.label}
-              </h2>
-              <div className={view === "list" ? "space-y-2" : "space-y-3"}>
-                {group.orders.map((order, index) => (
-                  <div
-                    key={order.id}
-                    className={reveal()}
-                    style={{ animationDelay: `${Math.min(index * 60, 300)}ms` }}
-                  >
-                    <OrderCard
-                      order={order}
-                      view={view}
-                      onCancel={(candidate) => {
-                        setCancelError("");
-                        setCancelCandidate(candidate);
-                      }}
-                      cancelling={cancellingOrderId === order.id}
-                      selecting={selectingHistory}
-                      selected={historyIds.includes(order.id)}
-                      onSelect={toggleHistory}
-                    />
-                  </div>
-                ))}
+            {activeTab === "to-pay" && selectableHistoryIds.length > 0 && (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-[#41362D]/75">
+                  {selectingHistory ? ta("orders.selectHint") : ta("orders.historyHint")}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectingHistory(!selectingHistory);
+                    setHistoryIds([]);
+                  }}
+                  className={`${secondaryBtn} min-h-11 flex-none px-4 text-sm`}
+                >
+                  {selectingHistory ? t("orders.cancel") : t("orders.select")}
+                </button>
               </div>
-            </section>
-          ))
+            )}
+            {selectingHistory && (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={!selectableHistoryIds.length || deletingHistory}
+                  onClick={toggleAllHistory}
+                  aria-pressed={allHistorySelected}
+                  className={`${secondaryBtn} min-h-11 text-sm`}
+                >
+                  {allHistorySelected ? t("orders.deselectAll") : t("orders.selectAll")}
+                </button>
+                <button
+                  type="button"
+                  disabled={!historyIds.length || deletingHistory}
+                  onClick={() => setShowDeleteHistory(true)}
+                  className={`${dangerOutlineBtn} min-h-11 text-sm`}
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  {deletingHistory
+                    ? t("orders.deleteModal.deleting")
+                    : t("orders.deleteWithCount", { count: historyIds.length })}
+                </button>
+              </div>
+            )}
+            {error ? (
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#E3C19F] bg-[#FFFDF9] px-5 py-10 text-center">
+                <p className="text-[15px] font-semibold text-[#41362D]">{error}</p>
+                <button type="button" onClick={loadOrders} className={`${primaryBtn} px-8`}>
+                  {t("orders.retry")}
+                </button>
+              </div>
+            ) : groupedOrders.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-[#E3C19F] bg-[#FFFDF9]/80 px-6 py-12 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F7EDE2]">
+                  <Package className="h-8 w-8 text-[#6B594A]" aria-hidden="true" />
+                </div>
+                <p className="text-base font-bold text-[#41362D]">{t("orders.emptyTitle")}</p>
+                <p className="max-w-xs text-[15px] leading-relaxed text-[#41362D]/75">
+                  {ta(`orders.empty.${active.key}`)}
+                </p>
+                <Link to="/browse" className={`${primaryBtn} mt-1 px-6`}>
+                  {ta("orders.browseLivestock")}
+                </Link>
+              </div>
+            ) : (
+              groupedOrders.map((group) => (
+                <section key={group.key} className="space-y-2.5">
+                  <h2 className="px-1 text-sm font-bold text-[#41362D]/75">
+                    {group.label}
+                  </h2>
+                  <div className={view === "list" ? "space-y-2" : "space-y-3"}>
+                    {group.orders.map((order, index) => (
+                      <div
+                        key={order.id}
+                        className={reveal()}
+                        style={{ animationDelay: `${Math.min(index * 60, 300)}ms` }}
+                      >
+                        <OrderCard
+                          order={order}
+                          view={view}
+                          onCancel={(candidate) => {
+                            setCancelError("");
+                            setCancelCandidate(candidate);
+                          }}
+                          cancelling={cancellingOrderId === order.id}
+                          selecting={selectingHistory}
+                          selected={historyIds.includes(order.id)}
+                          onSelect={toggleHistory}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))
             )}
           </>
         )}

@@ -39,7 +39,11 @@ export async function reconcileOrderLivestockStatuses(orders, livestock) {
     const desiredStatus = desiredById.get(item.id);
     if (item.reservationState === "Active") return item;
     if (!desiredStatus || item.status === desiredStatus) return item;
-    updates.push(qurbi.entities.Livestock.update(item.id, { status: desiredStatus }));
+    // The backend marks a listing Sold itself when the purchase completes and
+    // rejects Sold from clients (400), so only reflect it locally.
+    if (desiredStatus !== "Sold") {
+      updates.push(qurbi.entities.Livestock.update(item.id, { status: desiredStatus }));
+    }
     return { ...item, status: desiredStatus };
   });
 

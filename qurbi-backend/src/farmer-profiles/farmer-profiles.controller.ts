@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { FarmerProfilesService } from './farmer-profiles.service';
 import { UserRole } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -16,7 +25,10 @@ export class FarmerProfilesController {
   @Roles(UserRole.FARMER)
   @UseGuards(RolesGuard)
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateFarmerProfileDto) {
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: CreateFarmerProfileDto,
+  ) {
     return this.farmerProfilesService.create({ ...body, userId: user.id });
   }
 
@@ -40,7 +52,11 @@ export class FarmerProfilesController {
   @Roles(UserRole.FARMER, UserRole.ADMIN)
   @UseGuards(RolesGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser, @Body() body: UpdateFarmerProfileDto) {
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: UpdateFarmerProfileDto,
+  ) {
     return this.farmerProfilesService.updateOwned(id, user, body);
   }
 

@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { UserRole } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -23,7 +33,9 @@ export class BreedsController {
   @Public()
   @Get()
   findAll(@Query('speciesId') speciesId?: string) {
-    return speciesId ? this.breedsService.findBySpecies(speciesId) : this.breedsService.findAll();
+    return speciesId
+      ? this.breedsService.findBySpecies(speciesId)
+      : this.breedsService.findAll();
   }
 
   @Public()

@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Livestock, UserRole } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,7 +37,10 @@ export class LivestockController {
   @Roles(UserRole.FARMER)
   @UseGuards(RolesGuard)
   @Post()
-  create(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateLivestockDto) {
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: CreateLivestockDto,
+  ) {
     return this.livestockService.createForFarmer(user.id, body);
   }
 
@@ -60,19 +73,28 @@ export class LivestockController {
   }
 
   @Get(':id/availability')
-  availability(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+  availability(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.livestockService.availability(id, user);
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser | undefined) {
+  findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser | undefined,
+  ) {
     return this.livestockService.findOneForViewer(id, user);
   }
 
-
   @Patch(':id')
-  update(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser, @Body() body: UpdateLivestockDto) {
+  update(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: UpdateLivestockDto,
+  ) {
     return this.livestockService.updateOwned(id, user, body);
   }
 
@@ -81,8 +103,15 @@ export class LivestockController {
   @Roles(UserRole.ADMIN)
   @UseGuards(RolesGuard)
   @Patch(':id/marketplace-visibility')
-  setMarketplaceBlock(@Param('id') id: string, @Body() body: SetMarketplaceBlockDto) {
-    return this.livestockService.setMarketplaceBlock(id, body.blocked, body.reason ?? null);
+  setMarketplaceBlock(
+    @Param('id') id: string,
+    @Body() body: SetMarketplaceBlockDto,
+  ) {
+    return this.livestockService.setMarketplaceBlock(
+      id,
+      body.blocked,
+      body.reason ?? null,
+    );
   }
 
   // Admin-only: homepage curation, same pattern as the block endpoint above.

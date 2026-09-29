@@ -1,4 +1,10 @@
-import { IsDateString, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { DeliveryMethod } from '../../entities';
 import type { DeliveryAddressSnapshot } from '../../entities';
 

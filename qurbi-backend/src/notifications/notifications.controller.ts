@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { UserRole } from '../entities';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -22,7 +31,10 @@ export class NotificationsController {
   }
 
   @Get()
-  findInbox(@CurrentUser() user: AuthenticatedUser, @Query('audience') audience: NotificationAudienceDto['audience']) {
+  findInbox(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('audience') audience: NotificationAudienceDto['audience'],
+  ) {
     return this.notificationsService.findInbox(user.id, audience);
   }
 
@@ -32,7 +44,10 @@ export class NotificationsController {
   }
 
   @Patch('read-all')
-  markAllRead(@CurrentUser() user: AuthenticatedUser, @Body() body: NotificationAudienceDto) {
+  markAllRead(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: NotificationAudienceDto,
+  ) {
     return this.notificationsService.markAllRead(user.id, body.audience);
   }
 
@@ -42,7 +57,10 @@ export class NotificationsController {
   }
 
   @Patch('clear-all')
-  clearAll(@CurrentUser() user: AuthenticatedUser, @Body() body: NotificationAudienceDto) {
+  clearAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: NotificationAudienceDto,
+  ) {
     return this.notificationsService.clearAll(user.id, body.audience);
   }
 }

@@ -12,13 +12,21 @@ export class FarmVerification extends BaseEntity {
   @Column({ type: 'varchar', length: 36 })
   farmerProfileId: string;
 
-  @ManyToOne(() => FarmerProfile, (farmerProfile) => farmerProfile.verifications, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(
+    () => FarmerProfile,
+    (farmerProfile) => farmerProfile.verifications,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
   @JoinColumn({ name: 'farmerProfileId' })
   farmerProfile: FarmerProfile;
 
-  @Column({ type: 'enum', enum: VerificationStatus, default: VerificationStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: VerificationStatus,
+    default: VerificationStatus.PENDING,
+  })
   status: VerificationStatus;
 
   // SSM cert, land title, ID copy, etc. — shape varies, hence JSON not columns.

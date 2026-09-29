@@ -9,6 +9,9 @@ import { LocalDiskStorageService } from './storage/local-disk-storage.service';
 @Module({
   imports: [TypeOrmModule.forFeature([UploadedFile])],
   controllers: [UploadsController],
-  providers: [UploadsService, { provide: StorageService, useClass: LocalDiskStorageService }],
+  providers: [
+    UploadsService,
+    { provide: StorageService, useClass: LocalDiskStorageService },
+  ],
 })
 export class UploadsModule {}

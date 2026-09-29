@@ -1,0 +1,37 @@
+{
+  "appHeader": {
+    "login": "Login",
+    "signUp": "Sign Up",
+    "goBack": "Go back",
+    "openProfile": "Open profile",
+    "notifications": "Open notifications",
+    "notificationsUnread": "Open notifications, {{count}} unread"
+  },
+  "bottomNav": {
+    "browse": "Browse",
+    "bulkBuy": "Bulk Buy",
+    "home": "Home",
+    "cart": "Cart",
+    "orders": "Orders"
+  },
+  "pageLoading": {
+    "loading": "Loading...",
+    "pleaseWait": "Please wait..."
+  },
+  "qurbiLoading": {
+    "loading": "Loading…",
+    "loadingContent": "Loading content",
+    "loadingProducts": "Loading products",
+    "loadingLivestockDetails": "Loading livestock details"
+  },
+  "splashScreen": {
+    "tagline": "Slaughter your cattle"
+  },
+  "pageNotFound": {
+    "title": "Page Not Found",
+    "description": "The page \"{{pageName}}\" could not be found in this application.",
+    "adminNoteTitle": "Admin Note",
+    "adminNoteBody": "This could mean that the AI hasn't implemented this page yet. Ask it to implement it in the chat.",
+    "goHome": "Go Home"
+  }
+}

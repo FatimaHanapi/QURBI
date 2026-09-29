@@ -112,7 +112,12 @@ const Carousel = React.forwardRef((
 })
 Carousel.displayName = "Carousel"
 
-const CarouselContent = React.forwardRef(({ className, ...props }, ref) => {
+const CarouselContent = React.forwardRef(
+  /**
+   * @param {React.ComponentPropsWithoutRef<"div">} props
+   * @param {React.ForwardedRef<React.ElementRef<"div">>} ref
+   */
+  ({ className, ...props }, ref) => {
   const { carouselRef, orientation } = useCarousel()
 
   return (
@@ -130,7 +135,12 @@ const CarouselContent = React.forwardRef(({ className, ...props }, ref) => {
 })
 CarouselContent.displayName = "CarouselContent"
 
-const CarouselItem = React.forwardRef(({ className, ...props }, ref) => {
+const CarouselItem = React.forwardRef(
+  /**
+   * @param {React.ComponentPropsWithoutRef<"div">} props
+   * @param {React.ForwardedRef<React.ElementRef<"div">>} ref
+   */
+  ({ className, ...props }, ref) => {
   const { orientation } = useCarousel()
 
   return (
@@ -148,7 +158,12 @@ const CarouselItem = React.forwardRef(({ className, ...props }, ref) => {
 })
 CarouselItem.displayName = "CarouselItem"
 
-const CarouselPrevious = React.forwardRef(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+const CarouselPrevious = React.forwardRef(
+  /**
+   * @param {React.ComponentPropsWithoutRef<typeof Button> & { variant?: any, size?: any }} props
+   * @param {React.ForwardedRef<React.ElementRef<typeof Button>>} ref
+   */
+  ({ className, variant = "outline", size = "icon", ...props }, ref) => {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
 
   return (
@@ -169,7 +184,12 @@ const CarouselPrevious = React.forwardRef(({ className, variant = "outline", siz
 })
 CarouselPrevious.displayName = "CarouselPrevious"
 
-const CarouselNext = React.forwardRef(({ className, variant = "outline", size = "icon", ...props }, ref) => {
+const CarouselNext = React.forwardRef(
+  /**
+   * @param {React.ComponentPropsWithoutRef<typeof Button> & { variant?: any, size?: any }} props
+   * @param {React.ForwardedRef<React.ElementRef<typeof Button>>} ref
+   */
+  ({ className, variant = "outline", size = "icon", ...props }, ref) => {
   const { orientation, scrollNext, canScrollNext } = useCarousel()
 
   return (

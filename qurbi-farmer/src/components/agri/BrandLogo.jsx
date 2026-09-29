@@ -2,6 +2,9 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 // QURBI wordmark + leaf mark.
+/**
+ * @param {{ className?: string, compact?: boolean, light?: boolean }} props
+ */
 export default function BrandLogo({ className, compact = false, light = false }) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -14,7 +17,7 @@ export default function BrandLogo({ className, compact = false, light = false })
       {!compact && (
         <div className="leading-none">
           <p className={cn("font-extrabold tracking-tight text-lg", light ? "text-white" : "text-foreground")}>QURBI</p>
-          <p className={cn("text-[10px] font-semibold uppercase tracking-[0.2em]", light ? "text-white/70" : "text-primary")}>Farmer</p>
+          <p className={cn("text-xs font-semibold uppercase tracking-[0.2em]", light ? "text-white/70" : "text-primary")}>Farmer</p>
         </div>
       )}
     </div>

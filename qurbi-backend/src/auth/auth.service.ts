@@ -1,10 +1,20 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'crypto';
 import { IsNull, Repository } from 'typeorm';
-import { FarmerProfile, RefreshToken, User, UserRole, UserStatus } from '../entities';
+import {
+  FarmerProfile,
+  RefreshToken,
+  User,
+  UserRole,
+  UserStatus,
+} from '../entities';
 import { jwtConstants } from './jwt.constants';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -28,7 +38,9 @@ type SafeUser = Omit<User, 'passwordHash'>;
 // "farmer who hasn't onboarded yet". Re-declared (not inherited from
 // SafeUser/User, whose own `farmerProfile` relation is non-nullable) so it
 // can legally be `null` here.
-type MeResponse = Omit<SafeUser, 'farmerProfile'> & { farmerProfile?: FarmerProfile | null };
+type MeResponse = Omit<SafeUser, 'farmerProfile'> & {
+  farmerProfile?: FarmerProfile | null;
+};
 
 // Precomputed once and reused for every login where the email doesn't match
 // a real user, so argon2.verify always runs against a real-shaped hash. This
@@ -37,9 +49,11 @@ type MeResponse = Omit<SafeUser, 'farmerProfile'> & { farmerProfile?: FarmerProf
 let dummyHashPromise: Promise<string> | null = null;
 function getDummyHash(): Promise<string> {
   if (!dummyHashPromise) {
-    dummyHashPromise = argon2.hash(randomBytes(32).toString('hex'), { type: argon2.argon2id });
+    dummyHashPromise = argon2.hash(randomBytes(32).toString('hex'), {
+      type: argon2.argon2id,
+    });
   }
-  return dummyHashPromise!;
+  return dummyHashPromise;
 }
 
 function hashToken(rawToken: string): string {
@@ -47,8 +61,9 @@ function hashToken(rawToken: string): string {
 }
 
 function sanitize(user: User): SafeUser {
-  const { passwordHash: _passwordHash, ...safe } = user;
-  return safe;
+  const safe: Partial<User> = { ...user };
+  delete safe.passwordHash;
+  return safe as SafeUser;
 }
 
 @Injectable()
@@ -70,7 +85,9 @@ export class AuthService {
       throw new ConflictException('Email is already registered');
     }
 
-    const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
+    const passwordHash = await argon2.hash(dto.password, {
+      type: argon2.argon2id,
+    });
     const user = await this.userRepository.save(
       this.userRepository.create({
         email,
@@ -83,7 +100,10 @@ export class AuthService {
     return sanitize(user);
   }
 
-  async login(dto: LoginDto, meta: RequestMeta): Promise<TokenPair & { user: SafeUser }> {
+  async login(
+    dto: LoginDto,
+    meta: RequestMeta,
+  ): Promise<TokenPair & { user: SafeUser }> {
     const email = dto.email.toLowerCase();
     const user = await this.userRepository
       .createQueryBuilder('user')
@@ -92,11 +112,18 @@ export class AuthService {
       .getOne();
 
     const hashToCheck = user?.passwordHash ?? (await getDummyHash());
-    const passwordMatches = await argon2.verify(hashToCheck, dto.password).catch(() => false);
+    const passwordMatches = await argon2
+      .verify(hashToCheck, dto.password)
+      .catch(() => false);
 
     // Same exception, same message, whichever of these failed — never reveal
     // which one it was.
-    if (!user || !user.passwordHash || !passwordMatches || user.status !== UserStatus.ACTIVE) {
+    if (
+      !user ||
+      !user.passwordHash ||
+      !passwordMatches ||
+      user.status !== UserStatus.ACTIVE
+    ) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -114,19 +141,29 @@ export class AuthService {
     }
 
     const email = identity.email.toLowerCase();
-    let user = await this.userRepository.findOne({ where: { googleId: identity.uid } });
+    let user = await this.userRepository.findOne({
+      where: { googleId: identity.uid },
+    });
     user ??= await this.userRepository.findOne({ where: { email } });
 
     if (user?.googleId && user.googleId !== identity.uid) {
-      throw new UnauthorizedException('This email is linked to another Google account');
+      throw new UnauthorizedException(
+        'This email is linked to another Google account',
+      );
     }
 
     if (!user) {
       user = this.userRepository.create({
         email,
         passwordHash: null,
-        fullName: (identity.name || email.split('@')[0]).slice(0, 150),
-        role: dto.portal === FirebasePortal.BUYER ? UserRole.BUYER : UserRole.FARMER,
+        fullName: (typeof identity.name === 'string' && identity.name
+          ? identity.name
+          : email.split('@')[0]
+        ).slice(0, 150),
+        role:
+          dto.portal === FirebasePortal.BUYER
+            ? UserRole.BUYER
+            : UserRole.FARMER,
         status: UserStatus.ACTIVE,
         avatarUrl: identity.picture || null,
         googleId: identity.uid,
@@ -150,7 +187,9 @@ export class AuthService {
 
   async refresh(dto: RefreshDto, meta: RequestMeta): Promise<TokenPair> {
     const tokenHash = hashToken(dto.refreshToken);
-    const existing = await this.refreshTokenRepository.findOne({ where: { tokenHash } });
+    const existing = await this.refreshTokenRepository.findOne({
+      where: { tokenHash },
+    });
 
     if (!existing) {
       throw new UnauthorizedException('Invalid refresh token');
@@ -164,14 +203,18 @@ export class AuthService {
         { userId: existing.userId, revokedAt: IsNull() },
         { revokedAt: new Date() },
       );
-      throw new UnauthorizedException('Refresh token reuse detected; all sessions revoked');
+      throw new UnauthorizedException(
+        'Refresh token reuse detected; all sessions revoked',
+      );
     }
 
     if (existing.expiresAt.getTime() < Date.now()) {
       throw new UnauthorizedException('Refresh token expired');
     }
 
-    const user = await this.userRepository.findOne({ where: { id: existing.userId } });
+    const user = await this.userRepository.findOne({
+      where: { id: existing.userId },
+    });
     if (!user || user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedException('Account is not active');
     }
@@ -181,7 +224,9 @@ export class AuthService {
 
   async logout(dto: RefreshDto): Promise<void> {
     const tokenHash = hashToken(dto.refreshToken);
-    const existing = await this.refreshTokenRepository.findOne({ where: { tokenHash } });
+    const existing = await this.refreshTokenRepository.findOne({
+      where: { tokenHash },
+    });
     // Idempotent — logging out an already-revoked or unknown token is not an error.
     if (existing && !existing.revokedAt) {
       existing.revokedAt = new Date();
@@ -201,7 +246,9 @@ export class AuthService {
     // profile itself rather than duplicating the column. Only queried for
     // farmers; buyers/admins never have a profile row to begin with.
     if (user.role === UserRole.FARMER) {
-      const farmerProfile = await this.farmerProfileRepository.findOne({ where: { userId } });
+      const farmerProfile = await this.farmerProfileRepository.findOne({
+        where: { userId },
+      });
       return { ...safe, farmerProfile: farmerProfile ?? null };
     }
 
@@ -213,7 +260,10 @@ export class AuthService {
     meta: RequestMeta,
     rotatedFrom?: RefreshToken,
   ): Promise<TokenPair> {
-    const accessToken = await this.jwtService.signAsync({ sub: user.id, role: user.role });
+    const accessToken = await this.jwtService.signAsync({
+      sub: user.id,
+      role: user.role,
+    });
 
     const rawRefreshToken = randomBytes(64).toString('hex');
     const refreshTokenEntity = await this.refreshTokenRepository.save(

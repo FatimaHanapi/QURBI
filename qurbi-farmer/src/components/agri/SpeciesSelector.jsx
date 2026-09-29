@@ -2,6 +2,9 @@ import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SPECIES } from "@/lib/agri";
 
+/**
+ * @param {{ value?: string, onChange: (selection: { species: string, speciesRequestId: string, speciesApprovalStatus: string }) => void }} props
+ */
 export default function SpeciesSelector({ value, onChange }) {
   const supportedValue = SPECIES.includes(value) ? value : "";
 

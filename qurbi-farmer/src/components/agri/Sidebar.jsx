@@ -50,7 +50,7 @@ export default function Sidebar() {
         <div className="px-3">
           <div className="min-w-0">
             <p className="text-xs font-bold text-foreground truncate">{name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
           </div>
         </div>
         <button

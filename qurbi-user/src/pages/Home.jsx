@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Boxes,
   Leaf,
@@ -7,6 +8,9 @@ import {
   Package,
   User,
   ChevronRight,
+  Search,
+  MapPin,
+  RefreshCw,
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useReveal } from "@/hooks/useReveal";
@@ -14,42 +18,43 @@ import SplashScreen from "@/components/SplashScreen";
 import { useAuth } from "@/lib/AuthContext";
 import AppHeader from "@/components/AppHeader";
 import ViewCartCard from "@/components/ViewCartCard";
+import LivestockCard from "@/components/shop/LivestockCard";
+import { loadLivestockWithFarmers } from "@/lib/farmerClient";
+import { isProductExpired } from "@/lib/product-expiry";
 import cowImage from "@/assets/home-categories/Lembu-white.png";
 import goatImage from "@/assets/home-categories/Kambing-white.png";
 
+// Shortcuts: each one carries a hint so it adds information the bottom nav
+// does not (what is inside, how many), instead of repeating it.
 const QUICK_ACTIONS = [
-  { icon: Leaf, label: "Browse", path: "/browse" },
-  { icon: Boxes, label: "Bulk Buy", path: "/bulk-buy" },
-  { icon: ShoppingCart, label: "Cart", path: "/cart" },
-  { icon: Package, label: "Orders", path: "/history" },
-  { icon: User, label: "Profile", path: "/profile" },
+  { icon: Leaf, label: "browse", path: "/browse" },
+  { icon: Boxes, label: "bulkBuy", path: "/bulk-buy" },
+  { icon: ShoppingCart, label: "cart", path: "/cart" },
+  { icon: Package, label: "orders", path: "/history" },
+  { icon: User, label: "profile", path: "/profile" },
+  { icon: MapPin, label: "addresses", path: "/address-book" },
 ];
 
 const CHIP_TINTS = ["bg-gradient-to-br from-[#41362D] to-[#6B594A]"];
 const HOME_SPECIES = ["Cow", "Goat"];
 const HOME_SPECIES_IMAGES = { Cow: cowImage, Goat: goatImage };
+const FEATURED_LIMIT = 6;
 const HIGHLIGHTS = [
   {
-    title: "Find Your Qurban Livestock",
-    description: "Explore available cattle and goats from trusted farmers.",
+    id: "findLivestock",
     path: "/browse",
-    action: "Browse Livestock",
     icon: Leaf,
     gradient: "from-[#41362D] to-[#6B594A]",
   },
   {
-    title: "Buy Complete Bulk Lots",
-    description: "Secure a full livestock lot with one simple purchase.",
+    id: "bulkBuy",
     path: "/bulk-buy",
-    action: "Explore Bulk Buy",
     icon: Boxes,
     gradient: "from-[#6B594A] to-[#41362D]",
   },
   {
-    title: "Follow Every Order Stage",
-    description: "Review progress updates and track your active purchases.",
+    id: "trackOrders",
     path: "/orders",
-    action: "Track Orders",
     icon: Package,
     gradient: "from-[#41362D] via-[#6B594A] to-[#4B3E34]",
   },
@@ -57,7 +62,24 @@ const HIGHLIGHTS = [
 const BOOTSTRAP_FAILSAFE_MS = 6500;
 const SPLASH_DURATION_MS = 3200;
 
+function FeaturedSkeleton() {
+  return (
+    <div className="flex gap-3 overflow-hidden" aria-hidden="true">
+      {[0, 1, 2].map((index) => (
+        <div
+          key={index}
+          className="h-[248px] w-[46%] flex-none animate-pulse rounded-2xl bg-[#41362D]/15 sm:w-56"
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
+  const { t } = useTranslation("shop");
+  const { t: tf } = useTranslation("shopflow");
+  const navigate = useNavigate();
+
   const { totalItems, totalPrice } = useCart();
 
   const { reveal } = useReveal();
@@ -76,8 +98,43 @@ export default function Home() {
   const highlightDragXRef = useRef(0);
   const blockHighlightClick = useRef(false);
 
+  const [searchText, setSearchText] = useState("");
+  const [livestock, setLivestock] = useState(/** @type {any[]} */ ([]));
+  const [livestockLoading, setLivestockLoading] = useState(true);
+  const [livestockError, setLivestockError] = useState(false);
+
   const sessionReady =
     authChecked && !isLoadingAuth && !isLoadingPublicSettings;
+
+  const loadFeatured = useCallback(() => {
+    setLivestockLoading(true);
+    setLivestockError(false);
+    loadLivestockWithFarmers()
+      .then((items) => setLivestock(Array.isArray(items) ? items : []))
+      .catch(() => setLivestockError(true))
+      .finally(() => setLivestockLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadFeatured();
+  }, [loadFeatured]);
+
+  // Featured listings first, then the newest ones.
+  const featured = useMemo(
+    () =>
+      livestock
+        .filter((item) => !isProductExpired(item))
+        .sort((a, b) => {
+          if (Boolean(b.isFeatured) !== Boolean(a.isFeatured)) return b.isFeatured ? 1 : -1;
+          return new Date(b.created_date).getTime() - new Date(a.created_date).getTime();
+        })
+        .slice(0, FEATURED_LIMIT),
+    [livestock],
+  );
+  const availableCount = useMemo(
+    () => livestock.filter((item) => !isProductExpired(item)).length,
+    [livestock],
+  );
 
   useEffect(() => {
     if (sessionReady) return undefined;
@@ -159,6 +216,18 @@ export default function Home() {
     setHighlightsPaused(false);
   };
 
+  const submitSearch = (event) => {
+    event.preventDefault();
+    const query = searchText.trim();
+    navigate("/browse", { state: query ? { query } : { focusSearch: true } });
+  };
+
+  const quickActionHint = (label) => {
+    if (label === "browse" && availableCount > 0) return tf("home.hints.browseCount", { count: availableCount });
+    if (label === "cart" && totalItems > 0) return tf("home.hints.cartCount", { count: totalItems });
+    return tf(`home.hints.${label}`);
+  };
+
   // Keep the existing launch/transition splash on screen until both the
   // minimum animation and authentication bootstrap have completed.
   if (showSplash || (!sessionReady && !bootstrapReleased)) {
@@ -173,73 +242,48 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] pb-24">
+    <div className="aisyah-page">
       <AppHeader
         eyebrow=""
         title="QURBI"
         titleClassName="text-2xl sm:text-3xl"
         subtitleClassName="text-base"
+        search={
+          <form role="search" onSubmit={submitSearch} className="flex gap-2">
+            <label className="qurbi-search flex h-12 min-w-0 flex-1 items-center gap-2 rounded-2xl border px-3 focus-within:ring-2 focus-within:ring-[#E3C19F]">
+              <Search aria-hidden="true" className="h-5 w-5 flex-none text-[#41362D]" />
+              <span className="sr-only">{tf("home.searchLabel")}</span>
+              <input
+                type="search"
+                enterKeyHint="search"
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                placeholder={tf("home.searchPlaceholder")}
+                className="min-w-0 flex-1 bg-transparent text-base outline-none"
+              />
+            </label>
+            <button
+              type="submit"
+              className="flex h-12 flex-none items-center justify-center rounded-2xl bg-[#E3C19F] px-4 text-sm font-bold text-[#41362D] shadow-md transition-transform active:scale-95"
+            >
+              {tf("home.searchButton")}
+            </button>
+          </form>
+        }
       />
 
       <ViewCartCard totalItems={totalItems} totalPrice={totalPrice} />
 
-      {/* ========================================================= */}
-      {/* MAIN CONTENT */}
-      {/* ========================================================= */}
-
-      <div className="space-y-6 px-5 pt-5">
-        {/* ======================================================= */}
-        {/* QUICK ACTIONS */}
-        {/* ======================================================= */}
-
-        <section
-          className={`${reveal()} rounded-3xl border border-[#41362D]/20 bg-white/55 p-4 shadow-sm sm:p-5`}
-          style={{ animationDelay: "140ms" }}
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#41362D] sm:text-lg">
-              Quick Actions
-            </h2>
-            <span className="flex items-center gap-1 text-xs font-bold text-[#41362D]/65">
-              Swipe <ChevronRight className="h-3.5 w-3.5" />
-            </span>
-          </div>
-
-          <div className="no-scrollbar flex gap-4 overflow-x-auto pb-2">
-            {QUICK_ACTIONS.map(({ icon: Icon, label, path }, i) => (
-              <Link
-                key={label}
-                to={path}
-                viewTransition
-                className={`${reveal()} flex w-24 flex-none flex-col items-center gap-2.5 text-center transition-all duration-200 ease-out active:scale-[0.98]`}
-                style={{
-                  animationDelay: `${180 + i * 60}ms`,
-                }}
-              >
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#41362D] to-[#6B594A] shadow-lg shadow-black/20 transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]">
-                  <Icon className="h-7 w-7 text-white" />
-                </div>
-                <p className="w-full break-words text-base font-bold text-[#41362D]">
-                  {label}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* ======================================================= */}
+      <div className="mx-auto max-w-5xl space-y-7 px-4 pt-5 sm:px-5">
         {/* ANIMAL CATEGORIES */}
-        {/* ======================================================= */}
-
-        <div className={reveal()} style={{ animationDelay: "260ms" }}>
+        <section className={reveal()} style={{ animationDelay: "120ms" }} aria-labelledby="home-categories-title">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#41362D] sm:text-lg">
-              Categories
+            <h2 id="home-categories-title" className="text-lg font-bold text-[#41362D]">
+              {t("home.categoriesTitle")}
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 justify-items-center gap-3 sm:gap-4">
-            {/* Categories */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {HOME_SPECIES.map((label, i) => (
               <Link
                 key={label}
@@ -247,45 +291,92 @@ export default function Home() {
                 state={{ species: label }}
                 className={`
                     flex
+                    min-h-[88px]
                     w-full
-                    flex-col
                     items-center
-                    gap-2
+                    justify-center
+                    gap-3
                     rounded-2xl
                     qurbi-category-card
                     transition-[translate,box-shadow]
                     duration-300
                     ease-out
                     px-3
-                    py-5
+                    py-4
                     ${CHIP_TINTS[i % CHIP_TINTS.length]}
                     ${reveal()}
                   `}
                 style={{
-                  animationDelay: `${300 + i * 50}ms`,
+                  animationDelay: `${160 + i * 50}ms`,
                 }}
               >
-                <span className="flex h-5 w-[140px] sm:w-[180px] items-center justify-center rounded-xl sm:h-20">
-                  <img
-                    data-no-contrast-outline
-                    src={HOME_SPECIES_IMAGES[label]}
-                    alt={label}
-                    className="h-10 w-10 object-contain px-1"
-                  />
-                </span>
-
-                <span className="text-base font-bold text-white sm:text-lg">
-                  {label}
+                <img
+                  data-no-contrast-outline
+                  src={HOME_SPECIES_IMAGES[label]}
+                  alt=""
+                  className="h-11 w-11 flex-none object-contain"
+                />
+                <span className="text-lg font-bold text-white">
+                  {t(`home.species.${label.toLowerCase()}`)}
                 </span>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
 
+        {/* FEATURED / NEW LIVESTOCK */}
+        <section className={reveal()} style={{ animationDelay: "200ms" }} aria-labelledby="home-featured-title">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <h2 id="home-featured-title" className="text-lg font-bold text-[#41362D]">
+                {tf("home.featuredTitle")}
+              </h2>
+              <p className="text-sm text-[#6B594A]">{tf("home.featuredSubtitle")}</p>
+            </div>
+            <Link
+              to="/browse"
+              className="inline-flex min-h-11 flex-none items-center gap-1 rounded-xl px-2 text-sm font-bold text-[#41362D] underline-offset-4 hover:underline"
+            >
+              {tf("home.seeAll")} <ChevronRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {livestockLoading && !livestock.length ? (
+            <FeaturedSkeleton />
+          ) : livestockError && !livestock.length ? (
+            <div className="rounded-2xl border border-[#41362D]/20 bg-[#F7EDE2]/80 p-4 text-center">
+              <p className="text-sm font-semibold text-[#41362D]">{tf("home.featuredError")}</p>
+              <button
+                type="button"
+                onClick={loadFeatured}
+                className="aisyah-primary-button mt-3 inline-flex min-h-11 items-center gap-2"
+              >
+                <RefreshCw aria-hidden="true" className="h-4 w-4" /> {tf("common.retry")}
+              </button>
+            </div>
+          ) : featured.length === 0 ? (
+            <div className="rounded-2xl border border-[#41362D]/20 bg-[#F7EDE2]/80 p-4 text-center">
+              <p className="text-sm font-semibold text-[#41362D]">{tf("home.featuredEmpty")}</p>
+              <Link to="/bulk-buy" className="aisyah-primary-button mt-3 inline-flex min-h-11 items-center">
+                {tf("home.featuredEmptyAction")}
+              </Link>
+            </div>
+          ) : (
+            <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto overscroll-x-contain px-4 pb-3 sm:-mx-5 sm:px-5">
+              {featured.map((item, index) => (
+                <div key={item.id} className="w-[46%] flex-none snap-start sm:w-56">
+                  <LivestockCard livestock={item} index={index} showFeatured />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* HIGHLIGHTS */}
         <section
           className={`${reveal()} touch-pan-y select-none`}
-          style={{ animationDelay: "360ms" }}
-          aria-label="Highlights"
+          style={{ animationDelay: "260ms" }}
+          aria-label={t("home.highlightsAriaLabel")}
           onMouseEnter={() => setHighlightsPaused(true)}
           onMouseLeave={() => setHighlightsPaused(false)}
           onTouchStart={handleHighlightTouchStart}
@@ -307,10 +398,10 @@ export default function Home() {
           }}
         >
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#41362D] sm:text-lg">
-              Highlights
+            <h2 className="text-lg font-bold text-[#41362D]">
+              {t("home.highlightsTitle")}
             </h2>
-            <span className="text-xs font-semibold text-[#6B594A]">
+            <span className="text-sm font-semibold text-[#6B594A]">
               {activeHighlight + 1} / {HIGHLIGHTS.length}
             </span>
           </div>
@@ -324,11 +415,13 @@ export default function Home() {
               }}
             >
               {HIGHLIGHTS.map(
-                ({ title, description, path, action, icon: Icon, gradient }) => (
+                ({ id, path, icon: Icon, gradient }, index) => (
                   <Link
-                    key={title}
+                    key={id}
                     to={path}
                     viewTransition
+                    tabIndex={activeHighlight === index ? 0 : -1}
+                    aria-hidden={activeHighlight === index ? undefined : true}
                     className={`relative flex min-h-40 w-full min-w-full items-center gap-4 overflow-hidden bg-gradient-to-br ${gradient} p-5 text-left text-white before:pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:opacity-70 sm:min-h-44 sm:p-6`}
                   >
                     <span className="relative z-10 flex h-14 w-14 flex-none items-center justify-center rounded-2xl border border-white/25 bg-white/10 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.65)] backdrop-blur-sm">
@@ -336,13 +429,13 @@ export default function Home() {
                     </span>
                     <span className="relative z-10 min-w-0 flex-1">
                       <span className="block text-lg font-extrabold leading-tight sm:text-xl">
-                        {title}
+                        {t(`home.highlights.${id}.title`)}
                       </span>
-                      <span className="mt-2 block text-sm leading-relaxed text-white/70">
-                        {description}
+                      <span className="mt-2 block text-sm leading-relaxed text-white/80">
+                        {t(`home.highlights.${id}.description`)}
                       </span>
-                      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#F1DFCD]">
-                        {action} <ChevronRight className="h-4 w-4" />
+                      <span className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#F1DFCD]">
+                        {t(`home.highlights.${id}.action`)} <ChevronRight className="h-4 w-4" />
                       </span>
                     </span>
                   </Link>
@@ -351,20 +444,60 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-3 flex justify-center gap-2">
+          <div className="mt-1 flex justify-center">
             {HIGHLIGHTS.map((highlight, index) => (
               <button
-                key={highlight.title}
+                key={highlight.id}
                 type="button"
                 onClick={() => setActiveHighlight(index)}
-                aria-label={`Show highlight ${index + 1}: ${highlight.title}`}
+                aria-label={t("home.showHighlight", {
+                  number: index + 1,
+                  title: t(`home.highlights.${highlight.id}.title`),
+                })}
                 aria-current={activeHighlight === index ? "true" : undefined}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  activeHighlight === index
-                    ? "w-7 bg-[#41362D]"
-                    : "w-2.5 bg-[#E3C19F]"
-                }`}
-              />
+                className="flex h-11 min-w-11 items-center justify-center px-1"
+              >
+                <span
+                  className={`block h-2.5 rounded-full transition-all duration-300 ${
+                    activeHighlight === index
+                      ? "w-7 bg-[#41362D]"
+                      : "w-2.5 bg-[#41362D]/30"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* SHORTCUTS (formerly Quick Actions) */}
+        <section
+          className={reveal()}
+          style={{ animationDelay: "320ms" }}
+          aria-labelledby="home-shortcuts-title"
+        >
+          <h2 id="home-shortcuts-title" className="mb-3 text-lg font-bold text-[#41362D]">
+            {t("home.quickActionsTitle")}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {QUICK_ACTIONS.map(({ icon: Icon, label, path }) => (
+              <Link
+                key={label}
+                to={path}
+                viewTransition
+                className="flex min-h-[64px] min-w-0 items-center gap-3 rounded-2xl border border-[#41362D]/15 bg-[#F7EDE2]/85 p-3 text-left transition-colors hover:bg-[#F7EDE2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#41362D]"
+              >
+                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-[#41362D] to-[#6B594A]">
+                  <Icon aria-hidden="true" className="h-5 w-5 text-white" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-bold leading-tight text-[#41362D]">
+                    {label === "addresses" ? tf("home.addresses") : t(`home.quickActions.${label}`)}
+                  </span>
+                  <span className="mt-0.5 block text-[13px] leading-snug text-[#6B594A]">
+                    {quickActionHint(label)}
+                  </span>
+                </span>
+              </Link>
             ))}
           </div>
         </section>

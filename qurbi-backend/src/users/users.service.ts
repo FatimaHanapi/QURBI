@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
 import { User, UserRole, UserStatus } from '../entities';
@@ -70,9 +74,16 @@ export class UsersService extends BaseCrudService<User> {
   // role/status are privilege-bearing fields — a non-admin actor (editing
   // their own row, the only row findOwned lets them reach) can never touch
   // them, self-elevation included.
-  async updateOwned(id: string, viewer: AuthenticatedUser, data: UserWriteInput): Promise<User> {
+  async updateOwned(
+    id: string,
+    viewer: AuthenticatedUser,
+    data: UserWriteInput,
+  ): Promise<User> {
     await this.findOwned(id, viewer);
-    if (viewer.role !== UserRole.ADMIN && (data.role !== undefined || data.status !== undefined)) {
+    if (
+      viewer.role !== UserRole.ADMIN &&
+      (data.role !== undefined || data.status !== undefined)
+    ) {
       throw new ForbiddenException('Only an admin can change role or status');
     }
     return super.update(id, data);

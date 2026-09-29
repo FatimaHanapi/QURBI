@@ -5,16 +5,24 @@ import { Cart, CartItem } from '../entities';
 
 @Injectable()
 export class CartsService {
-  constructor(@InjectRepository(Cart) private readonly repository: Repository<Cart>) {}
+  constructor(
+    @InjectRepository(Cart) private readonly repository: Repository<Cart>,
+  ) {}
 
-  async getOrCreateForUser(userId: string, manager?: EntityManager): Promise<Cart> {
+  async getOrCreateForUser(
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<Cart> {
     const repo = manager ? manager.getRepository(Cart) : this.repository;
     const existing = await repo.findOne({ where: { userId } });
     if (existing) return existing;
     return repo.save(repo.create({ userId }));
   }
 
-  async getCartWithItemsForUser(userId: string, manager?: EntityManager): Promise<Cart> {
+  async getCartWithItemsForUser(
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<Cart> {
     const cart = await this.getOrCreateForUser(userId, manager);
     const repo = manager ? manager.getRepository(Cart) : this.repository;
     return repo.findOneOrFail({

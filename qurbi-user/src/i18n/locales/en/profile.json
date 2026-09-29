@@ -1,0 +1,250 @@
+{
+  "language": {
+    "title": "Language",
+    "subtitle": "Choose your preferred app language",
+    "english": "English",
+    "malay": "Bahasa Melayu"
+  },
+  "profile": {
+    "pageTitle": "Profile",
+    "pageSubtitle": "Manage your details",
+    "loading": "Loading your profile...",
+    "guestBuyer": "Guest Buyer",
+    "noEmailSet": "No email set",
+    "accountInfo": {
+      "title": "Account Info",
+      "edit": "Edit",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "editModal": {
+      "title": "Edit Personal Info",
+      "fullNamePlaceholder": "Full Name",
+      "emailPlaceholder": "Email Address",
+      "phonePlaceholder": "Phone Number",
+      "saving": "Saving...",
+      "saved": "Saved!",
+      "saveChanges": "Save Changes",
+      "saveError": "Could not save your details."
+    },
+    "addressBookCard": {
+      "title": "Address Book",
+      "subtitle": "Manage delivery addresses"
+    },
+    "orderHistoryCard": {
+      "title": "Order History",
+      "subtitle": "View all past orders"
+    },
+    "privacyPolicyCard": {
+      "title": "Privacy Policy",
+      "subtitle": "How we collect and use your data"
+    },
+    "termsConditionsCard": {
+      "title": "Terms & Conditions",
+      "subtitle": "The rules for buying on QURBI"
+    },
+    "customerSupportCard": {
+      "title": "Customer Support",
+      "subtitle": "FAQ and hello@mycesgroup.com"
+    },
+    "authRequiredMessage": "Sign in to view and manage your profile."
+  },
+  "addressBook": {
+    "pageTitle": "Address Book",
+    "pageSubtitle": "Manage your delivery addresses",
+    "loading": "Loading your address book...",
+    "savedCount_one": "{{count}} saved address",
+    "savedCount_other": "{{count}} saved addresses",
+    "emptyTitle": "No addresses yet",
+    "emptySubtitle": "Add a delivery address to use during checkout",
+    "addNewAddress": "Add New Address",
+    "form": {
+      "editTitle": "Edit Address",
+      "addTitle": "Add New Address",
+      "subtitle": "Fill in the delivery contact & location",
+      "addressLabel": "ADDRESS LABEL",
+      "labelPlaceholder": "e.g. \"Home\", \"Office\", \"Farm\"",
+      "contactInfo": "CONTACT INFORMATION",
+      "fullNamePlaceholder": "Full Name *",
+      "emailPlaceholder": "Email Address",
+      "phonePlaceholder": "Phone / WhatsApp",
+      "deliveryAddress": "DELIVERY ADDRESS *",
+      "streetPlaceholder": "Street / Unit / Building *",
+      "cityPlaceholder": "City *",
+      "statePlaceholder": "State",
+      "postcodePlaceholder": "Postcode",
+      "countryPlaceholder": "Country",
+      "setDefault": "Set as default address",
+      "setDefaultHint": "Auto-selected in cart checkout",
+      "cancel": "Cancel",
+      "saveAddress": "Save Address",
+      "streetRequired": "Street address is required.",
+      "cityRequired": "City is required.",
+      "nameRequired": "Name is required.",
+      "saving": "Saving..."
+    },
+    "card": {
+      "noLabel": "No label",
+      "default": "DEFAULT",
+      "selected": "SELECTED",
+      "setDefault": "Set Default",
+      "selectedButton": "Selected",
+      "useThisAddress": "Use This Address"
+    },
+    "saveError": "Contact information could not be saved.",
+    "signInPrompt": "Sign in to manage your saved delivery addresses.",
+    "signInMessage": "Sign in to manage your delivery addresses.",
+    "signIn": "Sign In",
+    "onboardingSubtitle": "Add your delivery address or skip for now",
+    "skipForNow": "Skip for now",
+    "deleteModal": {
+      "title": "Delete address?",
+      "messageLabeled": "This will permanently remove your {{label}} address.",
+      "messageGeneric": "This will permanently remove this address.",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    }
+  },
+  "privacyPolicy": {
+    "pageTitle": "Privacy Policy",
+    "pageSubtitle": "How QURBI collects, uses and protects your data",
+    "intro": "This policy explains what personal data QURBI collects when you use the app and why.",
+    "sections": [
+      {
+        "title": "1. Information we collect",
+        "body": [
+          "Account details: your name, email address, phone number and profile photo, provided when you sign in with Google.",
+          "Delivery information: recipient name and phone number, delivery address, and any delivery notes you save to your address book.",
+          "Order information: the items you purchase, order status, and delivery tracking updates.",
+          "Usage information: login activity such as your first and most recent sign-in, generated automatically by the app."
+        ]
+      },
+      {
+        "title": "2. How we use your information",
+        "body": [
+          "To create and secure your QURBI account and verify it's really you signing in.",
+          "To process your orders and get them delivered to the right address.",
+          "To show you order status, tracking updates and notifications.",
+          "To respond to support requests and investigate disputes or fraud."
+        ]
+      },
+      {
+        "title": "3. Who we share it with",
+        "body": [
+          "Farmers fulfilling your order see only what's needed for delivery: recipient name, phone number and address.",
+          "Google is used only to sign you in — we never post to your Google account.",
+          "QURBI admins may access account and order data to manage the platform and resolve support issues.",
+          "We do not sell your personal data to third parties."
+        ]
+      },
+      {
+        "title": "4. Data retention",
+        "body": [
+          "We keep your account and order history for as long as your account is active, and as needed to meet legal, tax and dispute-resolution obligations."
+        ]
+      },
+      {
+        "title": "5. Your rights",
+        "body": [
+          "Under Malaysia's Personal Data Protection Act 2010, you can request access to, correction of, or deletion of your personal data by contacting our support team, subject to our legal obligation to retain order records."
+        ]
+      },
+      {
+        "title": "6. Changes to this policy",
+        "body": [
+          "We may update this Privacy Policy from time to time. Continued use of QURBI after an update means you accept the revised policy."
+        ]
+      }
+    ],
+    "contactQuestion": "Questions about your data? Email"
+  },
+  "termsConditions": {
+    "pageTitle": "Terms & Conditions",
+    "pageSubtitle": "The rules for buying on QURBI",
+    "intro": "By using QURBI, you agree to the terms below.",
+    "sections": [
+      {
+        "title": "1. What QURBI is",
+        "body": [
+          "QURBI is an online marketplace connecting verified farmers with buyers in Malaysia for the purchase of livestock, covering browsing, ordering, delivery tracking and payment."
+        ]
+      },
+      {
+        "title": "2. Your account",
+        "body": [
+          "You sign in with Google. You're responsible for keeping your account details accurate and for all activity under your account.",
+          "QURBI may suspend or terminate accounts that breach these terms, provide false information, or are used for fraud."
+        ]
+      },
+      {
+        "title": "3. Orders and pricing",
+        "body": [
+          "Prices shown to buyers include QURBI's platform fee on top of the farmer's listed price.",
+          "Placing an order is an offer to purchase; the order is confirmed once payment is accepted.",
+          "Farmers are responsible for the accuracy of listing details (species, breed, age, health and availability)."
+        ]
+      },
+      {
+        "title": "4. Delivery",
+        "body": [
+          "Delivery is fulfilled by the farmer directly or coordinated through QURBI, depending on the seller's delivery method.",
+          "You're responsible for providing an accurate delivery address and being reachable to receive your order."
+        ]
+      },
+      {
+        "title": "5. Cancellations and refunds",
+        "body": [
+          "Refund and cancellation requests are reviewed case by case, taking into account order status and delivery stage. Contact Customer Support to raise a request."
+        ]
+      },
+      {
+        "title": "6. Legal compliance",
+        "body": [
+          "All livestock sold on QURBI must comply with applicable Malaysian livestock, health and movement regulations. Farmers, not QURBI, are responsible for meeting these requirements."
+        ]
+      },
+      {
+        "title": "7. Changes to these terms",
+        "body": [
+          "QURBI may update these Terms & Conditions from time to time. Continued use of the app after a change means you accept the updated terms."
+        ]
+      }
+    ],
+    "contactQuestion": "Questions about these terms? Email"
+  },
+  "customerSupport": {
+    "pageTitle": "Customer Support",
+    "pageSubtitle": "We're here to help",
+    "needAHand": "Need a hand?",
+    "needAHandSubtitle": "Check the FAQ below or email our team directly.",
+    "emailSupport": "Email Support",
+    "faqTitle": "Frequently Asked Questions",
+    "faqs": [
+      {
+        "q": "How do I track my order?",
+        "a": "Go to Profile > Order History, or Orders from the home tab, and open the order to see live delivery tracking updates."
+      },
+      {
+        "q": "How is the price on a listing calculated?",
+        "a": "The price shown includes the farmer's listed price plus QURBI's platform fee, so there are no surprise charges at checkout."
+      },
+      {
+        "q": "Are the farmers on QURBI verified?",
+        "a": "Yes. Every farmer completes an identity and farm verification review before they can list livestock for sale."
+      },
+      {
+        "q": "Can I cancel or get a refund on an order?",
+        "a": "Refund and cancellation requests are reviewed case by case depending on the order and delivery status. Contact us using the email below and include your order number."
+      },
+      {
+        "q": "How do I update my delivery address?",
+        "a": "Go to Profile > Address Book to add, edit or set a default delivery address."
+      },
+      {
+        "q": "I didn't receive a notification about my order. What should I do?",
+        "a": "Check Notifications from the bell icon at the top of the app. If something still looks wrong, contact Customer Support with your order number."
+      }
+    ]
+  }
+}

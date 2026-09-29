@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Trash2, ShoppingCart, Check, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Trash2, ShoppingCart, Check, ChevronRight, Scale } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { GRADE_COLORS } from "@/lib/livestock-data";
 import { useReveal } from "@/hooks/useReveal";
@@ -9,17 +10,20 @@ import { isProductExpired } from "@/lib/product-expiry";
 import AppHeader from "@/components/AppHeader";
 import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 import { AisyahCardSkeleton } from "@/components/AisyahLoading";
+import StickyActionBar from "@/components/shop/StickyActionBar";
+import { formatRM } from "@/lib/format";
 
 const isUnobtainable = (result) =>
   result?.available === false && result?.state !== "reserved_by_you";
 
 function CartItemImage({ item }) {
+  const { t } = useTranslation("cart");
   const [imageFailed, setImageFailed] = useState(false);
 
   if (!item.image || imageFailed) {
     return (
-      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-1 text-center text-[10px] font-bold text-[#41362D]">
-        No image
+      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-1 text-center text-[11px] font-bold leading-tight text-[#41362D]">
+        {t("cart.noImage")}
       </div>
     );
   }
@@ -27,25 +31,26 @@ function CartItemImage({ item }) {
   return (
     <img
       src={item.image}
-      alt={item.listing_name || item.breed || "Cart product"}
-      className="h-12 w-12 flex-shrink-0 rounded-xl object-cover"
+      alt=""
+      className="h-16 w-16 flex-shrink-0 rounded-xl object-cover"
       onError={() => setImageFailed(true)}
     />
   );
 }
 
 function DeleteCartModal({ request, onCancel, onConfirm }) {
+  const { t } = useTranslation("cart");
   if (!request) return null;
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-cart-title" onClick={onCancel}>
       <div className="w-full max-w-sm rounded-3xl border border-[#F7EDE2]/30 bg-gradient-to-br from-[#41362D] to-[#6B594A] p-5 text-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-        <h2 id="delete-cart-title" className="text-lg font-bold text-white">Delete {request.multiple ? "selected items" : "item"}?</h2>
+        <h2 id="delete-cart-title" className="text-lg font-bold text-white">{request.multiple ? t("cart.deleteModalTitleMultiple") : t("cart.deleteModalTitleSingle")}</h2>
         <p className="mt-2 text-sm leading-relaxed text-[#F7EDE2]">
-          {request.multiple ? `${request.count} selected items will be removed from your cart.` : `${request.label || "This item"} will be removed from your cart.`}
+          {request.multiple ? t("cart.deleteModalBodyMultiple", { count: request.count }) : t("cart.deleteModalBodySingle", { label: request.label || t("cart.thisItem") })}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <button type="button" onClick={onCancel} className="min-h-11 rounded-xl border border-[#F7EDE2] text-sm font-bold text-white">Keep Item</button>
-          <button type="button" onClick={onConfirm} className="min-h-11 rounded-xl border border-[#41362D] bg-gradient-to-br from-[#EF4444] to-[#B91C1C] text-sm font-bold text-white shadow-sm shadow-red-950/25">Delete</button>
+          <button type="button" onClick={onCancel} className="min-h-11 rounded-xl border border-[#F7EDE2] text-sm font-bold text-white">{t("cart.keepItem")}</button>
+          <button type="button" onClick={onConfirm} className="min-h-11 rounded-xl border border-[#41362D] bg-gradient-to-br from-[#EF4444] to-[#B91C1C] text-sm font-bold text-white shadow-sm shadow-red-950/25">{t("cart.delete")}</button>
         </div>
       </div>
     </div>,
@@ -54,14 +59,15 @@ function DeleteCartModal({ request, onCancel, onConfirm }) {
 }
 
 function AvailabilityModal({ message, onClose }) {
+  const { t } = useTranslation("cart");
   if (!message) return null;
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-5 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="cart-availability-title">
       <div className="w-full max-w-sm rounded-3xl border border-[#F7EDE2]/40 bg-gradient-to-br from-[#41362D] to-[#6B594A] p-5 text-white shadow-2xl">
-        <h2 id="cart-availability-title" className="text-lg font-bold text-white">Product unavailable</h2>
+        <h2 id="cart-availability-title" className="text-lg font-bold text-white">{t("cart.productUnavailableTitle")}</h2>
         <p className="mt-2 text-sm leading-relaxed text-[#F7EDE2]">{message}</p>
         <button type="button" onClick={onClose} className="mt-5 min-h-11 w-full rounded-xl border border-[#F7EDE2] bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] text-sm font-bold text-[#41362D]">
-          Okay
+          {t("cart.okay")}
         </button>
       </div>
     </div>,
@@ -70,6 +76,8 @@ function AvailabilityModal({ message, onClose }) {
 }
 
 export default function Cart() {
+  const { t } = useTranslation("cart");
+  const { t: tf } = useTranslation("shopflow");
   const {
     cartItems,
     removeFromCart,
@@ -94,13 +102,11 @@ export default function Cart() {
     try {
       setAvailability(await checkCartAvailability(cartItems));
     } catch {
-      setAvailabilityError(
-        "We couldn't verify current stock. Your cart has not been changed.",
-      );
+      setAvailabilityError(t("cart.stockCheckError"));
     } finally {
       setCheckingStock(false);
     }
-  }, [cartItems]);
+  }, [cartItems, t]);
   useEffect(() => {
     refreshAvailability();
   }, [refreshAvailability]);
@@ -113,10 +119,8 @@ export default function Cart() {
     if (!removed.length) return;
 
     removed.forEach((item) => removeFromCart(item.key));
-    setAvailabilityNotice(
-      "This product is already reserved by another buyer and has been removed from your cart.",
-    );
-  }, [availability, cartItems, removeFromCart]);
+    setAvailabilityNotice(t("cart.reservedRemovedNotice"));
+  }, [availability, cartItems, removeFromCart, t]);
 
   const proceedToPayment = async () => {
     if (!selectedItems.length || checkingStock || availabilityError) return;
@@ -139,18 +143,16 @@ export default function Cart() {
           .forEach((item) => removeFromCart(item.key));
         setAvailabilityNotice(
           reserved
-            ? "This product is already reserved by another buyer and has been removed from your cart."
+            ? t("cart.reservedRemovedNotice")
             : expired
-              ? "This product listing has expired and cannot be purchased while waiting for farmer renewal."
-              : "One or more selected products are currently unobtainable. Please review your cart before payment.",
+              ? t("cart.expiredListingNotice")
+              : t("cart.unobtainableNotice"),
         );
         return;
       }
       navigateWithTransition("/payment");
     } catch {
-      setAvailabilityNotice(
-        "We couldn't verify current availability. Please try again before payment.",
-      );
+      setAvailabilityNotice(t("cart.verifyAvailabilityFailedNotice"));
     } finally {
       setCheckingStock(false);
     }
@@ -159,18 +161,29 @@ export default function Cart() {
   if (cartItems.length === 0) {
     return (
       <div className="aisyah-page flex flex-col">
-        <AppHeader title="Your Cart" subtitle="0 items" />
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-            <ShoppingCart className="w-10 h-10 text-gray-300" />
+        <AppHeader title={t("cart.title")} subtitle={t("cart.emptySubtitle")} />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#F7EDE2] shadow-sm">
+            <ShoppingCart aria-hidden="true" className="h-10 w-10 text-[#6B594A]" />
           </div>
-          <p className="text-gray-400 text-center">Your cart is empty.</p>
-          <button
-            onClick={() => navigateWithTransition("/browse")}
-            className="aisyah-primary-button"
-          >
-            Browse livestock
-          </button>
+          <p className="text-lg font-bold text-[#41362D]">{t("cart.emptyMessage")}</p>
+          <p className="max-w-xs text-sm text-[#6B594A]">{tf("cart.emptyHint")}</p>
+          <div className="flex w-full max-w-xs flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => navigateWithTransition("/browse")}
+              className="aisyah-primary-button min-h-12"
+            >
+              {t("cart.browseLivestock")}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigateWithTransition("/bulk-buy")}
+              className="min-h-12 rounded-xl border-2 border-[#41362D]/60 px-4 text-sm font-bold text-[#41362D]"
+            >
+              {tf("cart.browseBulk")}
+            </button>
+          </div>
         </div>
         <AvailabilityModal
           message={availabilityNotice}
@@ -189,53 +202,61 @@ export default function Cart() {
       if (allSelected === selectedKeys.includes(key)) toggleSelect(key);
     });
   };
+  const itemName = (item) =>
+    item.item_type === "bulk" ? item.listing_name : item.title || item.breed;
+  const payDisabled =
+    selectedItems.length === 0 || checkingStock || Boolean(availabilityError);
 
   return (
-    <div className="aisyah-page overflow-x-hidden pb-56 sm:pb-52">
+    <div className="aisyah-page qurbi-action-bar-space overflow-x-hidden">
       <AppHeader
-        title="Your Cart"
-        subtitle={`${totalItems} head · ${selectedItems.length} selected`}
+        title={t("cart.title")}
+        subtitle={t("cart.subtitleSummary", {
+          total: totalItems,
+          selected: selectedItems.length,
+        })}
       />
 
-      {/* Selection Toolbar */}
-      {createPortal(
-        <div className="fixed bottom-[calc(9.75rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 px-3 sm:px-4">
-          <div
-            className={`mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-2 rounded-2xl border border-gray-50 bg-white p-3 shadow-sm ${reveal()}`}
-            style={{ animationDelay: "80ms" }}
-          >
+      <div className="aisyah-content max-w-2xl">
+        {/* Selection toolbar */}
+        <div
+          className={`flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#41362D]/15 bg-[#F7EDE2]/85 px-2 py-1 ${reveal()}`}
+          style={{ animationDelay: "80ms" }}
+        >
           <button
+            type="button"
+            role="checkbox"
+            aria-checked={allSelected}
             onClick={toggleAllSelectable}
-            className="flex items-center gap-2 active:scale-95 transition-transform"
+            className="flex min-h-11 items-center gap-2.5 rounded-xl px-2 transition-transform active:scale-95"
           >
-            <div
-              className={`flex h-5 w-5 items-center justify-center rounded-md border-2 ${allSelected ? "border-[#16A34A] bg-gradient-to-br from-[#16A34A] to-[#22C55E]" : "border-gray-200"}`}
+            <span
+              aria-hidden="true"
+              className={`flex h-6 w-6 items-center justify-center rounded-md border-2 ${allSelected ? "border-[#41362D] bg-[#41362D]" : "border-[#41362D]/60 bg-[#F7EDE2]"}`}
             >
-              {allSelected && <Check className="w-3 h-3 text-white" />}
-            </div>
-            <span className="text-sm font-semibold text-gray-700">
-              Select All
+              {allSelected && <Check className="h-4 w-4 text-[#F7EDE2]" strokeWidth={3} />}
+            </span>
+            <span className="text-sm font-bold text-[#41362D]">
+              {t("cart.selectAll")}
+            </span>
+            <span className="text-sm font-medium text-[#6B594A]">
+              {t("cart.selectedCount", {
+                selected: selectedKeys.length,
+                total: cartItems.length,
+              })}
             </span>
           </button>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">
-              {selectedKeys.length}/{cartItems.length} selected
-            </span>
-            {selectedKeys.length > 0 && (
-              <button
-                onClick={() => setDeleteRequest({ multiple: true, count: selectedKeys.length })}
-                className="flex min-h-9 items-center gap-1.5 rounded-xl bg-gradient-to-br from-[#EF4444] to-[#B91C1C] px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-red-950/25 transition-transform active:scale-95"
-              >
-                <Trash2 className="h-3.5 w-3.5 text-white" /> Delete
-              </button>
-            )}
-          </div>
+          {selectedKeys.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setDeleteRequest({ multiple: true, count: selectedKeys.length })}
+              aria-label={tf("cart.removeSelected")}
+              className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold text-[#6B594A] underline-offset-4 transition-colors hover:text-[#41362D] hover:underline"
+            >
+              <Trash2 aria-hidden="true" className="h-4 w-4" /> {tf("cart.removeShort")}
+            </button>
+          )}
         </div>
-        </div>,
-        document.body,
-      )}
-
-      <div className="aisyah-content">
 
         {/* Cart Items */}
         {checkingStock && !hasAvailability ? (
@@ -244,18 +265,18 @@ export default function Cart() {
             variant="list"
           />
         ) : availabilityError && !hasAvailability ? (
-          <div className="rounded-2xl border border-red-200 bg-white/60 p-5 text-center shadow-sm">
-            <p className="text-sm text-red-700">{availabilityError}</p>
+          <div className="rounded-2xl border border-[#41362D]/20 bg-[#F7EDE2]/90 p-5 text-center shadow-sm" role="alert">
+            <p className="text-sm font-semibold text-[#41362D]">{availabilityError}</p>
             <button
               type="button"
               onClick={refreshAvailability}
-              className="mt-3 rounded-xl bg-gradient-to-br from-[#41362D] to-[#6B594A] px-5 py-2.5 text-sm font-bold text-white"
+              className="aisyah-primary-button mt-3 min-h-12 px-5"
             >
-              Retry stock check
+              {t("cart.retryStockCheck")}
             </button>
           </div>
         ) : (
-          <div className="space-y-4 animate-content-ready">
+          <ul className="space-y-3 animate-content-ready" aria-label={t("cart.title")}>
             {cartItems.map((item, idx) => {
               const availabilityResult = availability[item.key];
               const reservedByYou =
@@ -266,6 +287,8 @@ export default function Cart() {
                   isProductExpired(item));
               const unavailable =
                 expired || isUnobtainable(availabilityResult);
+              const selected = selectedKeys.includes(item.key);
+              const name = itemName(item);
               const detailId =
                 item.item_type === "bulk"
                   ? item.bulk_listing_id || item.id
@@ -278,164 +301,182 @@ export default function Cart() {
               const openDetail = () => {
                 if (detailPath) navigateWithTransition(detailPath);
               };
+              const subtitle =
+                item.item_type === "bulk"
+                  ? t("cart.bulkAnimalsCount", { count: item.total_animals })
+                  : [item.animal, item.title && item.breed !== item.title ? item.breed : ""]
+                      .filter(Boolean)
+                      .join(" · ");
               return (
-                <div
+                <li
                   key={item.key}
-                  role={detailPath ? "link" : undefined}
-                  tabIndex={detailPath ? 0 : undefined}
-                  aria-label={
-                    detailPath
-                      ? `Open ${item.item_type === "bulk" ? item.listing_name : item.breed} details`
-                      : undefined
-                  }
-                  onClick={(event) => {
-                    if (event.target.closest("button, a, input")) return;
-                    openDetail();
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.target !== event.currentTarget) return;
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      openDetail();
-                    }
-                  }}
-                  className={`min-w-0 overflow-hidden rounded-2xl border bg-white p-3 shadow-sm sm:p-4 ${detailPath ? "cursor-pointer" : ""} ${unavailable ? "border-orange-200 bg-orange-50/30" : selectedKeys.includes(item.key) ? "qurbi-cart-item-selected" : "border-gray-50"} ${reveal()}`}
+                  className={`min-w-0 overflow-hidden rounded-2xl border-2 bg-gradient-to-br from-[#41362D] to-[#6B594A] p-3 text-white shadow-sm sm:p-4 ${unavailable ? "border-[#B45309]/70" : selected ? "qurbi-cart-item-selected" : "border-transparent"} ${reveal()}`}
                   style={{ animationDelay: `${120 + idx * 60}ms` }}
                 >
-              <div className="mb-3 flex min-w-0 items-start justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <button
-                    onClick={() => toggleSelect(item.key)}
-                    className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border-2 transition-all active:scale-90 ${selectedKeys.includes(item.key) ? "border-[#16A34A] bg-gradient-to-br from-[#16A34A] to-[#22C55E]" : "border-gray-200 bg-white"}`}
-                  >
-                    {selectedKeys.includes(item.key) && (
-                      <Check className="w-4 h-4 text-white" />
-                    )}
-                  </button>
-                  <CartItemImage item={item} />
-                  <div className="min-w-0">
-                    <p className="break-words [overflow-wrap:anywhere] font-bold text-gray-900">
-                      {item.item_type === "bulk"
-                        ? item.listing_name
-                        : item.breed}
-                    </p>
-                    <p className="break-words text-xs text-gray-400">
-                      {item.item_type === "bulk"
-                        ? `${item.total_animals} animals · Bulk lot`
-                        : item.animal}
-                    </p>
-                    {unavailable && (
-                      <p
-                        className={`mt-1 inline-flex rounded-lg px-2 py-1 text-xs font-bold ${
-                          expired
-                            ? "bg-gradient-to-br from-yellow-400 to-amber-500 text-[#41362D]"
-                            : "bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white"
-                        }`}
-                      >
-                        {expired
-                          ? "Expired"
-                          : availabilityResult?.state === "reserved"
-                          ? "Reserved by another buyer"
-                          : availabilityResult?.state === "listing_expired"
-                            ? "Expired — waiting for farmer renewal"
-                            : "Unavailable / Out of Stock"}
-                      </p>
-                    )}
-                    {reservedByYou && (
-                      <p className="mt-1 inline-flex rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 px-2 py-1 text-xs font-bold text-[#41362D]">
-                        Complete Payment
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-none items-center gap-1">
-                  {item.grade && (
-                    <span
-                      className={`px-2 py-0.5 rounded-lg text-xs font-bold ${GRADE_COLORS[item.grade]}`}
+                  <div className="flex min-w-0 items-start gap-1">
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={selected}
+                      aria-label={tf("cart.selectItemAria", { name })}
+                      onClick={() => toggleSelect(item.key)}
+                      className="-ml-1 -mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-xl transition-transform active:scale-90"
                     >
-                      {item.grade}
-                    </span>
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-6 w-6 items-center justify-center rounded-md border-2 transition-colors ${selected ? "border-[#E3C19F] bg-[#E3C19F]" : "border-[#F7EDE2]/70 bg-transparent"}`}
+                      >
+                        {selected && <Check className="h-4 w-4 text-[#41362D]" strokeWidth={3} />}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={openDetail}
+                      disabled={!detailPath}
+                      aria-label={
+                        detailPath
+                          ? t("cart.openDetailsAriaLabel", { name })
+                          : undefined
+                      }
+                      className="flex min-w-0 flex-1 items-start gap-3 rounded-xl text-left disabled:cursor-default"
+                    >
+                      <CartItemImage item={item} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block break-words text-base font-bold leading-snug text-white [overflow-wrap:anywhere]">
+                          {name}
+                        </span>
+                        {subtitle && (
+                          <span className="mt-0.5 block break-words text-sm text-white/75">
+                            {subtitle}
+                          </span>
+                        )}
+                        {item.grade && (
+                          <span
+                            className={`mt-1 inline-flex rounded-lg px-2 py-0.5 text-xs font-bold ${GRADE_COLORS[item.grade] || "bg-[#E3C19F] text-[#41362D]"}`}
+                          >
+                            {tf("card.grade", { grade: item.grade })}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDeleteRequest({ key: item.key, label: name })}
+                      aria-label={t("cart.deleteAriaLabel", { name })}
+                      className="-mr-1 -mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-lg text-[#F7EDE2]/70 transition-colors hover:bg-[#F7EDE2]/10 hover:text-white"
+                    >
+                      <Trash2 aria-hidden="true" className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  {(unavailable || reservedByYou) && (
+                    <div className="mt-2 pl-10">
+                      {unavailable && (
+                        <p
+                          className={`inline-flex rounded-lg px-2 py-1 text-xs font-bold ${
+                            expired
+                              ? "bg-[#FEF3C7] text-[#78350F]"
+                              : "bg-[#F7EDE2] text-[#41362D]"
+                          }`}
+                        >
+                          {expired
+                            ? t("cart.expired")
+                            : availabilityResult?.state === "reserved"
+                            ? t("cart.reservedByAnother")
+                            : availabilityResult?.state === "listing_expired"
+                              ? t("cart.listingExpiredAwaitingRenewal")
+                              : t("cart.unavailable")}
+                        </p>
+                      )}
+                      {reservedByYou && (
+                        <p className="inline-flex rounded-lg bg-[#FEF3C7] px-2 py-1 text-xs font-bold text-[#78350F]">
+                          {t("cart.completePayment")}
+                        </p>
+                      )}
+                    </div>
                   )}
-                  <button
-                    onClick={() => setDeleteRequest({ key: item.key, label: item.item_type === "bulk" ? item.listing_name : item.breed })}
-                    aria-label={`Delete ${item.item_type === "bulk" ? item.listing_name : item.breed} from cart`}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#DC2626]/60 bg-white/90 text-[#DC2626] shadow-sm transition-transform active:scale-90"
-                  >
-                    <Trash2 className="h-4 w-4 text-[#DC2626]" />
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  {item.item_type === "bulk" ? (
-                    <p className="text-gray-400 text-xs">
-                      {item.male_count || 0} male · {item.female_count || 0}{" "}
-                      female · {item.state || "Location not specified"}
-                    </p>
-                  ) : (
-                    item.weight_min > 0 && (
-                      <p className="text-gray-400 text-xs">
-                        ⚖️{" "}
-                        {item.weight_min === item.weight_max
-                          ? item.weight_min
-                          : `${item.weight_min}–${item.weight_max}`}{" "}
-                        kg
+
+                  <div className="mt-3 flex items-end justify-between gap-3 border-t border-[#F7EDE2]/15 pt-3 pl-10">
+                    <div className="min-w-0">
+                      {item.item_type === "bulk" ? (
+                        <p className="text-sm text-white/75">
+                          {t("cart.bulkGenderSummary", {
+                            male: item.male_count || 0,
+                            female: item.female_count || 0,
+                            location: item.state || t("cart.locationNotSpecified"),
+                          })}
+                        </p>
+                      ) : (
+                        item.weight_min > 0 && (
+                          <p className="flex items-center gap-1 text-sm text-white/75">
+                            <Scale aria-hidden="true" className="h-3.5 w-3.5" />
+                            {item.weight_min === item.weight_max
+                              ? item.weight_min
+                              : `${item.weight_min}–${item.weight_max}`}{" "}
+                            kg
+                          </p>
+                        )
+                      )}
+                      <p className="text-sm text-white/75">
+                        {formatRM(item.price_per_head)}
+                        {item.item_type === "bulk"
+                          ? t("cart.perLot")
+                          : t("cart.perHead")}
                       </p>
-                    )
-                  )}
-                  <p className="text-gray-900 font-bold">
-                    RM {item.price_per_head.toLocaleString()}
-                    {item.item_type === "bulk" ? " / lot" : "/head"}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2 pt-2 border-t border-gray-50 flex justify-between">
-                <span className="text-gray-400 text-xs">
-                  Subtotal (
-                  {item.item_type === "bulk"
-                    ? "1 lot"
-                    : `${item.quantity} head`}
-                  )
-                </span>
-                <span className="text-gray-900 font-bold text-sm">
-                  RM {item.total.toLocaleString()}
-                </span>
-              </div>
-                </div>
+                    </div>
+                    <div className="flex-none text-right">
+                      <p className="text-xs text-white/70">
+                        {t("cart.subtotalLabel", {
+                          detail:
+                            item.item_type === "bulk"
+                              ? t("cart.oneLot")
+                              : t("cart.headCount", { count: item.quantity }),
+                        })}
+                      </p>
+                      <p className="text-lg font-extrabold text-white">
+                        {formatRM(item.total)}
+                      </p>
+                    </div>
+                  </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </div>
 
-      {/* Fixed Payment Button */}
-      {createPortal(
-        <div className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 animate-fade-in-up px-3 sm:px-4">
-          <div className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] p-2.5 shadow-xl shadow-black/20 sm:p-3">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs text-white/70">
-                {selectedItems.length} item{selectedItems.length !== 1 ? "s" : ""} selected
-              </p>
-              <p className="truncate text-base font-bold leading-tight text-white sm:text-lg">
-                RM {selectedSubtotal.toLocaleString()}
-              </p>
-            </div>
-            <button
-              onClick={proceedToPayment}
-              disabled={
-                selectedItems.length === 0 ||
-                checkingStock ||
-                Boolean(availabilityError)
-              }
-              className="flex min-h-10 flex-none items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-4 py-2 text-sm font-bold text-black transition-all duration-200 ease-out hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 sm:px-5 sm:text-base"
-            >
-              {checkingStock ? "Checking stock..." : "Payment"}{" "}
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>,
-        document.body,
-      )}
+      {/* Sticky checkout bar */}
+      <StickyActionBar tone="dark" label={tf("cart.checkoutBarLabel")}>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-white/80">
+            {selectedItems.length
+              ? t("cart.selectedItemsCount", { count: selectedItems.length })
+              : t("cart.selectAtLeastOne")}
+          </p>
+          <p className="text-xl font-extrabold leading-tight text-white">
+            {formatRM(selectedSubtotal)}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={proceedToPayment}
+          disabled={payDisabled}
+          className="flex min-h-12 flex-none items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-5 text-base font-bold text-[#41362D] transition-all duration-200 ease-out active:scale-[0.98] disabled:opacity-60"
+        >
+          {checkingStock ? (
+            <>
+              <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-[#41362D] border-t-transparent" />
+              {t("cart.checkingStock")}
+            </>
+          ) : (
+            <>
+              {tf("cart.continueToPayment")} <ChevronRight aria-hidden="true" className="h-5 w-5" />
+            </>
+          )}
+        </button>
+      </StickyActionBar>
       <DeleteCartModal
         request={deleteRequest}
         onCancel={() => setDeleteRequest(null)}

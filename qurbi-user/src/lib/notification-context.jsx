@@ -58,7 +58,7 @@ export function NotificationProvider({ children }) {
     (incoming) => {
       if (!user?.id || bannerRef.current || !incoming.length) return;
       const sorted = [...incoming].sort(
-        (a, b) => new Date(b.event_at || 0) - new Date(a.event_at || 0),
+        (a, b) => new Date(b.event_at || 0).getTime() - new Date(a.event_at || 0).getTime(),
       );
       const candidate = sorted.find(
         (notification) =>
