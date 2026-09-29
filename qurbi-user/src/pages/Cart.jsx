@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
 import { Trash2, ShoppingCart, Check, ChevronRight } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { GRADE_COLORS } from "@/lib/livestock-data";
@@ -9,9 +8,31 @@ import { checkCartAvailability } from "@/lib/livestock-availability";
 import { isProductExpired } from "@/lib/product-expiry";
 import AppHeader from "@/components/AppHeader";
 import { AisyahCardSkeleton } from "@/components/AisyahLoading";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
 const isUnobtainable = (result) =>
   result?.available === false && result?.state !== "reserved_by_you";
+
+function CartItemImage({ item }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (!item.image || imageFailed) {
+    return (
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] px-1 text-center text-[10px] font-bold text-[#41362D]">
+        No image
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={item.image}
+      alt={item.listing_name || item.breed || "Cart product"}
+      className="h-12 w-12 flex-shrink-0 rounded-xl object-cover"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
 
 function DeleteCartModal({ request, onCancel, onConfirm }) {
   if (!request) return null;
@@ -60,7 +81,7 @@ export default function Cart() {
     selectedItems,
     selectedSubtotal,
   } = useCart();
-  const navigate = useNavigate();
+  const { navigateWithTransition } = useHeaderTransition();
   const { reveal } = useReveal();
   const [availability, setAvailability] = useState({});
   const [checkingStock, setCheckingStock] = useState(true);
@@ -125,7 +146,7 @@ export default function Cart() {
         );
         return;
       }
-      navigate("/payment");
+      navigateWithTransition("/payment");
     } catch {
       setAvailabilityNotice(
         "We couldn't verify current availability. Please try again before payment.",
@@ -145,7 +166,7 @@ export default function Cart() {
           </div>
           <p className="text-gray-400 text-center">Your cart is empty.</p>
           <button
-            onClick={() => navigate("/browse")}
+            onClick={() => navigateWithTransition("/browse")}
             className="aisyah-primary-button"
           >
             Browse livestock
@@ -255,7 +276,7 @@ export default function Cart() {
                   : `/livestock/${encodeURIComponent(detailId)}?from=cart`
                 : "";
               const openDetail = () => {
-                if (detailPath) navigate(detailPath);
+                if (detailPath) navigateWithTransition(detailPath);
               };
               return (
                 <div
@@ -291,13 +312,7 @@ export default function Cart() {
                       <Check className="w-4 h-4 text-white" />
                     )}
                   </button>
-                  {item.image ? (
-                    <img src={item.image} alt="" className="h-12 w-12 flex-shrink-0 rounded-xl object-cover" />
-                  ) : (
-                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#F7EDE2] px-1 text-center text-[10px] font-bold text-[#41362D]">
-                      {item.item_type === "bulk" ? "Bulk lot" : item.animal || "Livestock"}
-                    </span>
-                  )}
+                  <CartItemImage item={item} />
                   <div className="min-w-0">
                     <p className="break-words [overflow-wrap:anywhere] font-bold text-gray-900">
                       {item.item_type === "bulk"

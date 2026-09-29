@@ -1,8 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { CartItem, OrderItemType } from '../entities';
 import { CartsService } from '../carts/carts.service';
+import { ReservationsService } from '../reservations/reservations.service';
 
 type AddCartItemInput = {
   userId: string;
@@ -18,6 +19,7 @@ export class CartItemsService {
   constructor(
     @InjectRepository(CartItem) private readonly repository: Repository<CartItem>,
     private readonly cartsService: CartsService,
+    private readonly reservationsService: ReservationsService,
   ) {}
 
   async findAllForUser(userId: string): Promise<CartItem[]> {
@@ -32,6 +34,15 @@ export class CartItemsService {
   // snapshotting happens once at checkout, on order_items.
   async addItem(input: AddCartItemInput): Promise<CartItem> {
     this.assertValidTarget(input);
+    if (input.livestockId) {
+      const availability = await this.reservationsService.availability(input.livestockId, input.userId);
+      if (!availability.available && availability.state === 'reserved') {
+        throw new ConflictException('This livestock is currently reserved by another buyer.');
+      }
+      if (!availability.available) {
+        throw new ConflictException('This livestock is no longer available.');
+      }
+    }
     const cart = await this.cartsService.getOrCreateForUser(input.userId);
 
     // TypeORM throws on both `undefined` and a bare `null` inside a where

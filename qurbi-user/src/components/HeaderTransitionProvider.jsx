@@ -1,20 +1,31 @@
 import React, {
-  useCallback,
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import { UNSAFE_NavigationContext, useLocation } from "react-router-dom";
+import { flushSync } from "react-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const HEADER_TRANSITION_MS = 700;
+const NORMAL_EXIT_MS = 340;
+const ICON_EXIT_MS = 620;
+const ENTER_MS = 540;
+const FAILSAFE_MS = 1800;
+
 const HeaderTransitionContext = createContext({
+  phase: "idle",
   isContracting: false,
   isIconClosing: false,
   iconOrigin: null,
+  transitionType: null,
+  /** @type {(...args: any[]) => any} */
   beginIconTransition: () => {},
+  /** @type {(...args: any[]) => any} */
+  navigateWithTransition: () => {},
+  /** @type {(...args: any[]) => any} */
   navigateFromIconPage: () => {},
 });
 
@@ -22,109 +33,107 @@ export function useHeaderTransition() {
   return useContext(HeaderTransitionContext);
 }
 
-/** Delays route changes until the current header has contracted. */
-export default function HeaderTransitionProvider({ children }) {
-  const { navigator } = useContext(UNSAFE_NavigationContext);
-  const location = useLocation();
-  const [isContracting, setIsContracting] = useState(false);
-  const [isIconClosing, setIsIconClosing] = useState(false);
-  const [iconOrigin, setIconOrigin] = useState(null);
-  const transitionRunning = useRef(false);
-  const timer = useRef(null);
+const iconTypeForPath = (pathname) =>
+  pathname === "/notifications"
+    ? "notification"
+    : pathname === "/profile"
+      ? "profile"
+      : null;
 
-  const beginIconTransition = (type, element) => {
-    if (!element || transitionRunning.current) return;
+export default function HeaderTransitionProvider({ children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [phase, setPhase] = useState("idle");
+  const [iconOrigin, setIconOrigin] = useState(null);
+  const [transitionType, setTransitionType] = useState(null);
+  const lockedRef = useRef(false);
+  const iconOriginRef = useRef(null);
+  const timersRef = useRef(new Set());
+  const locationKeyRef = useRef(location.key);
+
+  const schedule = useCallback((callback, delay) => {
+    const timer = window.setTimeout(() => {
+      timersRef.current.delete(timer);
+      callback();
+    }, delay);
+    timersRef.current.add(timer);
+    return timer;
+  }, []);
+
+  const unlock = useCallback(() => {
+    lockedRef.current = false;
+    setPhase("idle");
+    setTransitionType(null);
+  }, []);
+
+  const beginIconTransition = useCallback((type, element) => {
+    if (!element) return;
     const bounds = element.getBoundingClientRect();
-    setIconOrigin({
+    const origin = {
       type,
       x: bounds.left + bounds.width / 2,
       y: bounds.top + bounds.height / 2,
-    });
-  };
+    };
+    iconOriginRef.current = origin;
+    setIconOrigin(origin);
+  }, []);
+
+  const navigateWithTransition = useCallback(
+    (destination, options = {}) => {
+      if (lockedRef.current) return false;
+
+      const currentType = iconTypeForPath(location.pathname);
+      const destinationPath =
+        typeof destination === "string"
+          ? new URL(destination, window.location.href).pathname
+          : "";
+      const destinationType = iconTypeForPath(destinationPath);
+      const requestedType =
+        options.transitionType || currentType || destinationType || null;
+      const closingFromIcon = Boolean(
+        currentType && iconOriginRef.current?.type === currentType,
+      );
+
+      lockedRef.current = true;
+      setTransitionType(requestedType);
+      setPhase("exiting");
+
+      const delay = closingFromIcon ? ICON_EXIT_MS : NORMAL_EXIT_MS;
+      schedule(() => {
+        if (typeof destination === "number") {
+          navigate(destination);
+          return;
+        }
+        flushSync(() => {
+          navigate(destination, options.navigateOptions);
+        });
+      }, delay);
+      schedule(unlock, FAILSAFE_MS);
+      return true;
+    },
+    [location.pathname, navigate, schedule, unlock],
+  );
 
   const navigateFromIconPage = useCallback(
-    (destination) => {
-      const completeNavigation = () => {
-        if (typeof destination === "number") navigator.go(destination);
-        else navigator.push(destination);
-      };
-
-      // The history blocker below already coordinates this when it is exposed
-      // by the active router implementation.
-      if (typeof navigator.block === "function") {
-        completeNavigation();
-        return;
-      }
-
-      const currentType =
-        location.pathname === "/notifications"
-          ? "notification"
-          : location.pathname === "/profile"
-            ? "profile"
-            : null;
-      const canAnimate = Boolean(
-        currentType && iconOrigin?.type === currentType,
-      );
-
-      if (!canAnimate) {
-        completeNavigation();
-        return;
-      }
-      if (transitionRunning.current) return;
-
-      transitionRunning.current = true;
-      setIsContracting(false);
-      setIsIconClosing(true);
-
-      timer.current = window.setTimeout(
-        completeNavigation,
-        currentType === "profile" ? 650 : 620,
-      );
-    },
-    [iconOrigin, location.pathname, navigator],
+    (destination, navigateOptions) =>
+      navigateWithTransition(destination, { navigateOptions }),
+    [navigateWithTransition],
   );
 
   useLayoutEffect(() => {
-    if (typeof navigator.block !== "function") return undefined;
+    if (locationKeyRef.current === location.key) return;
+    locationKeyRef.current = location.key;
+    // A route must never inherit the previous screen's scroll offset. Doing
+    // this in layout effect keeps the destination header in place before its
+    // first painted frame, including navigation from a collapsed header.
+    window.scrollTo(0, 0);
+    setPhase("entering");
+    schedule(unlock, ENTER_MS);
+  }, [location.key, schedule, unlock]);
 
-    const unblock = navigator.block((transition) => {
-      if (transitionRunning.current) return;
-
-      transitionRunning.current = true;
-      setIsContracting(true);
-      const currentType =
-        location.pathname === "/notifications"
-          ? "notification"
-          : location.pathname === "/profile"
-            ? "profile"
-            : null;
-      const isClosingFromIcon = Boolean(
-        currentType && iconOrigin?.type === currentType,
-      );
-      setIsIconClosing(isClosingFromIcon);
-
-      const transitionDelay = isClosingFromIcon
-        ? currentType === "profile"
-          ? 650
-          : 620
-        : HEADER_TRANSITION_MS;
-
-      timer.current = window.setTimeout(() => {
-        unblock();
-        transition.retry();
-      }, transitionDelay);
-    });
-
-    return () => {
-      unblock();
-    };
-  }, [navigator, location.key, location.pathname, iconOrigin]);
-
-  // BrowserRouter does not expose navigator.block. In that setup, delay normal
-  // in-app link navigation here so the current header can finish contracting.
+  // Links cover BottomNav, cards and normal header actions. Programmatic
+  // navigation uses navigateWithTransition explicitly on the affected pages.
   useEffect(() => {
-    if (typeof navigator.block === "function") return undefined;
-
     const handleLinkClick = (event) => {
       if (
         event.defaultPrevented ||
@@ -133,86 +142,51 @@ export default function HeaderTransitionProvider({ children }) {
         event.ctrlKey ||
         event.shiftKey ||
         event.altKey
-      ) {
-        return;
-      }
+      ) return;
 
       const link = event.target.closest("a[href]");
-      if (
-        !link ||
-        link.hasAttribute("download") ||
-        (link.target && link.target !== "_self")
-      ) {
-        return;
-      }
-
-      const destinationUrl = new URL(link.href, window.location.href);
-      if (destinationUrl.origin !== window.location.origin) return;
-
-      const destination = `${destinationUrl.pathname}${destinationUrl.search}${destinationUrl.hash}`;
+      if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self")) return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      const destination = `${url.pathname}${url.search}${url.hash}`;
       const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
       if (destination === current) return;
 
-      if (transitionRunning.current) {
-        event.preventDefault();
-        return;
-      }
-
-      const iconPages = ["/notifications", "/profile"];
-      const leavingIconPage = iconPages.includes(window.location.pathname);
-      const enteringIconPage = iconPages.includes(destinationUrl.pathname);
-
-      // Entering these pages retains the existing icon-origin animation.
-      if (enteringIconPage) {
-        return;
-      }
-
-      // Leaving reverses that animation before committing the navigation.
-      if (leavingIconPage) {
-        event.preventDefault();
-        navigateFromIconPage(destination);
-        return;
-      }
-
       event.preventDefault();
-      transitionRunning.current = true;
-      setIsContracting(true);
-
-      timer.current = window.setTimeout(
-        () => navigator.push(destination),
-        HEADER_TRANSITION_MS,
-      );
+      if (lockedRef.current) return;
+      const destinationType = iconTypeForPath(url.pathname);
+      if (destinationType) beginIconTransition(destinationType, link);
+      navigateWithTransition(destination, {
+        transitionType: destinationType || iconOriginRef.current?.type,
+      });
     };
 
     document.addEventListener("click", handleLinkClick, true);
     return () => document.removeEventListener("click", handleLinkClick, true);
-  }, [navigateFromIconPage, navigator]);
+  }, [beginIconTransition, navigateWithTransition]);
 
   useEffect(() => {
-    transitionRunning.current = false;
-    setIsContracting(false);
-    setIsIconClosing(false);
-
-    const destinationType =
-      location.pathname === "/notifications"
-        ? "notification"
-        : location.pathname === "/profile"
-          ? "profile"
-          : null;
-    if (!destinationType) setIconOrigin(null);
-
     return () => {
-      if (timer.current) window.clearTimeout(timer.current);
+      for (const timer of timersRef.current) window.clearTimeout(timer);
+      timersRef.current.clear();
     };
-  }, [location.key]);
+  }, []);
+
+  const currentIconType = iconTypeForPath(location.pathname);
+  const isIconClosing =
+    phase === "exiting" &&
+    Boolean(currentIconType && iconOrigin?.type === currentIconType);
 
   return (
     <HeaderTransitionContext.Provider
       value={{
-        isContracting,
+        phase,
+        isContracting: phase === "exiting" && !isIconClosing,
         isIconClosing,
         iconOrigin,
+        transitionType,
         beginIconTransition,
+        navigateWithTransition,
         navigateFromIconPage,
       }}
     >

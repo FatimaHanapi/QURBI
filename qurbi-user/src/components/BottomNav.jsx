@@ -52,7 +52,6 @@ export default function BottomNav() {
                 <Link
                   key={path}
                   to={path}
-                  viewTransition
                   className="relative -mt-10 flex flex-1 flex-col items-center"
                 >
                   <div
@@ -83,7 +82,6 @@ export default function BottomNav() {
               <Link
                 key={path}
                 to={path}
-                viewTransition
                 className="relative flex flex-1 flex-col items-center justify-end gap-1 py-1 active:scale-90 transition-transform"
               >
                 <div

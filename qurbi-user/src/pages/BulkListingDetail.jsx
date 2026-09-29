@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Link,
-  useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom";
@@ -21,16 +20,17 @@ import {
   DetailOuterSheet,
   LightDetailCard,
 } from "@/components/DetailsSurface";
-import PageLoading from "@/components/PageLoading";
+import DetailPageLoading from "@/components/DetailPageLoading";
 import {
   animateProductToCart,
   captureCartAnimationSource,
 } from "@/lib/cart-animation";
 import { getBreedGenderBreakdown } from "@/lib/bulk-listing";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
 export default function BulkListingDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigateWithTransition } = useHeaderTransition();
   const [searchParams] = useSearchParams();
   const openedFromCart = searchParams.get("from") === "cart";
   const returnPath = openedFromCart ? "/cart" : "/bulk-buy";
@@ -81,7 +81,13 @@ export default function BulkListingDetail() {
   }
 
   if (!listing) {
-    return <PageLoading hideHeader message="Loading bulk details..." />;
+    return (
+      <DetailPageLoading
+        message="Loading bulk details..."
+        backTo={returnPath}
+        backLabel={returnLabel}
+      />
+    );
   }
 
   const total = listing.totalAnimals ??
@@ -118,7 +124,7 @@ export default function BulkListingDetail() {
         if (now) {
           buyNow(item);
           animateProductToCart(animationSource);
-          navigate("/payment");
+          navigateWithTransition("/payment");
         } else {
           if (!addToCart(item)) {
             alert("This bulk lot is already in your cart.");
@@ -149,7 +155,7 @@ export default function BulkListingDetail() {
       <div className="relative h-72 bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2]">
         <button
           type="button"
-          onClick={() => navigate(returnPath)}
+          onClick={() => navigateWithTransition(returnPath)}
           aria-label={returnLabel}
           className="absolute left-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-xl border border-[#F7EDE2]/60 bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white shadow-lg shadow-black/20 transition-all duration-200 ease-out active:scale-[0.98]"
         >

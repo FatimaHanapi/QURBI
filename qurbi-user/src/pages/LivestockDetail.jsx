@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   useParams,
-  useNavigate,
   Link,
   useSearchParams,
 } from "react-router-dom";
@@ -25,11 +24,12 @@ import {
   DetailOuterSheet,
   LightDetailCard,
 } from "@/components/DetailsSurface";
-import PageLoading from "@/components/PageLoading";
+import DetailPageLoading from "@/components/DetailPageLoading";
 import {
   animateProductToCart,
   captureCartAnimationSource,
 } from "@/lib/cart-animation";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
 function AvailabilityModal({ state, onClose, onBrowse, backLabel }) {
   if (!state) return null;
@@ -69,7 +69,7 @@ function AvailabilityModal({ state, onClose, onBrowse, backLabel }) {
 
 export default function LivestockDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { navigateWithTransition } = useHeaderTransition();
   const [searchParams] = useSearchParams();
   const openedFromCart = searchParams.get("from") === "cart";
   const returnPath = openedFromCart ? "/cart" : "/browse";
@@ -176,13 +176,17 @@ export default function LivestockDetail() {
       }
       buyNow(buildCartItem());
       animateProductToCart(animationSource);
-      navigate("/payment");
+      navigateWithTransition("/payment");
     });
   };
 
   if (loading && !livestock) {
     return (
-      <PageLoading hideHeader message="Loading livestock details..." />
+      <DetailPageLoading
+        message="Loading livestock details..."
+        backTo={returnPath}
+        backLabel={returnLabel}
+      />
     );
   }
 
@@ -253,7 +257,7 @@ export default function LivestockDetail() {
       >
         <button
           type="button"
-          onClick={() => navigate(returnPath)}
+          onClick={() => navigateWithTransition(returnPath)}
           aria-label={returnLabel}
           className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-xl border border-[#F7EDE2]/60 bg-[#41362D]/80 text-white shadow-lg backdrop-blur-sm active:scale-95"
         >
@@ -468,7 +472,7 @@ export default function LivestockDetail() {
       <AvailabilityModal
         state={availabilityModal}
         onClose={() => setAvailabilityModal("")}
-        onBrowse={() => navigate(returnPath)}
+        onBrowse={() => navigateWithTransition(returnPath)}
         backLabel={returnLabel}
       />
     </div>

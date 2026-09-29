@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { MapPin, Package, Search, Users } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { loadBulkListings } from "@/lib/farmerClient";
@@ -15,6 +15,7 @@ import {
   compactBreedGenderLabel,
   getBreedGenderBreakdown,
 } from "@/lib/bulk-listing";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
 const lotTotal = (listing) =>
   listing.totalAnimals ??
@@ -36,7 +37,30 @@ const toCartItem = (listing) => ({
   image: listing.coverImage || listing.images?.[0] || "",
 });
 
+function BulkListingImage({ image, name }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (!image || imageFailed) {
+    return (
+      <div className="flex h-full items-center justify-center bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] text-xs font-bold text-[#41362D]">
+        No image
+      </div>
+    );
+  }
+
+  return (
+    <img
+      data-cart-product-image
+      src={image}
+      alt={name || "Bulk product"}
+      className="h-full w-full object-cover"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
 export default function BulkBuy() {
+  const { navigateWithTransition } = useHeaderTransition();
   const [listings, setListings] = useState([]);
   const [query, setQuery] = useState("");
   const [state, setState] = useState("");
@@ -44,8 +68,6 @@ export default function BulkBuy() {
   const [error, setError] = useState("");
   const { addToCart, buyNow } = useCart();
   const requireAuth = useRequireAuth();
-  const navigate = useNavigate();
-
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -98,7 +120,7 @@ export default function BulkBuy() {
         const item = toCartItem(listing);
         if (goToCart) {
           buyNow(item);
-          navigate("/payment");
+          navigateWithTransition("/payment");
         } else {
           if (!addToCart(item)) {
             alert("This bulk lot is already in your cart.");
@@ -196,18 +218,7 @@ export default function BulkBuy() {
                   className="flex gap-3 p-3"
                 >
                   <div className="h-24 w-24 flex-none overflow-hidden rounded-xl bg-[#F7EDE2]">
-                    {image ? (
-                      <img
-                        data-cart-product-image
-                        src={image}
-                        alt={listing.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-xs font-bold text-[#41362D]">
-                        Bulk lot
-                      </div>
-                    )}
+                    <BulkListingImage image={image} name={listing.name} />
                   </div>
 
                   <div className="min-w-0 flex-1">

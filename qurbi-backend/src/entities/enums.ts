@@ -61,6 +61,13 @@ export enum PaymentStatus {
   REFUNDED = 'refunded',
 }
 
+export enum ReservationStatus {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  EXPIRED = 'expired',
+  CANCELLED = 'cancelled',
+}
+
 export enum DeliveryMethod {
   DELIVERY = 'delivery',
   SELF_PICKUP = 'self_pickup',

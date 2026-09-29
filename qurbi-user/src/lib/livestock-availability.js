@@ -28,6 +28,8 @@ export async function checkCartAvailability(items) {
 }
 
 export function availabilityMessage(result) {
+  if (result?.state === "reserved") return "This livestock is currently reserved by another buyer.";
+  if (result?.state === "reserved_by_you") return "Complete payment from your existing To Pay order.";
   if (result?.state === "not_found") return "This livestock listing could not be verified. Please refresh and try again.";
   if (["marketplace_hidden", "species_not_approved", "breed_not_approved"].includes(result?.state)) {
     return "This livestock listing is not approved for the marketplace.";

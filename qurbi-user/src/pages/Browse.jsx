@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   Search,
   X,
@@ -19,9 +19,10 @@ import { useReveal } from "@/hooks/useReveal";
 import AppHeader from "@/components/AppHeader";
 import PageLoading from "@/components/PageLoading";
 import { isProductExpired } from "@/lib/product-expiry";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
 function LivestockCard({ livestock, index = 0 }) {
-  const navigate = useNavigate();
+  const { navigateWithTransition } = useHeaderTransition();
   const imageReferences = [livestock.coverImage, ...(livestock.images || [])]
     .map((image) => {
       if (typeof image === "string") return image.trim();
@@ -46,7 +47,7 @@ function LivestockCard({ livestock, index = 0 }) {
 
   return (
     <div
-      onClick={() => navigate(`/livestock/${livestock.id}`)}
+      onClick={() => navigateWithTransition(`/livestock/${livestock.id}`)}
       className="relative min-h-[210px] cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] shadow-lg shadow-[#41362D]/30 animate-fade-in-up active:scale-[0.98] transition-transform sm:min-h-[285px]"
       style={{
         animationDelay: `${Math.min(index * 40, 300)}ms`,
@@ -62,8 +63,8 @@ function LivestockCard({ livestock, index = 0 }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[#E3C19F] text-sm font-bold text-[#41362D]">
-            {livestock.species || "Livestock"}
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#E3C19F] to-[#F7EDE2] text-sm font-bold text-[#41362D]">
+            No image
           </div>
         )}
 
@@ -103,8 +104,8 @@ function LivestockCard({ livestock, index = 0 }) {
                 strokeWidth={3}
               />
             </span>
-          )}
-          <div className="absolute bottom-7 left-0 right-0 flex min-w-0 flex-nowrap items-center gap-0.5 overflow-hidden text-[11px] font-semibold leading-none text-white/90 sm:bottom-8 sm:gap-1 sm:text-sm sm:leading-normal">
+          )}<br></br>
+          <div className="absolute bottom-5 left-0 right-0 flex min-w-0 flex-nowrap items-center gap-0.5 overflow-hidden text-[11px] font-semibold leading-none text-white/90 sm:bottom-8 sm:gap-1 sm:text-sm sm:leading-normal">
             {livestock.age && (
               <span className="whitespace-nowrap px-1 py-0.5">
                 {livestock.age}
@@ -130,7 +131,6 @@ function LivestockCard({ livestock, index = 0 }) {
 }
 
 export default function Browse() {
-  const navigate = useNavigate();
   const location = useLocation();
 
   const [livestock, setLivestock] = useState([]);

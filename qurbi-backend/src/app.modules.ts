@@ -17,6 +17,7 @@ import { SpeciesRequestsModule } from './species-requests/species-requests.modul
 import { BreedRequestsModule } from './breed-requests/breed-requests.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { ReservationsModule } from './reservations/reservations.module';
 
 export const APP_MODULES = [
   AuthModule,
@@ -38,4 +39,5 @@ export const APP_MODULES = [
   SpeciesRequestsModule,
   BreedRequestsModule,
   AddressesModule,
+  ReservationsModule,
 ];

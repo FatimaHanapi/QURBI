@@ -448,25 +448,20 @@ html {
   }
 }
 .animate-page-enter {
-  animation: pageEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: filter;
+  animation: none;
 }
 .animate-page-exit {
-  animation: pageExit 0.7s cubic-bezier(0.45, 0, 0.25, 1) both;
   pointer-events: none;
-  will-change: filter;
 }
 
 @keyframes pageContentExit {
   from {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
   to {
     opacity: 0;
-    transform: translateY(6px);
-    filter: blur(1.5px);
+    transform: translateY(4px);
   }
 }
 
@@ -474,24 +469,22 @@ html {
   from {
     opacity: 0;
     transform: translateY(6px);
-    filter: blur(1.5px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 }
 
 /* Keep the shared header and fixed navbar stable while only page content exits. */
 .animate-page-exit > :first-child > :not(header) {
-  animation: pageContentExit 0.52s cubic-bezier(0.45, 0, 0.25, 1) both;
-  will-change: opacity, transform, filter;
+  animation: pageContentExit 0.26s cubic-bezier(0.45, 0, 0.25, 1) both;
+  will-change: opacity, transform;
 }
 
 .animate-page-enter > :first-child > :not(header) {
-  animation: pageContentEnter 0.5s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: opacity, transform, filter;
+  animation: pageContentEnter 0.36s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
 }
 
 @keyframes headerCopyEnter {
@@ -526,12 +519,12 @@ html {
 }
 
 .animate-header-copy-enter {
-  animation: headerCopyEnter 0.68s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: headerCopyEnter 0.44s cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: opacity, clip-path, transform;
 }
 
 .animate-header-copy-exit {
-  animation: headerCopyExit 0.6s cubic-bezier(0.45, 0, 0.25, 1) both;
+  animation: headerCopyExit 0.26s cubic-bezier(0.45, 0, 0.25, 1) both;
   will-change: opacity, clip-path, transform;
 }
 

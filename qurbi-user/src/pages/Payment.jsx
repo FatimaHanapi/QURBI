@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   MapPin,
   ChevronRight,
@@ -7,7 +7,6 @@ import {
   Phone,
   Mail,
   Star,
-  Truck,
   CreditCard,
   ArrowLeft,
 } from "lucide-react";
@@ -26,15 +25,47 @@ import { loadLivestockById } from "@/lib/farmerClient";
 import { QurbiPageLoader } from "@/components/QurbiLoading";
 import { useAuthPrompt } from "@/lib/auth-prompt-context";
 import AuthRequiredState from "@/components/AuthRequiredState";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
-const ANIMAL_EMOJIS = {
-  Cow: "🐄",
-  Lamb: "🐑",
-  Goat: "🐐",
-  Buffalo: "🐃",
-  Camel: "🐪",
-};
 const DUMMY_DELIVERY_FEE_PER_FARMER = 10;
+const PAYMENT_CARD_SHADOW = "shadow-[0_12px_28px_rgba(65,54,45,0.18)]";
+
+function PaymentItemImage({ item, product }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageUrl =
+    item.image ||
+    item.coverImage ||
+    item.cover_image ||
+    item.imageSnapshot ||
+    item.image_snapshot ||
+    item.images?.[0] ||
+    product?.coverImage ||
+    product?.images?.[0] ||
+    "";
+
+  return (
+    <div
+      className={`flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-md shadow-black/15 ${
+        imageUrl && !imageFailed
+          ? ""
+          : "border-2 border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A]"
+      }`}
+    >
+      {imageUrl && !imageFailed ? (
+        <img
+          src={imageUrl}
+          alt={item.listing_name || item.breed || "Order product"}
+          className="h-full w-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span className="px-1 text-center text-[9px] font-bold leading-tight text-white">
+          No image
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default function Payment() {
   const { requestSignIn } = useAuthPrompt();
@@ -47,7 +78,7 @@ export default function Payment() {
     selectedAddress,
     profile,
   } = useUserProfile();
-  const navigate = useNavigate();
+  const { navigateWithTransition } = useHeaderTransition();
   const [searchParams] = useSearchParams();
   const { reveal } = useReveal();
   const resumeOrderId = searchParams.get("order_id");
@@ -77,8 +108,12 @@ export default function Payment() {
           orderId: resumeOrderId,
         });
         const order = response.data?.order;
-        if (!order || !["pending", "pending_payment", "to_pay"].includes(order.status))
+        if (!order || !["pending", "pending_payment", "to_pay"].includes(order.status)) {
+          if (order?.cancellationReason === "Payment reservation expired") {
+            throw new Error("Payment reservation expired.");
+          }
           throw new Error("This order is no longer awaiting payment.");
+        }
         if (active) {
           setResumedOrder(order);
           setLoadingProductDetails(
@@ -192,7 +227,7 @@ export default function Payment() {
             ? "This bulk lot is no longer available."
             : availabilityMessage(latest[unavailable?.key]),
         );
-        navigate(isResumingOrder ? "/orders" : "/cart");
+        navigateWithTransition(isResumingOrder ? "/orders" : "/cart");
         return;
       }
     } catch {
@@ -286,7 +321,7 @@ export default function Payment() {
       await qurbiApi.functions.invoke("cancelMyOrder", {
         orderId: resumedOrder.id,
       });
-      navigate("/orders", { replace: true });
+      navigateWithTransition("/orders", { navigateOptions: { replace: true } });
     } catch (error) {
       setCancelError(
         error.data?.error ||
@@ -309,7 +344,7 @@ export default function Payment() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#E3C19F] p-8">
         <p className="text-gray-500 text-center">{resumeError}</p>
         <button
-          onClick={() => navigate("/orders")}
+          onClick={() => navigateWithTransition("/orders")}
           className="rounded-xl px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"
         >
           Back to My Orders
@@ -321,7 +356,7 @@ export default function Payment() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#E3C19F] p-8">
         <p className="text-gray-500">No items selected for payment.</p>
         <button
-          onClick={() => navigate(isResumingOrder ? "/orders" : "/cart")}
+          onClick={() => navigateWithTransition(isResumingOrder ? "/orders" : "/cart")}
           className="rounded-xl px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"
         >
           {isResumingOrder ? "Back to My Orders" : "Back to Cart"}
@@ -337,7 +372,7 @@ export default function Payment() {
           addresses={addresses}
           selectedId={selectedAddressId}
           onSelect={setSelectedAddressId}
-          onAddNew={() => navigate("/address-book?new=1&returnTo=%2Fpayment")}
+          onAddNew={() => navigateWithTransition("/address-book?new=1&returnTo=%2Fpayment")}
           onClose={() => setShowPicker(false)}
         />
       )}
@@ -345,9 +380,9 @@ export default function Payment() {
       <div className="flex items-center gap-3 px-4 pt-5">
         <button
           type="button"
-          onClick={() => navigate(isResumingOrder ? "/orders" : "/cart")}
+          onClick={() => navigateWithTransition(isResumingOrder ? "/orders" : "/cart")}
           aria-label="Go back"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#F7EDE2] bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white shadow-sm active:scale-95"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white shadow-md shadow-black/20 active:scale-95"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -366,7 +401,7 @@ export default function Payment() {
       <div className="qurbi-content">
         {/* Selected Items (read-only) */}
         <div
-          className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-50 ${reveal()}`}
+          className={`bg-white rounded-2xl p-4 border border-gray-50 ${reveal()}`}
           style={{ animationDelay: "80ms" }}
         >
           <h3 className="text-gray-900 font-bold mb-3">Order Items</h3>
@@ -377,27 +412,16 @@ export default function Payment() {
                 className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  {productDetails[item.livestock_id]?.coverImage ||
-                  productDetails[item.livestock_id]?.images?.[0] ? (
-                    <img
-                      src={
-                        productDetails[item.livestock_id]?.coverImage ||
-                        productDetails[item.livestock_id]?.images?.[0]
-                      }
-                      alt=""
-                      className="w-11 h-11 rounded-lg object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <span className="w-11 h-11 rounded-lg bg-[#F7EDE2] flex items-center justify-center text-lg flex-shrink-0">
-                      {ANIMAL_EMOJIS[item.animal]}
-                    </span>
-                  )}
+                  <PaymentItemImage
+                    item={item}
+                    product={productDetails[item.livestock_id]}
+                  />
                   <div className="min-w-0">
                     <p className="text-gray-800 font-semibold text-sm truncate">
                       {item.item_type === "bulk"
                         ? item.listing_name
                         : item.breed}{" "}
-                      × {item.item_type === "bulk" ? "1 lot" : item.quantity}
+                         {item.item_type === "bulk" ? "1 lot" : item.quantity}
                     </p>
                     <p className="text-gray-400 text-xs truncate">
                       {item.farmer_name || "Unknown Farmer"}
@@ -411,40 +435,13 @@ export default function Payment() {
             ))}
           </div>
         </div>
-
-        {/* Fulfillment Method */}
-        {isResumingOrder ? (
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
-            <h3 className="text-gray-800 font-bold text-sm">
-              Existing unpaid order
-            </h3>
-            <p className="text-gray-500 text-sm mt-1">
-              Delivery ·{" "}
-              {buyerName || "Buyer details saved with this order"}
-            </p>
-          </div>
-        ) : (
-          <div
-            className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-50 ${reveal()}`}
-            style={{ animationDelay: "120ms" }}
-          >
-            <h3 className="mb-3 text-sm font-bold text-gray-800">Fulfillment</h3>
-            <div className="flex items-center gap-3 rounded-xl border-2 border-[#A9825F] bg-[#F7EDE2] p-3">
-              <Truck className="h-6 w-6 text-[#A9825F]" />
-              <div>
-                <p className="text-sm font-bold text-[#41362D]">Delivery</p>
-                <p className="text-xs text-[#6B594A]">Delivered to your selected address</p>
-              </div>
-            </div>
-          </div>
-        )}
-
+            <br></br>
         {/* Delivery Address + Buyer Info */}
         {!isResumingOrder && (
           <>
             <button
               onClick={() => setShowPicker(true)}
-              className={`w-full bg-white rounded-2xl shadow-sm border-2 overflow-hidden transition-all text-left active:scale-[0.99] ${selectedAddress ? "border-[#D5B18D]" : "border-dashed border-orange-200"}`}
+              className={`w-full bg-white rounded-2xl ${PAYMENT_CARD_SHADOW} border-2 overflow-hidden transition-all text-left active:scale-[0.99] ${selectedAddress ? "border-[#D5B18D]" : "border-dashed border-orange-200"}`}
             >
               <div
                 className={`px-4 py-2 flex items-center justify-between ${selectedAddress ? "bg-[#F7EDE2]" : "bg-orange-50"}`}
@@ -460,10 +457,10 @@ export default function Payment() {
               </div>
               <div className="px-4 py-3 flex items-start gap-3">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedAddress ? "bg-[#F7EDE2]" : "bg-orange-50"}`}
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border-2 border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A] shadow-md shadow-black/15"
                 >
                   <MapPin
-                    className={`h-5 w-5 ${selectedAddress ? "text-[#A9825F]" : "text-orange-300"}`}
+                    className="h-5 w-5 text-white"
                   />
                 </div>
                 {selectedAddress ? (
@@ -509,7 +506,7 @@ export default function Payment() {
             </button>
 
             <div
-              className={`bg-white rounded-2xl p-4 shadow-sm border ${!buyerName || !buyerEmail ? "border-orange-100" : "border-gray-50"} space-y-2`}
+              className={`bg-white rounded-2xl p-4 ${PAYMENT_CARD_SHADOW} border ${!buyerName || !buyerEmail ? "border-orange-100" : "border-gray-50"} space-y-2`}
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-gray-800 font-bold text-sm">
@@ -538,16 +535,22 @@ export default function Payment() {
               ) : (
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-gray-300" />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A]">
+                      <User className="h-3.5 w-3.5 text-white" />
+                    </span>
                     <span className="text-gray-800 text-sm">{buyerName}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-gray-300" />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A]">
+                      <Mail className="h-3.5 w-3.5 text-white" />
+                    </span>
                     <span className="text-gray-600 text-sm">{buyerEmail}</span>
                   </div>
                   {buyerPhone && (
                     <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-gray-300" />
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A]">
+                        <Phone className="h-3.5 w-3.5 text-white" />
+                      </span>
                       <span className="text-gray-600 text-sm">
                         {buyerPhone}
                       </span>
@@ -617,7 +620,7 @@ export default function Payment() {
           <button
             onClick={handleCheckout}
             disabled={loading || !canCheckout}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] py-4 text-lg font-bold text-white shadow-md shadow-black/20 transition-all duration-200 ease-out hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A] py-4 text-lg font-bold text-white shadow-md shadow-black/20 transition-all duration-200 ease-out hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? (
               <span className="flex items-center gap-2">
@@ -626,7 +629,10 @@ export default function Payment() {
               </span>
             ) : (
               <>
-                <CreditCard className="w-5 h-5" /> Pay RM{" "}
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E3C19F] bg-gradient-to-br from-[#41362D] to-[#6B594A]">
+                  <CreditCard className="h-5 w-5 text-white" />
+                </span>
+                Pay RM{" "}
                 {grandTotal.toLocaleString()}
               </>
             )}
