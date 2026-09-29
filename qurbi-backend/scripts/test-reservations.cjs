@@ -1,6 +1,6 @@
 const mysql = require('mysql2/promise');
 
-const api = 'http://localhost:3000/api';
+const api = process.env.API_BASE_URL || 'http://localhost:3000/api';
 const stamp = Date.now();
 const testEmails = [`reservation-a-${stamp}@example.test`, `reservation-b-${stamp}@example.test`];
 const password = 'ReservationTest123!';
@@ -105,6 +105,12 @@ async function main() {
     if (failedPayment.status !== 201 || afterFailure.orderStatus !== 'pending_payment' || afterFailure.paymentStatus !== 'failed' || afterFailure.reservationStatus !== 'active') {
       throw new Error(`Failed payment released the reservation: ${JSON.stringify(afterFailure)}`);
     }
+    const buyerOrders = await request('/orders', { token: tokens[winnerIndex] });
+    const failedOrder = buyerOrders.data?.find((candidate) => candidate.id === order.id);
+    const activeReservation = failedOrder?.reservations?.find((reservation) => reservation.status === 'active');
+    if (buyerOrders.status !== 200 || !activeReservation?.expiresAt) {
+      throw new Error('The active reservation is not exposed on the buyer order');
+    }
 
     const loserAvailability = await request(`/livestock/${stock[0].id}/availability`, { token: tokens[loserIndex] });
     const winnerAvailability = await request(`/livestock/${stock[0].id}/availability`, { token: tokens[winnerIndex] });
@@ -135,7 +141,14 @@ async function main() {
       [stock[0].id, order.id, order.checkoutKey],
     );
     if (retry.status !== 201 || retry.data[0].id !== order.id || reservationAfter.id !== reservationBefore.id || new Date(reservationAfter.expiresAt).getTime() !== new Date(reservationBefore.expiresAt).getTime() || counts.reservations !== 1 || counts.payments !== 1 || counts.ordersCount !== 1) {
-      throw new Error('Idempotent retry created a duplicate or reset the expiry');
+      throw new Error(`Idempotent retry created a duplicate or reset the expiry: ${JSON.stringify({
+        retryStatus: retry.status,
+        retryOrderId: retry.data?.[0]?.id,
+        originalOrderId: order.id,
+        reservationBefore,
+        reservationAfter,
+        counts,
+      })}`);
     }
 
     const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET || 'local-reservation-test-secret';
@@ -175,6 +188,7 @@ async function main() {
       race: { winnerStatus: race[winnerIndex].status, loserStatus: race[loserIndex].status },
       pendingPayment: true,
       failedPayment: afterFailure,
+      visibleInOrdersUntil: activeReservation.expiresAt,
       ownership: { owner: winnerAvailability.data.state, otherBuyer: loserAvailability.data.state },
       directAccessStatus: publicDetail.status,
       hiddenFromBrowse: !browseRows.some((item) => item.id === stock[0].id),

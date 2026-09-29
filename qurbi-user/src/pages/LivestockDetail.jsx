@@ -116,7 +116,7 @@ export default function LivestockDetail() {
     id: livestock.id,
     animal: livestock.species,
     breed: livestock.breed,
-    price_per_head: livestock.price || 0,
+    price_per_head: Number(livestock.price) || 0,
     weight_min: livestock.weight ? Number(livestock.weight) : 0,
     weight_max: livestock.weight ? Number(livestock.weight) : 0,
     farmer_id: livestock.ownerId || livestock.created_by_id || "",

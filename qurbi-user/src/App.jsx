@@ -30,6 +30,7 @@ import { NotificationProvider } from "@/lib/notification-context";
 import Notifications from "@/pages/Notifications";
 import AdminTest from "@/pages/AdminTest";
 import { AuthPromptProvider } from "@/lib/auth-prompt-context";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 
 function LegacyAuthRedirect({ mode }) {
   const location = useLocation();
@@ -48,6 +49,7 @@ function App() {
               <AuthPromptProvider>
                 <NotificationProvider>
                   <HeaderTransitionProvider>
+                  <AppErrorBoundary>
                   <Routes>
                     <Route element={<AppLayout />}>
                       <Route path="/" element={<Home />} />
@@ -88,6 +90,7 @@ function App() {
                       <Route path="*" element={<PageNotFound />} />
                     </Route>
                   </Routes>
+                  </AppErrorBoundary>
                   </HeaderTransitionProvider>
                 </NotificationProvider>
               </AuthPromptProvider>

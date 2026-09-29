@@ -161,6 +161,9 @@ function bulkListingForUser(item) {
 
 function orderForUser(order) {
   if (!order) return order;
+  const activeReservation = (order.reservations || []).find(
+    (reservation) => reservation.status === "active",
+  );
   const items = (order.items || []).map((item) => ({
     ...item,
     item_type: item.itemType === "bulk_share" ? "bulk" : "livestock",
@@ -175,10 +178,15 @@ function orderForUser(order) {
   return {
     ...order,
     items,
+    created_date: order.createdAt || order.created_at || order.created_date || null,
+    updated_date: order.updatedAt || order.updated_at || order.updated_date || null,
     subtotal: Number(order.subtotal || 0),
     delivery_fee: Number(order.deliveryFee || 0),
     discount: Number(order.discount || 0),
     total: Number(order.total || 0),
+    payment_status: order.paymentStatus || "unpaid",
+    reservation_status: activeReservation?.status || "",
+    reservation_expires_at: activeReservation?.expiresAt || null,
     fulfillment_method: order.deliveryMethod === "self_pickup" ? "pickup" : "delivery",
     tracking_events: order.trackingEvents || [],
   };

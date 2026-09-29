@@ -11,16 +11,37 @@ export const parseBase44Timestamp = (value) => {
   return new Date(TIMEZONE_LESS_BASE44_TIMESTAMP.test(timestamp) ? `${timestamp}Z` : timestamp);
 };
 
-const parts = (value) => new Intl.DateTimeFormat("en-CA", { timeZone: ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(parseBase44Timestamp(value)).reduce((out, part) => ({ ...out, [part.type]: part.value }), {});
+const validDate = (value) => {
+  const date = parseBase44Timestamp(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+const parts = (value) => {
+  const date = validDate(value);
+  if (!date) return null;
+  return new Intl.DateTimeFormat("en-CA", { timeZone: ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date).reduce((out, part) => ({ ...out, [part.type]: part.value }), {});
+};
 const dateKey = ({ year, month, day }) => `${year}-${month}-${day}`;
 
-export const orderDateKey = (createdDate) => dateKey(parts(createdDate));
-export const orderTimestamp = (createdDate) => parseBase44Timestamp(createdDate).getTime();
-export const formatOrderDate = (createdDate, options = {}) => new Intl.DateTimeFormat("en-MY", { timeZone: ZONE, day: "numeric", month: "short", year: "numeric", ...options }).format(parseBase44Timestamp(createdDate));
-export const formatOrderTime = (createdDate) => new Intl.DateTimeFormat("en-MY", { timeZone: ZONE, hour: "numeric", minute: "2-digit", hour12: true }).format(parseBase44Timestamp(createdDate));
-export const formatOrderDateTime = (createdDate) => new Intl.DateTimeFormat("en-MY", { timeZone: ZONE, day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }).format(parseBase44Timestamp(createdDate));
+export const orderDateKey = (createdDate) => {
+  const dateParts = parts(createdDate);
+  return dateParts ? dateKey(dateParts) : "date-unavailable";
+};
+export const orderTimestamp = (createdDate) => validDate(createdDate)?.getTime() || 0;
+export const formatOrderDate = (createdDate, options = {}) => {
+  const date = validDate(createdDate);
+  return date ? new Intl.DateTimeFormat("en-MY", { timeZone: ZONE, day: "numeric", month: "short", year: "numeric", ...options }).format(date) : "Date unavailable";
+};
+export const formatOrderTime = (createdDate) => {
+  const date = validDate(createdDate);
+  return date ? new Intl.DateTimeFormat("en-MY", { timeZone: ZONE, hour: "numeric", minute: "2-digit", hour12: true }).format(date) : "Time unavailable";
+};
+export const formatOrderDateTime = (createdDate) => {
+  const date = validDate(createdDate);
+  return date ? new Intl.DateTimeFormat("en-MY", { timeZone: ZONE, day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }).format(date) : "Date unavailable";
+};
 export const orderDayHeading = (createdDate) => {
   const key = orderDateKey(createdDate);
+  if (key === "date-unavailable") return "Date unavailable";
   const todayParts = parts(new Date());
   const today = dateKey(todayParts);
   const yesterdayDate = new Date(Date.UTC(Number(todayParts.year), Number(todayParts.month) - 1, Number(todayParts.day) - 1));

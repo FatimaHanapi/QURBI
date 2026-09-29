@@ -84,7 +84,7 @@ export class OrdersService {
     await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager));
     return this.repository.find({
       where: { buyerId, hiddenFromBuyerHistory: false },
-      relations: { items: true },
+      relations: { items: true, reservations: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -126,7 +126,7 @@ export class OrdersService {
     await this.dataSource.transaction((manager) => this.reservationsService.expireDue(manager));
     const order = await this.repository.findOne({
       where: { id },
-      relations: { items: true, trackingEvents: true },
+      relations: { items: true, trackingEvents: true, reservations: true },
     });
     if (!order) throw new NotFoundException(`Order ${id} not found`);
     this.assertParty(order, actor, ['buyer', 'farmer']);

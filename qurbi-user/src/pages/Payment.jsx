@@ -21,6 +21,7 @@ import {
 } from "@/lib/livestock-availability";
 import AddressPickerModal from "@/components/AddressPickerModal";
 import CancelOrderModal from "@/components/CancelOrderModal";
+import PaymentErrorModal from "@/components/PaymentErrorModal";
 import { loadLivestockById } from "@/lib/farmerClient";
 import { QurbiPageLoader } from "@/components/QurbiLoading";
 import { useAuthPrompt } from "@/lib/auth-prompt-context";
@@ -29,6 +30,57 @@ import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
 const DUMMY_DELIVERY_FEE_PER_FARMER = 10;
 const PAYMENT_CARD_SHADOW = "shadow-[0_12px_28px_rgba(65,54,45,0.18)]";
+
+function friendlyPaymentError(error, reservationAlreadyExists = false) {
+  const status = error?.response?.status;
+  const rawMessage = String(
+    error?.response?.data?.message || error?.message || "",
+  ).toLowerCase();
+  const paymentWasDeclined =
+    status === 402 ||
+    /insufficient|balance|declin|payment failed|payment unsuccessful/.test(
+      rawMessage,
+    );
+
+  if (paymentWasDeclined) {
+    return {
+      title: "Payment was not completed",
+      message:
+        "The payment provider could not complete this payment. Please check your balance or payment method before trying again.",
+      reserved: true,
+    };
+  }
+  if (status === 409 || /reserved|no longer available/.test(rawMessage)) {
+    return {
+      title: "This item is unavailable",
+      message:
+        "Another buyer may have reserved this livestock. Please return to your cart and choose an available item.",
+      reserved: reservationAlreadyExists,
+    };
+  }
+  if (status === 401) {
+    return {
+      title: "Please sign in again",
+      message:
+        "Your session has ended. Sign in again, then return to your order to continue payment.",
+      reserved: reservationAlreadyExists,
+    };
+  }
+  if (!error?.response || /network|failed to fetch|qurbi server/.test(rawMessage)) {
+    return {
+      title: "We could not reach QURBI",
+      message:
+        "Please check that the QURBI server and your internet connection are available, then try again.",
+      reserved: reservationAlreadyExists,
+    };
+  }
+  return {
+    title: "We could not continue payment",
+    message:
+      "Something went wrong while preparing your payment. No extra charge was made. Please try again.",
+    reserved: reservationAlreadyExists,
+  };
+}
 
 function PaymentItemImage({ item, product }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -92,10 +144,15 @@ export default function Payment() {
   const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
   const fulfillmentMethod = "delivery";
 
   useEffect(() => {
     if (!resumeOrderId) return;
+    if (!authChecked) {
+      setLoadingOrder(true);
+      return;
+    }
     let active = true;
     (async () => {
       if (!isAuthenticated || !user?.id) {
@@ -103,6 +160,8 @@ export default function Payment() {
         setLoadingOrder(false);
         return;
       }
+      setLoadingOrder(true);
+      setResumeError("");
       try {
         const response = await qurbiApi.functions.invoke("fetchMyOrders", {
           orderId: resumeOrderId,
@@ -132,7 +191,7 @@ export default function Payment() {
     return () => {
       active = false;
     };
-  }, [isAuthenticated, resumeOrderId, user?.id]);
+  }, [authChecked, isAuthenticated, resumeOrderId, user?.id]);
 
   useEffect(() => {
     if (!resumedOrder?.items?.length) {
@@ -206,14 +265,32 @@ export default function Payment() {
       requestSignIn({ returnTo: "/payment", message: "Sign in to securely continue with checkout." });
       return;
     }
-    if (paymentItems.length === 0)
-      return alert("No items selected for checkout.");
+    setCheckoutError(null);
+    if (paymentItems.length === 0) {
+      setCheckoutError({
+        title: "Your payment list is empty",
+        message: "Select an item from your cart before continuing to payment.",
+        reserved: false,
+      });
+      return;
+    }
     if (!canCheckout) {
-      if (!selectedAddress) return alert("Please select a delivery address.");
-      if (!buyerName || !buyerEmail)
-        return alert(
-          "Your delivery details are missing a name or email. Please complete your profile and address.",
-        );
+      if (!selectedAddress) {
+        setCheckoutError({
+          title: "Delivery address needed",
+          message: "Choose or add a delivery address before continuing.",
+          reserved: isResumingOrder,
+        });
+        return;
+      }
+      if (!buyerName || !buyerEmail) {
+        setCheckoutError({
+          title: "Delivery details incomplete",
+          message: "Add your name and email in your profile before continuing.",
+          reserved: isResumingOrder,
+        });
+        return;
+      }
       return;
     }
     try {
@@ -222,24 +299,27 @@ export default function Payment() {
         const unavailable = paymentItems.find(
           (item) => !latest[item.key]?.available,
         );
-        alert(
-          unavailable?.item_type === "bulk"
-            ? "This bulk lot is no longer available."
-            : availabilityMessage(latest[unavailable?.key]),
-        );
-        navigateWithTransition(isResumingOrder ? "/orders" : "/cart");
+        setCheckoutError({
+          title: "This item is unavailable",
+          message:
+            unavailable?.item_type === "bulk"
+              ? "This bulk lot is no longer available. Please choose another listing."
+              : availabilityMessage(latest[unavailable?.key]),
+          reserved: false,
+        });
         return;
       }
-    } catch {
-      alert(
-        "We couldn't verify current livestock availability. Please try again.",
-      );
+    } catch (error) {
+      setCheckoutError(friendlyPaymentError(error, isResumingOrder));
       return;
     }
     if (window.self !== window.top) {
-      alert(
-        "Checkout only works from the published app. Please open the app in a new tab.",
-      );
+      setCheckoutError({
+        title: "Open QURBI in a full browser",
+        message:
+          "For your payment security, open QURBI in a new browser tab and try again.",
+        reserved: isResumingOrder,
+      });
       return;
     }
     setLoading(true);
@@ -304,10 +384,19 @@ export default function Payment() {
       });
       if (res.data?.url) {
         if (!isResumingOrder) removeSelected();
-        window.location.href = res.data.url;
-      } else alert("Could not initiate payment. Please try again.");
+        navigateWithTransition(res.data.url, {
+          navigateOptions: { replace: true },
+        });
+      } else {
+        setCheckoutError({
+          title: "Payment could not start",
+          message:
+            "Your order was saved, but the payment page could not be opened. Continue from My Orders.",
+          reserved: true,
+        });
+      }
     } catch (err) {
-      alert("Error: " + err.message);
+      setCheckoutError(friendlyPaymentError(err, isResumingOrder));
     } finally {
       setLoading(false);
     }
@@ -667,6 +756,14 @@ export default function Payment() {
         onClose={() => {
           setCancelError("");
           setCancelCandidate(null);
+        }}
+      />
+      <PaymentErrorModal
+        error={checkoutError}
+        onClose={() => setCheckoutError(null)}
+        onViewOrders={() => {
+          setCheckoutError(null);
+          navigateWithTransition("/orders");
         }}
       />
     </div>
