@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   MapPin,
   ChevronRight,
@@ -24,6 +24,7 @@ import { loadLivestockById } from "@/lib/farmerClient";
 import { QurbiPageLoader } from "@/components/QurbiLoading";
 import { useAuthPrompt } from "@/lib/auth-prompt-context";
 import AuthRequiredState from "@/components/AuthRequiredState";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
 const ANIMAL_EMOJIS = {
   Cow: "🐄",
@@ -48,7 +49,7 @@ export default function Payment() {
     profile,
   } = useUserProfile();
 
-  const navigate = useNavigate();
+  const { navigateWithTransition } = useHeaderTransition();
   const { reveal } = useReveal();
 
   const [productDetails, setProductDetails] = useState({});
@@ -176,7 +177,7 @@ export default function Payment() {
             : availabilityMessage(latest[unavailable?.key]),
         );
 
-        navigate("/cart");
+        navigateWithTransition("/cart");
         return;
       }
     } catch {
@@ -299,7 +300,7 @@ export default function Payment() {
         </p>
 
         <button
-          onClick={() => navigate("/cart")}
+          onClick={() => navigateWithTransition("/cart")}
           className="rounded-xl px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"
         >
           Back to Cart
@@ -316,7 +317,7 @@ export default function Payment() {
           selectedId={selectedAddressId}
           onSelect={setSelectedAddressId}
           onAddNew={() =>
-            navigate("/address-book?new=1&returnTo=%2Fpayment")
+            navigateWithTransition("/address-book?new=1&returnTo=%2Fpayment")
           }
           onClose={() => setShowPicker(false)}
         />
@@ -325,7 +326,7 @@ export default function Payment() {
       <div className="flex items-center gap-3 px-4 pt-5">
         <button
           type="button"
-          onClick={() => navigate("/cart")}
+          onClick={() => navigateWithTransition("/cart")}
           aria-label="Go back"
           className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#F7EDE2] bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white shadow-sm active:scale-95"
         >

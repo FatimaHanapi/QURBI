@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Bell,
@@ -117,7 +116,6 @@ function SwipeableNotificationRow({
 }
 
 export default function Notifications() {
-  const navigate = useNavigate();
   const { navigateFromIconPage } = useHeaderTransition();
   const { authChecked, isAuthenticated } = useAuth();
   const {

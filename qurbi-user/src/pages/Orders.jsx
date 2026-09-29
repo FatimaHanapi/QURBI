@@ -522,7 +522,12 @@ export default function Orders() {
   );
 
   if (!authChecked) {
-    return <PageLoading message="Loading orders..." />;
+    return (
+      <div className="qurbi-page">
+        <AppHeader title="My Orders" subtitle="Track and manage your purchases" />
+        <PageLoading contentOnly message="Loading orders..." />
+      </div>
+    );
   }
 
   if (authChecked && !isAuthenticated)
@@ -655,8 +660,8 @@ export default function Orders() {
           </div>
         ) : groupedOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-20">
-            <div className="w-20 h-20 rounded-full bg-[#F7EDE2] flex items-center justify-center">
-              <Package className="w-10 h-10 text-[#C49A72]" /> 
+            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+              <Package className="w-10 h-10 text-black" />
             </div>
             <p className="text-gray-600 font-semibold">No orders to show</p>
             <p className="text-gray-400 text-sm text-center">

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { MapPin, Package, Search, Users } from "lucide-react";
 import AppHeader from "@/components/AppHeader";
 import { loadBulkListings } from "@/lib/farmerClient";
@@ -7,6 +7,7 @@ import { checkBulkListingAvailability } from "@/lib/livestock-availability";
 import { useCart } from "@/lib/cart-context";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import PageLoading from "@/components/PageLoading";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 import {
   animateProductToCart,
   captureCartAnimationSource,
@@ -44,7 +45,7 @@ export default function BulkBuy() {
   const [error, setError] = useState("");
   const { addToCart, buyNow } = useCart();
   const requireAuth = useRequireAuth();
-  const navigate = useNavigate();
+  const { navigateWithTransition } = useHeaderTransition();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,7 +99,7 @@ export default function BulkBuy() {
         const item = toCartItem(listing);
         if (goToCart) {
           buyNow(item);
-          navigate("/payment");
+          navigateWithTransition("/payment");
         } else {
           if (!addToCart(item)) {
             alert("This bulk lot is already in your cart.");

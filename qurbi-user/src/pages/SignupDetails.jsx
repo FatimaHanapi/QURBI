@@ -94,7 +94,7 @@ export default function SignupDetails() {
         </div>
         {saveError && <p role="alert" className="text-center text-xs text-red-600">{saveError}</p>}
         <button disabled={saving} onClick={handleSave} className={primaryBtn + " mt-1"}>
-          {saving ? "Saving…" : saved ? <><Check className="w-4 h-4" /> Saved!</> : <>Save & continue <ArrowRight className="w-4 h-4" /></>}
+          {saving ? "Saving…" : saved ? <><Check className="w-4 h-4" /> Saved!</> : <>Save & continue <ArrowRight className="w-4 h-4 text-white" /></>}
         </button>
         <button onClick={handleSkip} className="w-full bg-gradient-to-br from-[#41362D] to-[#6B594A] text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition-all">
           Skip for now

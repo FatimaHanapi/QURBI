@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, Bell, Leaf, User } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
@@ -12,10 +12,10 @@ const HEADER_EXPAND_SCROLL_Y = 4;
 export default function AppHeader({
   title,
   eyebrow = "QURBI",
-  subtitle,
-  backTo,
-  search,
-  children,
+  subtitle = "",
+  backTo = "",
+  search = null,
+  children = null,
   sticky = false,
   guestActionsOnLeft = false,
   progressiveShrink = false,
@@ -23,11 +23,10 @@ export default function AppHeader({
   titleClassName = "",
   subtitleClassName = "",
 }) {
-  const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();
   const { unreadCount } = useNotifications();
-  const { isContracting, beginIconTransition } = useHeaderTransition();
+  const { isContracting, beginIconTransition, navigateWithTransition } = useHeaderTransition();
   const hasExpandableContent = Boolean(search || children);
   const [extraVisible, setExtraVisible] = useState(false);
   const [headerEntered, setHeaderEntered] = useState(false);
@@ -112,14 +111,14 @@ export default function AppHeader({
   const shrinkStyle = shrinkEnabled
     ? expandedHeight
       ? {
-          height: isScrollShrunk ? "108px" : `${expandedHeight}px`,
-          paddingTop: isScrollShrunk ? "12px" : "28px",
-          paddingBottom: isScrollShrunk ? "8px" : "16px",
+          height: isScrollShrunk || isContracting ? "108px" : `${expandedHeight}px`,
+          paddingTop: isScrollShrunk || isContracting ? "12px" : "28px",
+          paddingBottom: isScrollShrunk || isContracting ? "8px" : "16px",
           transition:
-            "height 220ms cubic-bezier(0.22, 1, 0.36, 1), padding 220ms cubic-bezier(0.22, 1, 0.36, 1)",
+            "height 440ms cubic-bezier(0.22, 1, 0.36, 1), padding 440ms cubic-bezier(0.22, 1, 0.36, 1)",
           willChange: "height, padding",
         }
-      : isScrollShrunk
+      : isScrollShrunk || isContracting
         ? {
             height: "108px",
             paddingTop: "12px",
@@ -127,11 +126,12 @@ export default function AppHeader({
           }
         : undefined
     : undefined;
+  /** @type {React.CSSProperties | undefined} */
   const shrinkingContentStyle = shrinkEnabled
     ? {
-        opacity: isScrollShrunk ? 0 : 1,
-        pointerEvents: isScrollShrunk ? "none" : "auto",
-        transition: "opacity 140ms ease-out",
+        opacity: isScrollShrunk || isContracting ? 0 : 1,
+        pointerEvents: isScrollShrunk || isContracting ? "none" : "auto",
+        transition: "opacity 320ms ease-out",
         willChange: "opacity",
       }
     : undefined;
@@ -139,11 +139,11 @@ export default function AppHeader({
   const headerMarkup = (
     <header
       ref={headerRef}
-      className={`${shrinkEnabled ? (expandedHeight ? "absolute inset-x-0 top-0" : "relative") : sticky ? "sticky top-0 z-30" : "relative"} qurbi-header-background overflow-hidden rounded-b-[28px] bg-gradient-to-br from-[#41362D] to-[#6B594A] px-4 shadow-lg transition-[padding,border-radius,box-shadow] duration-700 ease-in-out sm:px-5 ${headerExpanded ? "pb-4 pt-7 sm:pt-8" : "pb-2 pt-3 sm:pt-4"}`}
+      className={`${shrinkEnabled ? (expandedHeight ? "absolute inset-x-0 top-0" : "relative") : sticky ? "sticky top-0 z-30" : "relative"} qurbi-header-background overflow-hidden rounded-b-[28px] bg-gradient-to-br from-[#41362D] to-[#6B594A] px-4 shadow-lg transition-[padding,border-radius,box-shadow] duration-500 ease-in-out sm:px-5 ${headerExpanded ? "pb-4 pt-7 sm:pt-8" : "pb-2 pt-3 sm:pt-4"}`}
       style={{ viewTransitionName: "qurbi-header", ...shrinkStyle }}
     >
       <div
-        className={`relative z-10 flex origin-top flex-col items-center text-center transition-transform duration-700 ease-in-out ${headerExpanded ? "scale-100" : "scale-[0.96]"}`}
+        className={`relative z-10 flex origin-top flex-col items-center text-center transition-transform duration-500 ease-in-out ${headerExpanded ? "scale-100" : "scale-[0.96]"}`}
       >
         <div className="absolute left-0 top-0 z-20 flex flex-row items-center gap-1.5">
           {isAuthenticated && (
@@ -171,14 +171,12 @@ export default function AppHeader({
             <>
               <Link
                 to="/auth?mode=login"
-                viewTransition
                 className="rounded-lg px-1.5 py-2 text-[10px] font-bold text-white/90"
               >
                 Login
               </Link>
               <Link
                 to="/auth?mode=register"
-                viewTransition
                 className="rounded-lg bg-white/15 px-1.5 py-2 text-[10px] font-bold text-white"
               >
                 Sign Up
@@ -188,7 +186,7 @@ export default function AppHeader({
           {backTo && (
             <button
               type="button"
-              onClick={() => navigate(backTo, { viewTransition: true })}
+              onClick={() => navigateWithTransition(backTo)}
               aria-label="Go back"
               className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#F7EDE2]/60 bg-white/10 text-white transition-transform active:scale-90"
             >
@@ -202,14 +200,12 @@ export default function AppHeader({
             <>
               <Link
                 to="/auth?mode=login"
-                viewTransition
                 className="rounded-lg px-1.5 py-2 text-[10px] font-bold text-white/90"
               >
                 Login
               </Link>
               <Link
                 to="/auth?mode=register"
-                viewTransition
                 className="rounded-lg bg-white/15 px-1.5 py-2 text-[10px] font-bold text-white"
               >
                 Sign Up
@@ -253,7 +249,7 @@ export default function AppHeader({
 
       {subtitle && (
         <div
-          className={`relative z-10 grid transition-[grid-template-rows] duration-700 ease-in-out ${headerEntered && !isContracting ? "grid-rows-[1fr] delay-0" : "grid-rows-[0fr] delay-100"}`}
+          className={`relative z-10 grid transition-[grid-template-rows] duration-500 ease-in-out ${headerEntered && !isContracting ? "grid-rows-[1fr] delay-0" : "grid-rows-[0fr]"}`}
         >
           <div
             className="min-h-0 overflow-hidden"
@@ -269,7 +265,7 @@ export default function AppHeader({
       )}
 
       <div
-        className={`relative z-10 grid ${shrinkEnabled ? "transition-[grid-template-rows]" : "transition-[grid-template-rows,opacity]"} duration-700 ease-in-out ${extraVisible && !isContracting ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        className={`relative z-10 grid ${shrinkEnabled ? "transition-[grid-template-rows]" : "transition-[grid-template-rows,opacity]"} duration-500 ease-in-out ${extraVisible && !isContracting ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
         aria-hidden={!hasExpandableContent}
       >
         <div
@@ -277,7 +273,7 @@ export default function AppHeader({
           style={shrinkingContentStyle}
         >
           <div
-            className={`pt-2 text-center transition-all duration-700 ease-in-out ${extraVisible && !isContracting ? "translate-y-0" : "-translate-y-2"}`}
+            className={`pt-2 text-center transition-all duration-500 ease-in-out ${extraVisible && !isContracting ? "translate-y-0" : "-translate-y-2"}`}
           >
             {search && <div className="mx-auto max-w-xl">{search}</div>}
             {children && <div className="mt-2">{children}</div>}

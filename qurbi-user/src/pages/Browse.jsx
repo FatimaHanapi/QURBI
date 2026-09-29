@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   Search,
   X,
@@ -19,9 +19,10 @@ import { useReveal } from "@/hooks/useReveal";
 import AppHeader from "@/components/AppHeader";
 import PageLoading from "@/components/PageLoading";
 import { isProductExpired } from "@/lib/product-expiry";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 
 function LivestockCard({ livestock, index = 0 }) {
-  const navigate = useNavigate();
+  const { navigateFromProductCard } = useHeaderTransition();
   const imageReferences = [livestock.coverImage, ...(livestock.images || [])]
     .map((image) => {
       if (typeof image === "string") return image.trim();
@@ -46,7 +47,13 @@ function LivestockCard({ livestock, index = 0 }) {
 
   return (
     <div
-      onClick={() => navigate(`/livestock/${livestock.id}`)}
+      onClick={(event) =>
+        navigateFromProductCard(
+          `/livestock/${livestock.id}`,
+          event.currentTarget,
+          { image: img, label: productName },
+        )
+      }
       className="relative min-h-[210px] cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-br from-[#41362D] to-[#6B594A] shadow-lg shadow-[#41362D]/30 animate-fade-in-up active:scale-[0.98] transition-transform sm:min-h-[285px]"
       style={{
         animationDelay: `${Math.min(index * 40, 300)}ms`,
@@ -130,7 +137,6 @@ function LivestockCard({ livestock, index = 0 }) {
 }
 
 export default function Browse() {
-  const navigate = useNavigate();
   const location = useLocation();
 
   const [livestock, setLivestock] = useState([]);

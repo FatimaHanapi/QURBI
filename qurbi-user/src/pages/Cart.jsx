@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
 import { Trash2, ShoppingCart, Check, ChevronRight } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { GRADE_COLORS } from "@/lib/livestock-data";
@@ -8,6 +7,7 @@ import { useReveal } from "@/hooks/useReveal";
 import { checkCartAvailability } from "@/lib/livestock-availability";
 import { isProductExpired } from "@/lib/product-expiry";
 import AppHeader from "@/components/AppHeader";
+import { useHeaderTransition } from "@/components/HeaderTransitionProvider";
 import { AisyahCardSkeleton } from "@/components/AisyahLoading";
 
 const isUnobtainable = (result) =>
@@ -60,7 +60,7 @@ export default function Cart() {
     selectedItems,
     selectedSubtotal,
   } = useCart();
-  const navigate = useNavigate();
+  const { navigateWithTransition } = useHeaderTransition();
   const { reveal } = useReveal();
   const [availability, setAvailability] = useState({});
   const [checkingStock, setCheckingStock] = useState(true);
@@ -125,7 +125,7 @@ export default function Cart() {
         );
         return;
       }
-      navigate("/payment");
+      navigateWithTransition("/payment");
     } catch {
       setAvailabilityNotice(
         "We couldn't verify current availability. Please try again before payment.",
@@ -145,7 +145,7 @@ export default function Cart() {
           </div>
           <p className="text-gray-400 text-center">Your cart is empty.</p>
           <button
-            onClick={() => navigate("/browse")}
+            onClick={() => navigateWithTransition("/browse")}
             className="aisyah-primary-button"
           >
             Browse livestock
@@ -255,7 +255,7 @@ export default function Cart() {
                   : `/livestock/${encodeURIComponent(detailId)}?from=cart`
                 : "";
               const openDetail = () => {
-                if (detailPath) navigate(detailPath);
+                if (detailPath) navigateWithTransition(detailPath);
               };
               return (
                 <div
