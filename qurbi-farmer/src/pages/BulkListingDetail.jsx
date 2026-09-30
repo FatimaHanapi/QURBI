@@ -48,7 +48,7 @@ export default function BulkListingDetail() {
   const total = Number(item.maleCount || 0) + Number(item.femaleCount || 0);
 
   return (
-    <div className="mx-auto w-full max-w-6xl animate-fade-in">
+    <div className="mx-auto min-w-0 w-full max-w-6xl animate-fade-in overflow-x-hidden">
       <header className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <button type="button" onClick={() => navigate("/bulk")} aria-label="Back to bulk listings" className="soft-card flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"><ArrowLeft className="h-5 w-5" /></button>
@@ -57,8 +57,8 @@ export default function BulkListingDetail() {
         <button type="button" onClick={() => navigate(`/bulk/${id}/edit`)} className="flex h-11 items-center gap-2 rounded-2xl bg-secondary/70 px-3.5 text-sm font-bold text-primary"><Pencil className="h-4 w-4" /><span className="hidden sm:inline">Edit</span></button>
       </header>
 
-      <div className="mt-5 grid items-start gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,.92fr)] lg:gap-8">
-        <div className="space-y-5">
+      <div className="mt-5 grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,.92fr)] lg:gap-8">
+        <div className="min-w-0 space-y-5">
           <section className="soft-card overflow-hidden p-2">
             <div className="aspect-[4/3] overflow-hidden rounded-[1rem] bg-muted sm:aspect-[16/11]">
               {images.length ? <Image src={images[activeImage]} fittingType="fill" alt={`${item.name} photo ${activeImage + 1}`} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No image available</div>}
@@ -69,9 +69,9 @@ export default function BulkListingDetail() {
           {videos.length > 0 && <section><h2 className="text-lg font-extrabold">Videos</h2><div className="mt-3 grid gap-3 sm:grid-cols-2">{videos.map((url, index) => <video key={`${url}-${index}`} src={resolveApiAssetUrl(url)} controls preload="metadata" className="aspect-video w-full rounded-2xl bg-black" />)}</div></section>}
         </div>
 
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <section className="soft-card p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4"><div className="min-w-0"><StatusBadge tone={STATUS_TONE[item.status] || "muted"} dot>{item.status}</StatusBadge><h2 className="mt-3 truncate text-3xl font-extrabold tracking-tight text-primary">{item.name}</h2></div><div className="shrink-0 text-right"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Total price</p><p className="mt-1 text-xl font-extrabold">{formatMYR(item.totalPrice)}</p></div></div>
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3"><div className="min-w-0"><StatusBadge tone={STATUS_TONE[item.status] || "muted"} dot>{item.status}</StatusBadge><h2 className="mt-3 truncate text-2xl font-extrabold tracking-tight text-primary sm:text-3xl">{item.name}</h2></div><div className="min-w-0 text-right"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Total price</p><p className="mt-1 whitespace-nowrap text-lg font-extrabold sm:text-xl">{formatMYR(item.totalPrice)}</p></div></div>
             <div className="mt-5 grid grid-cols-3 gap-2.5"><Count label="Animals" value={total} /><Count label="Male" value={item.maleCount || 0} /><Count label="Female" value={item.femaleCount || 0} /></div>
           </section>
 
