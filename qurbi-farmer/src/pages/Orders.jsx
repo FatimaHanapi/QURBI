@@ -9,6 +9,11 @@ import {
   PackageCheck,
   RefreshCw,
   ShieldAlert,
+<<<<<<< HEAD
+=======
+  Truck,
+  XCircle,
+>>>>>>> upstream/main
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { reconcileOrderLivestockStatuses } from "@/lib/orderLivestockStatus";
 
 const FILTERS = [
+<<<<<<< HEAD
   { key: "all", label: "All", groups: null },
   { key: "action", label: "To do", groups: ["action"] },
   { key: "payment", label: "Awaiting payment", groups: ["payment"] },
@@ -31,6 +37,31 @@ const STAGE_ACTION = {
   before: "Upload before-delivery photo",
   during: "Upload during-delivery photo",
   after: "Upload arrival photo",
+=======
+  { key: "all", label: "All", statuses: null },
+  { key: "to-ship", label: "To Ship", statuses: ["paid", "to_ship"] },
+  { key: "shipping", label: "Shipping", statuses: ["processing"] },
+  { key: "awaiting", label: "Awaiting Buyer", statuses: ["shipped", "to_receive", "delivering"] },
+  { key: "completed", label: "Completed", statuses: ["completed", "delivered"] },
+  { key: "issues", label: "Return / Refund", statuses: ["return_requested", "refund_requested", "return_refund", "refunded"] },
+  { key: "cancelled", label: "Cancelled", statuses: ["cancelled"] },
+];
+
+const STATUS_META = {
+  paid: ["To Ship", "info"],
+  to_ship: ["To Ship", "info"],
+  processing: ["Shipping", "primary"],
+  shipped: ["Awaiting Buyer", "warning"],
+  to_receive: ["Awaiting Buyer", "warning"],
+  delivering: ["Awaiting Buyer", "warning"],
+  completed: ["Completed", "success"],
+  delivered: ["Completed", "success"],
+  return_requested: ["Return Requested", "danger"],
+  refund_requested: ["Refund Requested", "danger"],
+  return_refund: ["Return / Refund", "danger"],
+  refunded: ["Refunded", "muted"],
+  cancelled: ["Cancelled", "muted"],
+>>>>>>> upstream/main
 };
 
 function inFilter(filter, order) {
@@ -81,8 +112,20 @@ function PackageCard({ order, onOpen }) {
   const first = order.items?.[0];
   const { title, breed } = orderItemTitle(first);
   const evidenceCount = ["before", "during", "after"].filter((stage) => order.tracking_photos?.[stage]?.image_url).length;
+<<<<<<< HEAD
   const stage = order.tracking_enabled !== false ? orderPhotoStage(order.status) : "";
   const needsFarmer = Boolean(stage);
+=======
+  const canProcess = ["paid", "to_ship", "processing"].includes(order.status) && order.tracking_enabled !== false;
+  const isCancelled = order.status === "cancelled";
+  const actionLabel = ["paid", "to_ship"].includes(order.status)
+    ? "Start delivery"
+    : order.status === "processing"
+      ? "Continue delivery"
+      : isCancelled
+        ? "View cancellation"
+        : "View order";
+>>>>>>> upstream/main
 
   return (
     <article className={cn(
@@ -112,6 +155,7 @@ function PackageCard({ order, onOpen }) {
         </div>
       )}
 
+<<<<<<< HEAD
       {meta.next && (
         <p className={cn("mt-3 rounded-xl px-3 py-2.5 text-sm leading-snug", needsFarmer ? "bg-amber-50 font-semibold text-amber-900" : "bg-muted/60 text-muted-foreground")}>
           {needsFarmer ? "Next: " : ""}{meta.next}
@@ -119,6 +163,14 @@ function PackageCard({ order, onOpen }) {
       )}
 
       <EvidenceProgress count={evidenceCount} />
+=======
+      {isCancelled ? (
+        <div className="mt-4 flex gap-2 rounded-xl border border-border bg-muted/45 p-3 text-xs text-muted-foreground">
+          <XCircle className="h-4 w-4 shrink-0 text-foreground" />
+          <div className="min-w-0"><p className="font-bold text-foreground">Cancelled by {order.cancelled_by || "Buyer"}</p><p className="mt-0.5 line-clamp-2">{order.cancellation_reason || "No cancellation reason was provided."}</p></div>
+        </div>
+      ) : <EvidenceProgress count={evidenceCount} />}
+>>>>>>> upstream/main
 
       <Button onClick={() => onOpen(order.id)} variant={needsFarmer ? "default" : "outline"} className="mt-4 h-12 w-full rounded-2xl text-sm font-bold">
         {needsFarmer ? <Camera className="mr-2 h-4 w-4" /> : null}{needsFarmer ? STAGE_ACTION[stage] : "View order"}<ChevronRight className="ml-auto h-4 w-4" />

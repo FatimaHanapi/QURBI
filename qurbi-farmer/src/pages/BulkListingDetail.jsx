@@ -72,7 +72,11 @@ export default function BulkListingDetail() {
   const listingHasSplit = item.maleCount != null || item.femaleCount != null;
 
   return (
+<<<<<<< HEAD
     <div className="mx-auto w-full min-w-0 max-w-6xl animate-fade-in">
+=======
+    <div className="mx-auto min-w-0 w-full max-w-6xl animate-fade-in overflow-x-hidden">
+>>>>>>> upstream/main
       <header className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <button type="button" onClick={() => navigate("/bulk")} aria-label="Back to bulk listings" className="soft-card flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"><ArrowLeft className="h-5 w-5" /></button>
@@ -81,7 +85,11 @@ export default function BulkListingDetail() {
         <button type="button" onClick={() => navigate(`/bulk/${id}/edit`)} aria-label="Edit bulk listing" className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-secondary/70 px-3.5 text-sm font-bold text-primary"><Pencil className="h-4 w-4" /><span className="hidden sm:inline">Edit</span></button>
       </header>
 
+<<<<<<< HEAD
       <div className="mt-5 grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,.92fr)] lg:gap-8">
+=======
+      <div className="mt-5 grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,.92fr)] lg:gap-8">
+>>>>>>> upstream/main
         <div className="min-w-0 space-y-5">
           <section className="soft-card overflow-hidden p-2">
             <div className="aspect-[4/3] w-full overflow-hidden rounded-[1rem] bg-muted sm:aspect-[16/11]">
@@ -95,6 +103,7 @@ export default function BulkListingDetail() {
 
         <div className="min-w-0 space-y-5">
           <section className="soft-card p-5 sm:p-6">
+<<<<<<< HEAD
             <StatusBadge kind="bulk" status={item.status} dot />
             <h2 className="mt-3 break-words text-2xl font-extrabold leading-tight tracking-tight text-primary">{item.name}</h2>
             <div className="mt-3 flex items-baseline justify-between gap-3 rounded-2xl bg-muted/55 px-4 py-3">
@@ -103,6 +112,10 @@ export default function BulkListingDetail() {
             </div>
             {total > 0 && <p className="mt-2 text-right text-sm text-muted-foreground">About {formatMYR(Math.round(Number(item.totalPrice) / total))} per animal</p>}
             <div className="mt-4 grid grid-cols-3 gap-2.5"><Count label="Animals" value={total} /><Count label="Male" value={listingHasSplit ? maleTotal : "—"} /><Count label="Female" value={listingHasSplit ? femaleTotal : "—"} /></div>
+=======
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3"><div className="min-w-0"><StatusBadge tone={STATUS_TONE[item.status] || "muted"} dot>{item.status}</StatusBadge><h2 className="mt-3 truncate text-2xl font-extrabold tracking-tight text-primary sm:text-3xl">{item.name}</h2></div><div className="min-w-0 text-right"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Total price</p><p className="mt-1 whitespace-nowrap text-lg font-extrabold sm:text-xl">{formatMYR(item.totalPrice)}</p></div></div>
+            <div className="mt-5 grid grid-cols-3 gap-2.5"><Count label="Animals" value={total} /><Count label="Male" value={item.maleCount || 0} /><Count label="Female" value={item.femaleCount || 0} /></div>
+>>>>>>> upstream/main
           </section>
 
           {item.description && (
