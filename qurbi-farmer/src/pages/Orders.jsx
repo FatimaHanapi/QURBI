@@ -9,6 +9,7 @@ import {
   RefreshCw,
   ShieldAlert,
   Truck,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +26,7 @@ const FILTERS = [
   { key: "awaiting", label: "Awaiting Buyer", statuses: ["shipped", "to_receive", "delivering"] },
   { key: "completed", label: "Completed", statuses: ["completed", "delivered"] },
   { key: "issues", label: "Return / Refund", statuses: ["return_requested", "refund_requested", "return_refund", "refunded"] },
+  { key: "cancelled", label: "Cancelled", statuses: ["cancelled"] },
 ];
 
 const STATUS_META = {
@@ -40,6 +42,7 @@ const STATUS_META = {
   refund_requested: ["Refund Requested", "danger"],
   return_refund: ["Return / Refund", "danger"],
   refunded: ["Refunded", "muted"],
+  cancelled: ["Cancelled", "muted"],
 };
 
 function statusMeta(status) {
@@ -90,11 +93,14 @@ function PackageCard({ order, onOpen }) {
   const first = order.items?.[0];
   const evidenceCount = ["before", "during", "after"].filter((stage) => order.tracking_photos?.[stage]?.image_url).length;
   const canProcess = ["paid", "to_ship", "processing"].includes(order.status) && order.tracking_enabled !== false;
+  const isCancelled = order.status === "cancelled";
   const actionLabel = ["paid", "to_ship"].includes(order.status)
     ? "Start delivery"
     : order.status === "processing"
       ? "Continue delivery"
-      : "View order";
+      : isCancelled
+        ? "View cancellation"
+        : "View order";
 
   return (
     <article className="soft-card group mx-auto w-full max-w-lg min-w-0 p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(65,54,45,0.1)] sm:p-5">
@@ -121,7 +127,12 @@ function PackageCard({ order, onOpen }) {
         </div>
       )}
 
-      <EvidenceProgress count={evidenceCount} />
+      {isCancelled ? (
+        <div className="mt-4 flex gap-2 rounded-xl border border-border bg-muted/45 p-3 text-xs text-muted-foreground">
+          <XCircle className="h-4 w-4 shrink-0 text-foreground" />
+          <div className="min-w-0"><p className="font-bold text-foreground">Cancelled by {order.cancelled_by || "Buyer"}</p><p className="mt-0.5 line-clamp-2">{order.cancellation_reason || "No cancellation reason was provided."}</p></div>
+        </div>
+      ) : <EvidenceProgress count={evidenceCount} />}
 
       <Button onClick={() => onOpen(order.id)} className="mt-3 h-11 w-full rounded-2xl text-sm font-bold">
         {canProcess ? <Truck className="mr-2 h-4 w-4" /> : null}{actionLabel}<ChevronRight className="ml-auto h-4 w-4" />

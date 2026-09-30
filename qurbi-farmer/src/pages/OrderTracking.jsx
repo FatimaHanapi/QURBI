@@ -7,7 +7,9 @@ import {
   Camera,
   Check,
   CircleDollarSign,
+  CircleX,
   Clock3,
+  ExternalLink,
   ImageOff,
   MapPinned,
   PackageCheck,
@@ -58,6 +60,7 @@ const STATUS_META = {
   refund_requested: ["Refund Requested", "danger"],
   return_refund: ["Return / Refund", "danger"],
   refunded: ["Refunded", "muted"],
+  cancelled: ["Cancelled", "muted"],
 };
 
 function errorMessage(error, fallback) {
@@ -156,6 +159,7 @@ export default function OrderTracking() {
   const tracking = order.tracking_photos || {};
   const [statusLabel, statusTone] = STATUS_META[order.status] || [order.status?.replaceAll("_", " ") || "Unknown", "muted"];
   const hasIssue = ISSUE_STATUSES.includes(order.status);
+  const isCancelled = order.status === "cancelled";
   const canTrack = order.tracking_enabled !== false && TRACKABLE_STATUSES.includes(order.status) && !hasIssue;
   const shippedAt = tracking.after?.uploaded_at || "";
 
@@ -169,6 +173,7 @@ export default function OrderTracking() {
     {error && <p className="mt-4 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p>}
     {order.multi_farmer_order && <div className="mt-4 flex gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" /><span>This order contains packages from multiple farmers. Evidence upload is locked to prevent one farmer from changing another farmer&apos;s fulfilment status.</span></div>}
     {hasIssue && <div className="mt-4 flex gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" /><span>Shipment actions are paused because this order has an active return or refund state.</span></div>}
+    {isCancelled && <div className="mt-4 flex gap-2 rounded-xl border border-border bg-muted/55 p-3 text-sm text-foreground"><CircleX className="mt-0.5 h-4 w-4 shrink-0" /><span>This order is closed. No delivery action is required from you.</span></div>}
 
     <section className="mt-5 rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3"><div><p className="text-xs text-muted-foreground">Order status</p><p className="mt-1 text-lg font-extrabold">#{order.order_number || order.id}</p></div><StatusBadge tone={statusTone} dot>{statusLabel}</StatusBadge></div>
@@ -180,12 +185,19 @@ export default function OrderTracking() {
       </div>
     </section>
 
+    {isCancelled && (
+      <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+        <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground"><CircleX className="h-5 w-5" /></span><div className="min-w-0"><h2 className="font-extrabold">Cancellation summary</h2><p className="mt-0.5 text-xs text-muted-foreground">The reservation has been released. An eligible listing is returned to the marketplace automatically.</p></div></div>
+        <div className="mt-4 grid gap-3 rounded-xl bg-muted/45 p-3 text-sm sm:grid-cols-2"><div><p className="text-[11px] text-muted-foreground">Cancelled by</p><p className="mt-0.5 font-bold">{order.cancelled_by || "Buyer"}</p></div><div><p className="text-[11px] text-muted-foreground">Cancelled at</p><p className="mt-0.5 font-bold">{dateTime(order.cancelled_at)}</p></div><div className="sm:col-span-2"><p className="text-[11px] text-muted-foreground">Reason</p><p className="mt-0.5 whitespace-pre-wrap font-semibold">{order.cancellation_reason || "No cancellation reason was provided."}</p></div></div>
+      </section>
+    )}
+
     <section className="mt-4 rounded-2xl border border-border bg-card p-4">
       <h2 className="font-extrabold">Livestock information</h2>
       <div className="mt-3 space-y-3">{order.items?.map((item, index) => (
         <article key={`${item.livestock_id}-${index}`} className="flex gap-3 rounded-xl bg-muted/60 p-3">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-background">{item.image_url ? <img src={item.image_url} alt={`${item.species} ${item.breed}`} className="h-full w-full object-cover" /> : <ImageOff className="h-6 w-6 text-muted-foreground" />}</div>
-          <div className="min-w-0 flex-1"><p className="text-base font-extrabold">{item.species || "Livestock"}</p><p className="truncate text-sm font-semibold text-muted-foreground">{item.breed || "Unspecified breed"}</p>{item.tag_number && <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground"><span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" />{item.tag_number}</span></div>}<p className="mt-2 text-sm font-extrabold text-primary">{formatMYR(item.total)}</p><p className="mt-1 truncate text-[10px] text-muted-foreground">Livestock ID: {item.livestock_id || "Unavailable"}</p></div>
+          <div className="min-w-0 flex-1"><p className="text-base font-extrabold">{item.species || "Livestock"}</p><p className="truncate text-sm font-semibold text-muted-foreground">{item.breed || "Unspecified breed"}</p>{item.tag_number && <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground"><span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" />{item.tag_number}</span></div>}<p className="mt-2 text-sm font-extrabold text-primary">{formatMYR(item.total)}</p><p className="mt-1 truncate text-[10px] text-muted-foreground">Livestock ID: {item.livestock_id || item.bulk_listing_id || "Unavailable"}</p>{isCancelled && (item.livestock_id || item.bulk_listing_id) && <button type="button" onClick={() => navigate(item.livestock_id ? `/livestock/${item.livestock_id}` : `/bulk/${item.bulk_listing_id}`)} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary">View listing <ExternalLink className="h-3.5 w-3.5" /></button>}</div>
         </article>
       ))}</div>
       <div className="mt-4 space-y-2 border-t border-border pt-3 text-sm"><div className="flex justify-between text-muted-foreground"><span>Farmer subtotal</span><span>{formatMYR(order.farmer_subtotal)}</span></div>{Number(order.farmer_delivery_fee) > 0 && <div className="flex justify-between text-muted-foreground"><span>Your delivery fee portion</span><span>{formatMYR(order.farmer_delivery_fee)}</span></div>}<div className="flex justify-between font-extrabold"><span>Order total</span><span className="text-primary">{formatMYR(order.farmer_total)}</span></div></div>
@@ -199,7 +211,7 @@ export default function OrderTracking() {
 
     {(order.refund_reason || order.refund_status) && <section className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-4"><h2 className="font-extrabold text-destructive">Return / Refund</h2>{order.refund_status && <p className="mt-2 text-sm"><span className="font-semibold">Status: </span>{order.refund_status.replaceAll("_", " ")}</p>}{order.refund_reason && <p className="mt-1 text-sm"><span className="font-semibold">Reason: </span>{order.refund_reason}</p>}{order.refund_admin_note && <p className="mt-1 text-sm"><span className="font-semibold">Admin note: </span>{order.refund_admin_note}</p>}</section>}
 
-    <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+    {!isCancelled && <section className="mt-4 rounded-2xl border border-border bg-card p-4">
       <h2 className="font-extrabold">Delivery evidence timeline</h2><p className="mt-1 text-xs text-muted-foreground">Upload the three farmer photos in order. The buyer&apos;s confirmation unlocks afterwards.</p>
       <div className="mt-5 space-y-4">{STAGES.map((stage, index) => {
         const proof = tracking[stage.key];
@@ -212,7 +224,7 @@ export default function OrderTracking() {
           : <p className="mt-3 text-xs font-semibold text-muted-foreground">{stage.key === "received" ? "Waiting for buyer confirmation after all farmer evidence is complete." : order.tracking_enabled === false ? "Tracking is locked for this multi-farmer order." : hasIssue ? "Tracking is paused for the return/refund process." : canTrack ? "Complete the previous photo first." : "This package is not awaiting a farmer update."}</p>}
         </div></div>;
       })}</div>
-    </section>
+    </section>}
 
     <AlertDialog open={Boolean(pendingUpload)} onOpenChange={(open) => { if (!open && !uploading) setPendingUpload(null); }}>
       <AlertDialogContent className="w-[calc(100%-2rem)] max-w-md rounded-2xl">

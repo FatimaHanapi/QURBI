@@ -13,6 +13,9 @@ import {
   DeliveryAddressSnapshot,
   DeliveryMethod,
   Livestock,
+  Notification,
+  NotificationAudience,
+  NotificationType,
   Order,
   OrderItem,
   OrderItemType,
@@ -92,7 +95,7 @@ export class OrdersService {
   findAllForFarmer(farmerId: string): Promise<Order[]> {
     return this.repository.find({
       where: { farmerId },
-      relations: { items: true },
+      relations: { items: true, trackingEvents: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -342,6 +345,7 @@ export class OrdersService {
       extra?: DeepPartial<Order>;
     } = {},
   ): Promise<Order> {
+    const previousStatus = order.status;
     const allowed = ALLOWED_TRANSITIONS[order.status] ?? [];
     if (!allowed.includes(toStatus)) {
       throw new ConflictException(
@@ -369,6 +373,27 @@ export class OrdersService {
     if (toStatus === OrderStatus.CANCELLED) {
       await this.reservationsService.cancelOrder(manager, order.id);
       await this.releaseOrderItems(manager, order.id, false);
+
+      // A buyer/admin cancellation should never become a silent dead-end in
+      // the farmer portal. Keep this notification in the same transaction as
+      // the order transition so the farmer cannot see one without the other.
+      if (opts.userId && opts.userId !== order.farmerId) {
+        const releaseMessage = previousStatus === OrderStatus.PENDING_PAYMENT
+          ? 'The reservation was released. Eligible listings are available to buyers again.'
+          : 'Open the order to review the cancellation and listing status.';
+        await manager.save(
+          manager.create(Notification, {
+            userId: order.farmerId,
+            audience: NotificationAudience.FARMER,
+            type: NotificationType.ORDER_UPDATE,
+            title: 'Order cancelled',
+            body: `Order #${order.orderNumber} was cancelled. Reason: ${order.cancellationReason || 'No reason provided'}. ${releaseMessage}`,
+            linkUrl: `/orders/${order.id}`,
+            relatedType: 'order',
+            relatedId: order.id,
+          }),
+        );
+      }
     }
 
     return order;
